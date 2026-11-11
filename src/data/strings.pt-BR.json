@@ -1,0 +1,20 @@
+{
+  "interactHint": "E",
+  "menuTitle": "{name}",
+  "menuPet": "Fazer carinho",
+  "menuFeed": "Dar comida ({count})",
+  "menuSleep": "Mandar dormir",
+  "menuInfo": "Ver ficha",
+  "menuClose": "Fechar",
+  "menuHelp": "↑↓ escolher · E confirmar · Esc fechar",
+  "feedNoItem": "Sem comida!",
+  "feedOk": "Nham! Energia {energy}",
+  "infoTitle": "Ficha",
+  "infoSpecies": "Espécie: {species}",
+  "infoEnergy": "Energia: {energy}/{max}",
+  "infoStatus": "Status: {status}",
+  "infoActivity": "Agora: {activity}",
+  "status": { "idle": "livre", "working": "trabalhando", "resting": "descansando" },
+  "activity": { "idle": "parado", "wander": "passeando", "eat": "comendo", "sleep": "dormindo", "petted": "recebendo carinho" },
+  "species": { "rabbit": "Coelho", "pigeon": "Pombo", "cat": "Gato", "monkey": "Macaco" }
+}

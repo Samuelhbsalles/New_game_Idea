@@ -1,0 +1,10 @@
+{
+  "panel": "#F4E9D3",
+  "panelShade": "#E3D3B5",
+  "ink": "#3B2A3F",
+  "disabled": "#B9AE9C",
+  "heart": "#E07A3C",
+  "sleep": "#A28FCF",
+  "fontFamily": "monospace",
+  "fontSize": 12
+}

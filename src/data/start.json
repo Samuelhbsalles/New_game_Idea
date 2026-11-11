@@ -1,0 +1,5 @@
+{
+  "coins": 50,
+  "inventory": { "bait": 3, "food": 3 },
+  "creatures": ["rabbit"]
+}

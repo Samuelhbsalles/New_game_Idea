@@ -1,0 +1,5 @@
+[
+  { "id": "bread", "name": "Bread", "price": 5 },
+  { "id": "bait", "name": "Bait", "price": 10 },
+  { "id": "food", "name": "Food", "price": 8, "energyRestore": 30 }
+]

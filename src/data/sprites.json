@@ -1,0 +1,12 @@
+{
+  "player": { "name": "player", "folder": "characters/player", "walkFrames": 4, "extras": [] },
+  "rabbit": {
+    "name": "rabbit",
+    "folder": "creatures/rabbit",
+    "walkFrames": 4,
+    "extras": [
+      { "action": "eat", "frames": 7, "fps": 8, "repeat": -1 },
+      { "action": "sleep", "frames": 10, "fps": 5, "repeat": -1 }
+    ]
+  }
+}

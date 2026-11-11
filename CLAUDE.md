@@ -5,11 +5,11 @@ Each agent owns a specific domain, enforcing separation of concerns and quality.
 
 ## Technology Stack
 
-- **Engine**: [CHOOSE: Godot 4 / Unity / Unreal Engine 5]
-- **Language**: [CHOOSE: GDScript / C# / C++ / Blueprint]
+- **Engine**: Phaser 3.90.0 (browser, custom web stack — outside the studio's Godot/Unity/Unreal support)
+- **Language**: TypeScript 5.9
 - **Version Control**: Git with trunk-based development
-- **Build System**: [SPECIFY after choosing engine]
-- **Asset Pipeline**: [SPECIFY after choosing engine]
+- **Build System**: Vite 8 (npm scripts)
+- **Asset Pipeline**: Static files in public/assets/, loaded by naming convention (<species>_<action>_<dir>_<frame>.png)
 
 > **Note**: Engine-specialist agents exist for Godot, Unity, and Unreal with
 > dedicated sub-specialists. Use the set matching your engine.
@@ -26,7 +26,7 @@ Each agent owns a specific domain, enforcing separation of concerns and quality.
      session. It defaults to Godot (the template's example engine); skills that
      need the pinned version read docs/engine-reference/<engine>/VERSION.md on
      demand regardless of this import. -->
-@docs/engine-reference/godot/VERSION.md
+@docs/engine-reference/phaser/VERSION.md
 
 
 ## Technical Preferences

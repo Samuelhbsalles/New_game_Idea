@@ -1,0 +1,3 @@
+[
+  { "id": "bakery", "name": "Bakery", "slots": 6, "shiftMs": 14400000, "productItemId": "bread" }
+]

@@ -25,3 +25,34 @@ framework:
 # here. `/settings --local <key>=<value>` writes there; `/settings <key>=<value>`
 # edits this file. See `.claude/docs/config-resolution.md` for the full
 # precedence order.
+
+engine:
+  # Phaser is outside this field's documented values (Godot|Unity|Unreal).
+  # Engine-specific skill branches will not match it — expected, not a bug.
+  name: "Phaser"
+  version: "3.90.0"
+  language: "TypeScript"
+  rendering: "WebGL (Canvas fallback)"
+  physics: "Arcade Physics"
+
+# No Phaser specialists exist; generic agents stand in.
+specialists:
+  code: "gameplay-programmer"
+  shader: "technical-artist"
+  ui: "ui-programmer"
+  additional: ["lead-programmer"]
+
+naming:
+  classes: PascalCase
+  variables: camelCase
+  constants: SCREAMING_SNAKE
+  signals: camelCase      # event names, e.g. 'shiftCompleted'
+  files: camelCase        # e.g. shiftTimer.ts; asset files use snake_case
+  scenes: PascalCase      # Phaser Scene classes, e.g. TownScene
+
+commands:
+  build: "npm run build"
+  test: "npx vitest run"
+  # Opens in the browser; run-and-observe has no Phaser recipe, so screenshots are manual.
+  run: "npm run dev"
+  smoke: "npx tsc --noEmit"

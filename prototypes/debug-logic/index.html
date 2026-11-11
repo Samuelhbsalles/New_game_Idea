@@ -1,0 +1,68 @@
+<!doctype html>
+<!-- PROTOTYPE - NOT FOR PRODUCTION -->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Logic Debug — Creature Game</title>
+    <style>
+      body { font: 14px/1.4 monospace; background: #f4e9d3; color: #3b2a3f; margin: 0; padding: 16px; }
+      h1 { font-size: 18px; margin: 0 0 4px; }
+      .note { opacity: .75; margin: 0 0 16px; }
+      section { background: #fff8ea; border: 2px solid #3b2a3f; border-radius: 4px; padding: 10px 12px; margin-bottom: 12px; }
+      h2 { font-size: 14px; margin: 0 0 8px; }
+      button { font: inherit; background: #f4e9d3; border: 2px solid #3b2a3f; border-radius: 4px; padding: 3px 8px; margin: 2px; cursor: pointer; }
+      button:hover { background: #f5c542; }
+      table { border-collapse: collapse; width: 100%; }
+      td, th { text-align: left; padding: 3px 6px; border-bottom: 1px solid #e3d3b5; }
+      .done { color: #2e7d32; font-weight: bold; }
+      .working { color: #3f86c6; }
+      pre { background: #3b2a3f; color: #f4e9d3; padding: 8px; overflow-x: auto; max-height: 300px; }
+      #log div { border-bottom: 1px dashed #e3d3b5; }
+    </style>
+  </head>
+  <body>
+    <h1>Logic Debug (story 001)</h1>
+    <p class="note">Throwaway page. It drives <code>src/logic/</code> directly, with no Phaser. Saves use a separate localStorage key, so the real game's save is untouched.</p>
+
+    <section>
+      <h2>Clock</h2>
+      <div>Real time: <span id="real"></span></div>
+      <div>Game time: <span id="game"></span> (<span id="offset"></span> ahead)</div>
+      <button data-ff="900000">+15 min</button>
+      <button data-ff="3600000">+1 h</button>
+      <button data-ff="14400000">+4 h</button>
+      <button id="ff-reset">Reset offset</button>
+    </section>
+
+    <section>
+      <h2>Creatures</h2>
+      <table id="creatures"></table>
+    </section>
+
+    <section>
+      <h2>Shifts</h2>
+      <table id="shifts"></table>
+    </section>
+
+    <section>
+      <h2>Save</h2>
+      <button id="save">Save</button>
+      <button id="reload">Reload page (simulate closing the game)</button>
+      <button id="corrupt">Corrupt the save + reload</button>
+      <button id="wipe">Delete save + reload</button>
+    </section>
+
+    <section>
+      <h2>Log</h2>
+      <div id="log"></div>
+    </section>
+
+    <section>
+      <h2>Raw state</h2>
+      <pre id="state"></pre>
+    </section>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
