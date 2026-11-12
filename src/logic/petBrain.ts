@@ -1,19 +1,28 @@
-/** What a pet is doing on its own. 'petted' is only ever started by the player. */
-export type PetActivity = 'idle' | 'wander' | 'eat' | 'sleep' | 'petted';
+/**
+ * What a pet is doing. 'petted' and 'follow' are only started by the player;
+ * the rest the pet may also pick by itself.
+ */
+export type PetActivity = 'idle' | 'wander' | 'eat' | 'sleep' | 'lounge' | 'askPet' | 'petted' | 'follow';
 
 /** The activities a pet may pick by itself, with their relative weights. */
-export type AutoActivity = 'idle' | 'wander' | 'eat' | 'sleep';
+export type AutoActivity = 'idle' | 'wander' | 'eat' | 'sleep' | 'lounge' | 'askPet';
+
+/** Activities with a duration range in the tuning ('follow' lasts until stopped). */
+export type TimedActivity = Exclude<PetActivity, 'follow'>;
+
+export const AUTO_ACTIVITIES: AutoActivity[] = ['idle', 'wander', 'eat', 'sleep', 'lounge', 'askPet'];
+export const TIMED_ACTIVITIES: TimedActivity[] = ['idle', 'wander', 'eat', 'sleep', 'lounge', 'askPet', 'petted'];
 
 /** Inclusive millisecond range. */
 export type MsRange = [number, number];
 
 /** Pet behaviour tuning, loaded from the room JSON. */
 export interface PetTuning {
-  durations: Record<PetActivity, MsRange>;
+  durations: Record<TimedActivity, MsRange>;
   weights: Record<AutoActivity, number>;
 }
 
-/** A decided activity and how long it lasts once the pet arrives (for eat/sleep) or starts. */
+/** A decided activity and how long it lasts once started (Infinity for 'follow'). */
 export interface PetPlan {
   activity: PetActivity;
   durationMs: number;
@@ -22,8 +31,6 @@ export interface PetPlan {
 /** Random source returning [0, 1). Injected so tests are deterministic. */
 export type Rng = () => number;
 
-const AUTO: AutoActivity[] = ['idle', 'wander', 'eat', 'sleep'];
-
 /** Duration inside a range, picked by one rng draw. */
 export function pickDuration(range: MsRange, rng: Rng): number {
   const [min, max] = range;
@@ -31,12 +38,18 @@ export function pickDuration(range: MsRange, rng: Rng): number {
 }
 
 /**
- * Picks the pet's next self-chosen activity by weight. Never repeats `previous`
- * when another activity has weight, so the pet doesn't stand still twice in a row.
- * @example nextActivity(tuning, Math.random, 'idle') // { activity: 'wander', durationMs: 2400 }
+ * Picks the pet's next self-chosen activity by weight.
+ * - Skips activities `isAllowed` rejects (e.g. 'eat' with an empty bowl, 'lounge' with no sofa).
+ * - Never repeats `previous` when another activity is possible, so it keeps changing what it does.
+ * @example nextActivity(tuning, Math.random, 'idle', (a) => a !== 'eat')
  */
-export function nextActivity(tuning: PetTuning, rng: Rng, previous?: PetActivity): PetPlan {
-  let pool = AUTO.filter((a) => tuning.weights[a] > 0);
+export function nextActivity(
+  tuning: PetTuning,
+  rng: Rng,
+  previous?: PetActivity,
+  isAllowed: (a: AutoActivity) => boolean = () => true,
+): PetPlan {
+  let pool = AUTO_ACTIVITIES.filter((a) => tuning.weights[a] > 0 && isAllowed(a));
   const withoutPrev = pool.filter((a) => a !== previous);
   if (withoutPrev.length > 0) pool = withoutPrev;
   if (pool.length === 0) return { activity: 'idle', durationMs: pickDuration(tuning.durations.idle, rng) };
@@ -54,8 +67,26 @@ export function nextActivity(tuning: PetTuning, rng: Rng, previous?: PetActivity
 }
 
 /** The plan started when the player picks an action from the pet menu. */
-export function playerPlan(tuning: PetTuning, activity: 'petted' | 'eat' | 'sleep', rng: Rng): PetPlan {
+export function playerPlan(tuning: PetTuning, activity: 'petted' | 'eat' | 'sleep' | 'follow', rng: Rng): PetPlan {
+  if (activity === 'follow') return { activity, durationMs: Infinity };
   return { activity, durationMs: pickDuration(tuning.durations[activity], rng) };
+}
+
+/**
+ * Where a following pet should walk: toward the leader, stopping `distance` px
+ * short. Returns null when already close enough (the pet should stand still).
+ */
+export function followTarget(
+  pet: { x: number; y: number },
+  leader: { x: number; y: number },
+  distance: number,
+): { x: number; y: number } | null {
+  const dx = leader.x - pet.x;
+  const dy = leader.y - pet.y;
+  const d = Math.hypot(dx, dy);
+  if (d <= distance) return null;
+  const k = (d - distance) / d;
+  return { x: pet.x + dx * k, y: pet.y + dy * k };
 }
 
 /**

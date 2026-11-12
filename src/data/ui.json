@@ -5,6 +5,10 @@
   "disabled": "#B9AE9C",
   "heart": "#E07A3C",
   "sleep": "#A28FCF",
-  "fontFamily": "monospace",
+  "fontFamily": "'Pixelify Sans', monospace",
+  "highlight": "#E8C98F",
+  "help": "#9A8770",
+  "panelSlice": 12,
+  "panelPad": 13,
   "fontSize": 12
 }

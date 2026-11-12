@@ -80,6 +80,7 @@ export function deserialize(data: string | null): GameState | null {
       isNum(s.endsAt),
   );
   if (!creaturesOk || !shiftsOk) return null;
+  if (raw.bowl !== undefined && !(isNum(raw.bowl) && raw.bowl >= 0)) return null;
   return raw as unknown as GameState;
 }
 

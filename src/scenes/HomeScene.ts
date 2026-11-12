@@ -1,44 +1,35 @@
 import Phaser from 'phaser';
-import creaturesJson from '../data/creatures.json';
+import furnitureJson from '../data/furniture.json';
 import homeJson from '../data/home.json';
-import itemsJson from '../data/items.json';
-import shopsJson from '../data/shops.json';
 import spritesJson from '../data/sprites.json';
-import startJson from '../data/start.json';
-import strings from '../data/strings.pt-BR.json';
 import ui from '../data/ui.json';
-import { systemClock } from '../logic/clock';
-import { parseConfig } from '../logic/config';
-import { Game } from '../logic/game';
-import { LocalStorageAdapter } from '../logic/localStorageAdapter';
-import { MemoryStorage } from '../logic/memoryStorage';
-import { buildFloorGrid, buildTileFrames, floorFrame, parseRoom, type RoomDef } from '../logic/room';
-import type { Storage } from '../logic/storage';
+import type { Game } from '../logic/game';
+import { buildFloorGrid, exitAt, findUseSpot, parseCatalog, parseRoom, solidRects, wallRects, type ExitDef, type Placed, type RoomDef } from '../logic/room';
+import { openOverlay } from './overlay';
 import { PetController } from './PetController';
+import { services } from './services';
 import { createCharacterAnims, facingFor, loadCharacter, showMotion, type CharacterArt, type Dir } from './sprites';
+import { Keys } from './ui/input';
+import { MenuPanel, textStyle, type MenuItem } from './ui/MenuPanel';
 
-const SAVE_KEY = 'creatureGame.save';
 const art = spritesJson as Record<string, CharacterArt>;
 
-/** Fills {placeholders} in a UI string. */
-function fmt(s: string, vars: Record<string, string | number>): string {
-  return s.replace(/\{(\w+)\}/g, (_, k: string) => String(vars[k] ?? `{${k}}`));
-}
+/** Scene opened by each exit's `to` in home.json. */
+const EXIT_SCENES: Record<string, string> = { town: 'TownScene' };
 
-function browserStorage(): Storage {
-  try {
-    return new LocalStorageAdapter(SAVE_KEY, window.localStorage);
-  } catch {
-    return new MemoryStorage();
-  }
+/** Something the player can walk up to and press E on. */
+interface Interactable {
+  x: number;
+  y: number;
+  open: () => void;
 }
-
-type MenuAction = 'pet' | 'feed' | 'sleep' | 'info' | 'close';
 
 /**
- * The player's home: Wang-tiled floor and walls, furniture, the player walking
- * with the arrow keys, and the pet NPC living its own life. Walk up to the pet
- * and press E/Space for its menu. Layout: src/data/home.json.
+ * The player's home: a painted room picture (PixelLab create_room) with
+ * invisible wall bodies from home.json's walkable rects, furniture from the catalog,
+ * the player walking with the arrow keys, and the pet NPC living its own life.
+ * E near the pet or the bowl opens its menu; Esc opens the pause menu.
+ * Layout: src/data/home.json; furniture: src/data/furniture.json.
  */
 export class HomeScene extends Phaser.Scene {
   private room!: RoomDef;
@@ -46,118 +37,163 @@ export class HomeScene extends Phaser.Scene {
   private world!: Game;
   private player!: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
   private pet!: PetController;
-  private keys!: {
-    cursors: Phaser.Types.Input.Keyboard.CursorKeys;
-    e: Phaser.Input.Keyboard.Key;
-    esc: Phaser.Input.Keyboard.Key;
-  };
+  private keys!: Keys;
   private facing: Dir = 'down';
   private hint!: Phaser.GameObjects.Container;
-  private panel: Phaser.GameObjects.Container | null = null;
-  private menuItems: { action: MenuAction; label: string; enabled: boolean }[] = [];
-  private menuIndex = 0;
-  private menuTexts: Phaser.GameObjects.Text[] = [];
+  private panel: MenuPanel | null = null;
+  private bowl: Placed | null = null;
+  private bowlLabel: Phaser.GameObjects.Text | null = null;
+
+  /** Set while fading out to another scene, so nothing else runs. */
+  private leaving = false;
+  /** Where the player appears: the spawn, or the door when coming back from the map. */
+  private arrivedFrom: string | null = null;
 
   constructor() {
     super('HomeScene');
   }
 
+  /** True when the pet was following outside and walks back in with the player. */
+  private petCameAlong = false;
+
+  init(data: { from?: string; petFollowing?: boolean }): void {
+    this.arrivedFrom = data?.from ?? null;
+    this.petCameAlong = data?.petFollowing === true;
+    this.leaving = false;
+  }
+
   preload(): void {
-    this.room = parseRoom(homeJson);
-    const { tileSize, tileset, furniture } = this.room;
-    this.load.spritesheet(tileset, `assets/home/${tileset}.png`, { frameWidth: tileSize, frameHeight: tileSize });
-    for (const f of furniture) this.load.image(f.key, `assets/home/${f.key}.png`);
+    this.room = parseRoom(homeJson, parseCatalog(furnitureJson));
+    const { background, furniture } = this.room;
+    this.load.image(background, `assets/home/${background}.png`);
+    for (const f of furniture) this.load.image(f.sprite, `assets/home/${f.sprite}.png`);
     loadCharacter(this, art[this.room.player.character]);
-    loadCharacter(this, art[this.petSpecies()]);
+    // Species art is chosen in create() once the save is known; preload every species we have art for.
+    for (const [key, a] of Object.entries(art)) if (key !== this.room.player.character) loadCharacter(this, a);
   }
 
   create(): void {
-    const { tileSize, tileset, furniture, player: p, pet: petDef } = this.room;
+    const svc = services(this);
+    const t = (k: string, v?: Record<string, string | number>) => services(this).i18n.t(k, v);
+    const { background, width, height, gridSize, furniture, player: p, pet: petDef } = this.room;
+    this.world = svc.loadGame();
+    this.cameras.main.setBackgroundColor(ui.ink);
 
-    // Floor and walls.
-    const map = this.make.tilemap({ data: buildTileFrames(this.room), tileWidth: tileSize, tileHeight: tileSize });
-    const tiles = map.addTilesetImage(tileset, tileset, tileSize, tileSize, 0, 0);
-    if (!tiles) throw new Error(`Tileset "${tileset}" failed to load`);
-    const layer = map.createLayer(0, tiles, 0, 0);
-    if (!layer) throw new Error('Tile layer failed to create');
-    layer.setCollisionByExclusion([floorFrame(this.room)]);
-    layer.setDepth(-1000);
+    // The painted room; walls are invisible static bodies; the camera centres the (small) room.
+    this.add.image(0, 0, background).setOrigin(0, 0).setDepth(-1000);
+    const walls = this.physics.add.staticGroup();
+    for (const r of wallRects(this.room)) {
+      const w = this.add.zone(r.x + r.w / 2, r.y + r.h / 2, r.w, r.h);
+      walls.add(w);
+    }
+    this.physics.world.setBounds(0, 0, width, height);
+    this.cameras.main.centerOn(width / 2, height / 2);
+    this.cameras.main.fadeIn(300, 0, 0, 0);
 
     // Furniture: solid pieces block with their lower half and depth-sort by their bottom edge.
     const solids = this.physics.add.staticGroup();
-    const blocked: { x: number; y: number; w: number; h: number }[] = [];
     for (const f of furniture) {
       if (f.solid) {
-        const s = solids.create(f.x, f.y, f.key) as Phaser.Physics.Arcade.Sprite;
-        s.setDepth(f.y + s.height / 2);
-        const body = s.body as Phaser.Physics.Arcade.StaticBody;
-        body.setSize(s.width, s.height / 2).setOffset(0, s.height / 2);
-        blocked.push({ x: f.x - s.width / 2, y: f.y - s.height / 2, w: s.width, h: s.height });
+        const s = solids.create(f.x, f.y, f.sprite) as Phaser.Physics.Arcade.Sprite;
+        s.setDepth(f.y + f.h / 2);
+        (s.body as Phaser.Physics.Arcade.StaticBody).setSize(f.w, f.h / 2).setOffset(0, f.h / 2);
       } else {
-        this.add.image(f.x, f.y, f.key).setDepth(-500);
+        this.add.image(f.x, f.y, f.sprite).setDepth(-500);
       }
     }
-
-    // Game state (save in localStorage).
-    const config = parseConfig({ species: creaturesJson, shops: shopsJson, items: itemsJson, start: startJson });
-    this.world = Game.load(config, systemClock, browserStorage());
+    this.bowl = furniture.find((f) => f.use?.kind === 'eat') ?? null;
+    if (this.bowl) {
+      this.bowlLabel = this.add
+        .text(this.bowl.x, this.bowl.y + this.bowl.h / 2 - 2, '', { ...textStyle(true, 9), color: ui.panel, backgroundColor: ui.ink, padding: { x: 2, y: 0 } })
+        .setOrigin(0.5, 0)
+        .setDepth(-400);
+      this.refreshBowl();
+    }
 
     // Player.
     const playerArt = art[p.character];
     createCharacterAnims(this, playerArt, p.walkFps);
-    this.player = this.physics.add.sprite(p.x, p.y, `${playerArt.name}_idle_down`);
+    const door = this.room.exits.find((e) => e.to === this.arrivedFrom);
+    const spawn = door ? door.arrive : p;
+    this.facing = door ? 'up' : 'down';
+    this.player = this.physics.add.sprite(spawn.x, spawn.y, `${playerArt.name}_idle_${this.facing}`);
     this.player.body.setSize(16, 10).setOffset(16, 34);
-    this.physics.add.collider(this.player, layer);
+    this.player.setCollideWorldBounds(true);
+    this.physics.add.collider(this.player, walls);
     this.physics.add.collider(this.player, solids);
 
     // Pet.
     const petArt = art[this.petSpecies()];
     createCharacterAnims(this, petArt, petDef.walkFps);
-    this.pet = new PetController(this, petDef, petArt.name, buildFloorGrid(this.room), tileSize, blocked, Math.random, ui.sleep);
-    this.physics.add.collider(this.pet.sprite, layer);
+    this.pet = new PetController(this, petDef, petArt.name, buildFloorGrid(this.room), gridSize, solidRects(this.room), Math.random, {
+      spot: (kind) => findUseSpot(this.room, kind),
+      bowlHasFood: () => (this.world.state.bowl ?? 0) > 0,
+      eatFromBowl: () => {
+        const r = this.world.eatFromBowl(petDef.creatureId, petDef.foodItemId);
+        if (r) {
+          this.world.save();
+          this.refreshBowl();
+        }
+        return r !== null;
+      },
+      playerPos: () => ({ x: this.player.x, y: this.player.y }),
+      say: (msg) => this.floatText(msg, this.pet.sprite.x, this.pet.sprite.y - 30),
+      sleepColor: ui.sleep,
+      heartColor: ui.heart,
+    });
+    this.pet.sprite.setCollideWorldBounds(true);
+    if (this.petCameAlong) {
+      this.pet.sprite.body.reset(spawn.x - 18, spawn.y + 4);
+      this.pet.command('follow');
+    }
+    this.physics.add.collider(this.pet.sprite, walls);
     this.physics.add.collider(this.pet.sprite, solids);
 
-    // Interaction hint bubble.
-    const bubble = this.add.rectangle(0, 0, 14, 14, Phaser.Display.Color.HexStringToColor(ui.panel).color).setStrokeStyle(1, this.ink());
-    const letter = this.add.text(0, 0, strings.interactHint, this.textStyle()).setOrigin(0.5);
-    this.hint = this.add.container(0, 0, [bubble, letter]).setDepth(20_000).setVisible(false);
+    // "Press E" bubble over whatever is in reach.
+    const bubble = this.add.rectangle(0, 0, 14, 14, Phaser.Display.Color.HexStringToColor(ui.panel).color).setStrokeStyle(1, Phaser.Display.Color.HexStringToColor(ui.ink).color);
+    const letter = this.add.text(0, 0, t('pet.hint'), textStyle(true)).setOrigin(0.5);
+    this.hint = this.add.container(0, 0, [bubble, letter]).setDepth(45_000).setVisible(false);
     this.tweens.add({ targets: this.hint, scale: 1.15, yoyo: true, repeat: -1, duration: 450 });
 
-    const kb = this.input.keyboard;
-    if (!kb) throw new Error('Keyboard input unavailable');
-    this.keys = {
-      cursors: kb.createCursorKeys(),
-      e: kb.addKey(Phaser.Input.Keyboard.KeyCodes.E),
-      esc: kb.addKey(Phaser.Input.Keyboard.KeyCodes.ESC),
+    this.keys = new Keys(this);
+    // Coming back from an overlay: drop the key press that closed it.
+    const onResume = () => {
+      this.keys.read();
+      this.openPause();
     };
+    this.events.on(Phaser.Scenes.Events.RESUME, onResume);
+    // Scene events outlive a restart (Title -> Home again), so unhook on shutdown.
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.events.off(Phaser.Scenes.Events.RESUME, onResume));
   }
 
   update(_t: number, dt: number): void {
+    if (this.leaving) return;
     this.pet.update(dt);
-    const confirm = Phaser.Input.Keyboard.JustDown(this.keys.e) || Phaser.Input.Keyboard.JustDown(this.keys.cursors.space);
-    const cancel = Phaser.Input.Keyboard.JustDown(this.keys.esc);
+    const input = this.keys.read();
 
     if (this.panel) {
       this.player.setVelocity(0, 0);
       showMotion(this.player, art[this.room.player.character].name, this.facing, false);
-      this.updatePanel(confirm, cancel);
+      if (this.panel.handle(input) === 'cancel') this.closePanel();
       return;
     }
 
     this.movePlayer();
-    const near = this.nearPet();
-    this.hint.setVisible(near);
-    if (near) this.hint.setPosition(this.pet.sprite.x, this.pet.sprite.y - 30);
-    if (near && confirm) this.openMenu();
+    if (input.cancel) return this.openPause();
+    // Only a player walking down into the doorway leaves (never a stray first-frame overlap).
+    const exit = this.player.body.velocity.y > 0 ? exitAt(this.room, { x: this.player.x, y: this.player.body.bottom }) : null;
+    if (exit) return this.leave(exit);
+    const target = this.nearest();
+    this.hint.setVisible(target !== null);
+    if (target) this.hint.setPosition(target.x, target.y - 30);
+    if (target && input.confirm) target.open();
   }
 
-  // ---- player ---------------------------------------------------------------
+  // ---- player -------------------------------------------------------------------
 
   private movePlayer(): void {
     const { speed, character } = this.room.player;
-    const c = this.keys.cursors;
-    let vx = (c.right.isDown ? 1 : 0) - (c.left.isDown ? 1 : 0);
-    let vy = (c.down.isDown ? 1 : 0) - (c.up.isDown ? 1 : 0);
+    let { x: vx, y: vy } = this.keys.axis();
     if (vx !== 0 && vy !== 0) {
       vx *= Math.SQRT1_2;
       vy *= Math.SQRT1_2;
@@ -168,170 +204,213 @@ export class HomeScene extends Phaser.Scene {
     this.player.setDepth(this.player.y + this.player.height / 2);
   }
 
-  private nearPet(): boolean {
-    const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.pet.sprite.x, this.pet.sprite.y);
-    return d <= this.room.player.interactRange;
+  /** Walked into a doorway: save, fade out and open the exit's scene (the town); a following pet comes too. */
+  private leave(exit: ExitDef): void {
+    if (this.leaving) return;
+    this.leaving = true;
+    this.player.setVelocity(0, 0);
+    this.world.save();
+    const petFollowing = this.pet.following;
+    this.cameras.main.fadeOut(250, 0, 0, 0);
+    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () =>
+      this.scene.start(EXIT_SCENES[exit.to] ?? exit.to, { from: 'home', place: 'home', petFollowing }),
+    );
   }
 
-  // ---- menu & info panel ---------------------------------------------------
+  /** The closest interactable in reach, or null. */
+  private nearest(): Interactable | null {
+    const list: Interactable[] = [{ x: this.pet.sprite.x, y: this.pet.sprite.y, open: () => this.openPetMenu() }];
+    if (this.bowl) list.push({ x: this.bowl.x, y: this.bowl.y, open: () => this.openBowlMenu() });
+    let best: Interactable | null = null;
+    let bestD = this.room.player.interactRange;
+    for (const it of list) {
+      const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, it.x, it.y);
+      if (d <= bestD) {
+        best = it;
+        bestD = d;
+      }
+    }
+    return best;
+  }
+
+  // ---- menus ------------------------------------------------------------------------
+
+  private t(k: string, v?: Record<string, string | number>): string {
+    return services(this).i18n.t(k, v);
+  }
 
   private petSpecies(): string {
     const id = this.room.pet.creatureId;
-    // Before the Game exists (preload), fall back to the start config's first species.
-    const c = this.world?.state.creatures.find((x) => x.id === id);
-    return c?.speciesId ?? startJson.creatures[0];
+    return this.world.state.creatures.find((x) => x.id === id)?.speciesId ?? this.world.state.creatures[0].speciesId;
   }
 
   private petName(): string {
-    const s = this.petSpecies();
-    return (strings.species as Record<string, string>)[s] ?? s;
+    return this.t(`species.${this.petSpecies()}`);
   }
 
-  private openMenu(): void {
+  private openPanel(build: () => MenuPanel, pausePet: boolean): void {
     this.hint.setVisible(false);
+    this.panel?.destroy();
+    if (pausePet) this.pet.setPaused(true);
+    this.panel = build();
+  }
+
+  private closePanel(): void {
+    this.panel?.destroy();
+    this.panel = null;
+    this.pet.setPaused(false);
+  }
+
+  private openPetMenu(): void {
     this.pet.setPaused(true);
     this.pet.faceTowards(this.player.x, this.player.y);
-    const food = this.world.state.inventory[this.room.pet.foodItemId] ?? 0;
-    this.menuItems = [
-      { action: 'pet', label: strings.menuPet, enabled: true },
-      { action: 'feed', label: fmt(strings.menuFeed, { count: food }), enabled: true },
-      { action: 'sleep', label: strings.menuSleep, enabled: true },
-      { action: 'info', label: strings.menuInfo, enabled: true },
-      { action: 'close', label: strings.menuClose, enabled: true },
+    const def = this.room.pet;
+    const food = () => this.world.state.inventory[def.foodItemId] ?? 0;
+    const items: MenuItem[] = [
+      { label: () => this.t('pet.pet'), onSelect: () => this.doPet() },
+      { label: () => this.t('pet.feed', { count: food() }), onSelect: () => this.doFeed() },
+      {
+        label: () => this.t(this.pet.following ? 'pet.stay' : 'pet.follow'),
+        onSelect: () => {
+          const follow = !this.pet.following;
+          this.closePanel();
+          this.pet.command(follow ? 'follow' : 'stay');
+          this.floatText(this.t(follow ? 'pet.following' : 'pet.staying'), this.pet.sprite.x, this.pet.sprite.y - 30);
+        },
+      },
+      { label: () => this.t('pet.sleep'), onSelect: () => this.doSleep() },
+      { label: () => this.t('pet.info'), onSelect: () => this.openPetInfo() },
+      { label: () => this.t('pet.close'), onSelect: () => this.closePanel() },
     ];
-    this.menuIndex = 0;
-    const lines = [fmt(strings.menuTitle, { name: this.petName() }), ...this.menuItems.map((m) => m.label)];
-    this.buildPanel(lines, strings.menuHelp, true);
+    this.openPanel(
+      () => new MenuPanel(this, { title: this.t('pet.menuTitle', { name: this.petName() }), items, help: this.t('pet.help'), anchor: this.above(this.pet.sprite) }),
+      true,
+    );
   }
 
-  private openInfo(): void {
+  private openPetInfo(): void {
     const c = this.world.creature(this.room.pet.creatureId);
     const max = this.world.speciesOf(c).maxEnergy;
     const lines = [
-      strings.infoTitle,
-      fmt(strings.infoSpecies, { species: this.petName() }),
-      fmt(strings.infoEnergy, { energy: Math.round(c.energy), max }),
-      fmt(strings.infoStatus, { status: (strings.status as Record<string, string>)[c.status] ?? c.status }),
-      fmt(strings.infoActivity, { activity: (strings.activity as Record<string, string>)[this.pet.activity] }),
+      this.t('pet.infoSpecies', { species: this.petName() }),
+      this.t('pet.infoEnergy', { energy: Math.round(c.energy), max }),
+      this.t('pet.infoStatus', { status: this.t(`status.${c.status}`) }),
+      this.t('pet.infoActivity', { activity: this.t(`activity.${this.pet.activity}`) }),
     ];
-    this.menuItems = [];
-    this.buildPanel(lines, `E / Esc`, false);
-  }
-
-  private buildPanel(lines: string[], help: string, selectable: boolean): void {
-    this.closePanel(false);
-    const pad = 8;
-    const lineH = ui.fontSize + 6;
-    const texts = lines.map((l, i) =>
-      this.add.text(pad + (selectable && i > 0 ? 12 : 0), pad + i * lineH, l, this.textStyle(i === 0)),
+    this.openPanel(
+      () => new MenuPanel(this, { title: this.t('pet.infoTitle'), lines, help: this.t('pet.infoClose'), anchor: this.above(this.pet.sprite) }),
+      true,
     );
-    const helpText = this.add.text(pad, pad + lines.length * lineH + 2, help, { ...this.textStyle(), fontSize: `${ui.fontSize - 3}px`, color: ui.disabled });
-    const w = Math.max(...texts.map((t) => t.x + t.width), helpText.width + pad) + pad;
-    const h = helpText.y + helpText.height + pad;
-    const bg = this.add
-      .rectangle(0, 0, w, h, Phaser.Display.Color.HexStringToColor(ui.panel).color)
-      .setOrigin(0)
-      .setStrokeStyle(2, this.ink());
-    const x = Phaser.Math.Clamp(this.pet.sprite.x - w / 2, 4, this.scale.width - w - 4);
-    const y = Phaser.Math.Clamp(this.pet.sprite.y - h - 30, 4, this.scale.height - h - 4);
-    this.panel = this.add.container(x, y, [bg, ...texts, helpText]).setDepth(30_000);
-    this.menuTexts = selectable ? texts.slice(1) : [];
-    this.highlightMenu();
   }
 
-  private highlightMenu(): void {
-    this.menuTexts.forEach((t, i) => {
-      const label = this.menuItems[i].label;
-      t.setText(i === this.menuIndex ? `▸ ${label}` : `  ${label}`);
-      t.setX(8);
+  private openBowlMenu(): void {
+    const bowl = this.bowl;
+    if (!bowl) return;
+    const cap = bowl.use?.capacity ?? 1;
+    const def = this.room.pet;
+    const items: MenuItem[] = [
+      {
+        label: () => this.t('bowl.fill', { count: this.world.state.inventory[def.foodItemId] ?? 0 }),
+        onSelect: () => {
+          const r = this.world.fillBowl(def.foodItemId, cap);
+          this.closePanel();
+          if (r.ok) {
+            this.world.save();
+            this.refreshBowl();
+            this.floatText(this.t('bowl.filled', { bowl: r.bowl, cap }), bowl.x, bowl.y - 24);
+          } else {
+            this.floatText(this.t(r.reason === 'full' ? 'bowl.full' : 'bowl.noItem'), bowl.x, bowl.y - 24);
+          }
+        },
+      },
+      { label: () => this.t('bowl.close'), onSelect: () => this.closePanel() },
+    ];
+    this.openPanel(
+      () =>
+        new MenuPanel(this, {
+          title: this.t('bowl.menuTitle', { bowl: this.world.state.bowl ?? 0, cap }),
+          items,
+          help: this.t('pet.help'),
+          anchor: this.above(bowl),
+        }),
+      false,
+    );
+  }
+
+  private openPause(): void {
+    const items: MenuItem[] = [
+      { label: () => this.t('pause.resume'), onSelect: () => this.closePanel() },
+      {
+        label: () => this.t('pause.options'),
+        onSelect: () => {
+          this.closePanel();
+          openOverlay(this, 'OptionsScene');
+        },
+      },
+      {
+        label: () => this.t('pause.toMenu'),
+        onSelect: () => {
+          this.world.save();
+          this.scene.start('TitleScene');
+        },
+      },
+    ];
+    this.openPanel(() => new MenuPanel(this, { title: this.t('pause.title'), items, help: this.t('pause.help'), anchor: { kind: 'center' }, minWidth: 140 }), true);
+  }
+
+  // ---- pet actions ------------------------------------------------------------------
+
+  private doPet(): void {
+    const wasAsking = this.pet.asking;
+    this.closePanel();
+    this.pet.command('petted');
+    if (wasAsking) {
+      this.pet.hearts(6);
+      this.floatText(this.t('pet.happy'), this.pet.sprite.x, this.pet.sprite.y - 34);
+    }
+  }
+
+  private doFeed(): void {
+    const r = this.world.feed(this.room.pet.creatureId, this.room.pet.foodItemId);
+    this.closePanel();
+    if (r.ok) {
+      this.world.save();
+      this.pet.command('eat');
+      this.floatText(this.t('pet.feedOk', { energy: Math.round(r.energy) }), this.pet.sprite.x, this.pet.sprite.y - 30);
+    } else {
+      this.floatText(this.t('pet.feedNoItem'), this.pet.sprite.x, this.pet.sprite.y - 30);
+    }
+  }
+
+  private doSleep(): void {
+    const id = this.room.pet.creatureId;
+    this.world.rest(id);
+    this.world.save();
+    this.closePanel();
+    this.pet.command('sleep', () => {
+      // Waking up frees the creature again; energy recovery over time is Story 004.
+      this.world.creature(id).status = 'idle';
+      this.world.save();
     });
   }
 
-  private updatePanel(confirm: boolean, cancel: boolean): void {
-    if (this.menuTexts.length === 0) {
-      // Info panel: any confirm/cancel closes it.
-      if (confirm || cancel) this.closePanel(true);
-      return;
-    }
-    const c = this.keys.cursors;
-    if (Phaser.Input.Keyboard.JustDown(c.down)) this.menuIndex = (this.menuIndex + 1) % this.menuItems.length;
-    if (Phaser.Input.Keyboard.JustDown(c.up)) this.menuIndex = (this.menuIndex + this.menuItems.length - 1) % this.menuItems.length;
-    this.highlightMenu();
-    if (cancel) return this.closePanel(true);
-    if (confirm) this.runAction(this.menuItems[this.menuIndex].action);
+  // ---- little effects -----------------------------------------------------------------
+
+  private above(o: { x: number; y: number }): { kind: 'above'; x: number; y: number } {
+    return { kind: 'above', x: o.x, y: o.y - 26 };
   }
 
-  private closePanel(resumePet: boolean): void {
-    this.panel?.destroy();
-    this.panel = null;
-    this.menuTexts = [];
-    if (resumePet) this.pet.setPaused(false);
+  private refreshBowl(): void {
+    if (!this.bowl || !this.bowlLabel) return;
+    const n = this.world.state.bowl ?? 0;
+    this.bowlLabel.setText(`${n}/${this.bowl.use?.capacity ?? 1}`);
   }
 
-  private runAction(action: MenuAction): void {
-    const id = this.room.pet.creatureId;
-    switch (action) {
-      case 'pet':
-        this.closePanel(true);
-        this.pet.command('petted');
-        this.hearts();
-        break;
-      case 'feed': {
-        const r = this.world.feed(id, this.room.pet.foodItemId);
-        this.closePanel(true);
-        if (r.ok) {
-          this.world.save();
-          this.pet.command('eat');
-          this.floatText(fmt(strings.feedOk, { energy: Math.round(r.energy) }), ui.ink);
-        } else {
-          this.floatText(strings.feedNoItem, ui.ink);
-        }
-        break;
-      }
-      case 'sleep':
-        this.world.rest(id);
-        this.world.save();
-        this.closePanel(true);
-        this.pet.command('sleep', () => {
-          // Waking up frees the creature again; energy recovery over time is Story 004.
-          this.world.creature(id).status = 'idle';
-          this.world.save();
-        });
-        break;
-      case 'info':
-        this.openInfo();
-        break;
-      case 'close':
-        this.closePanel(true);
-        break;
-    }
-  }
-
-  // ---- little effects --------------------------------------------------------
-
-  private hearts(): void {
-    for (let i = 0; i < 3; i++) {
-      const h = this.add
-        .text(this.pet.sprite.x + (i - 1) * 8, this.pet.sprite.y - 18, '♥', { fontFamily: ui.fontFamily, fontSize: '12px', color: ui.heart })
-        .setOrigin(0.5)
-        .setDepth(25_000);
-      this.tweens.add({ targets: h, y: h.y - 22, alpha: 0, delay: i * 180, duration: 900, onComplete: () => h.destroy() });
-    }
-  }
-
-  private floatText(msg: string, color: string): void {
+  private floatText(msg: string, x: number, y: number): void {
     const t = this.add
-      .text(this.pet.sprite.x, this.pet.sprite.y - 30, msg, { ...this.textStyle(), color, backgroundColor: ui.panel, padding: { x: 3, y: 1 } })
+      .text(x, y, msg, { ...textStyle(), backgroundColor: ui.panel, padding: { x: 3, y: 1 } })
       .setOrigin(0.5)
-      .setDepth(25_000);
-    this.tweens.add({ targets: t, y: t.y - 16, alpha: 0, delay: 700, duration: 900, onComplete: () => t.destroy() });
-  }
-
-  private textStyle(bold = false): Phaser.Types.GameObjects.Text.TextStyle {
-    return { fontFamily: ui.fontFamily, fontSize: `${ui.fontSize}px`, color: ui.ink, fontStyle: bold ? 'bold' : 'normal' };
-  }
-
-  private ink(): number {
-    return Phaser.Display.Color.HexStringToColor(ui.ink).color;
+      .setDepth(48_000);
+    this.tweens.add({ targets: t, y: y - 16, alpha: 0, delay: 900, duration: 900, onComplete: () => t.destroy() });
   }
 }

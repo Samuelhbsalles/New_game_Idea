@@ -71,4 +71,6 @@ export interface GameState {
   inventory: Record<string, number>;
   creatures: Creature[];
   shifts: Shift[];
+  /** Food portions waiting in the home bowl. Optional so older saves still load (missing = 0). */
+  bowl?: number;
 }

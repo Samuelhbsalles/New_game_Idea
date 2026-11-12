@@ -81,6 +81,35 @@ export class Game {
   }
 
   /**
+   * Moves one `itemId` from the inventory into the home bowl, up to `capacity`
+   * portions. Returns a reason when the player can't (no item, not food, bowl full).
+   */
+  fillBowl(itemId: string, capacity: number): { ok: true; bowl: number } | { ok: false; reason: 'no_item' | 'not_food' | 'full' } {
+    const item = this.config.items.find((i) => i.id === itemId);
+    if (!item || item.energyRestore === undefined) return { ok: false, reason: 'not_food' };
+    const bowl = this.state.bowl ?? 0;
+    if (bowl >= capacity) return { ok: false, reason: 'full' };
+    if ((this.state.inventory[itemId] ?? 0) <= 0) return { ok: false, reason: 'no_item' };
+    this.state.inventory[itemId] -= 1;
+    this.state.bowl = bowl + 1;
+    return { ok: true, bowl: this.state.bowl };
+  }
+
+  /**
+   * A creature eats one portion of `itemId` from the bowl: energy rises by the
+   * item's energyRestore, capped at max. Returns null if the bowl is empty.
+   */
+  eatFromBowl(creatureId: string, itemId: string): { energy: number } | null {
+    const creature = this.creature(creatureId);
+    const item = this.config.items.find((i) => i.id === itemId);
+    if (!item || item.energyRestore === undefined || (this.state.bowl ?? 0) <= 0) return null;
+    this.state.bowl = (this.state.bowl ?? 0) - 1;
+    creature.energy = Math.min(this.speciesOf(creature).maxEnergy, creature.energy + item.energyRestore);
+    creature.energyAt = this.clock.now();
+    return { energy: creature.energy };
+  }
+
+  /**
    * Sends a creature to rest. Energy recovery over time is Story 004; this only
    * records the status. Throws on an unknown creature.
    */

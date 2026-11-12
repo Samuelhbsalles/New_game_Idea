@@ -1,0 +1,115 @@
+{
+  "title": {
+    "game": "Creature Game",
+    "tag": "working title"
+  },
+  "mainMenu": {
+    "continue": "Continue",
+    "newGame": "New game",
+    "options": "Options",
+    "credits": "Credits",
+    "help": "↑↓ choose · E/Enter confirm",
+    "confirmNew": "Delete the saved game? E = yes · Esc = no"
+  },
+  "options": {
+    "title": "Options",
+    "language": "Language: {value}",
+    "music": "Music: {value}%",
+    "sfx": "Sound effects: {value}%",
+    "back": "Back",
+    "help": "↑↓ choose · ←→ change · Esc back"
+  },
+  "credits": {
+    "title": "Credits",
+    "body": "Art: PixelLab\nMusic: coming soon\nMade with Phaser",
+    "back": "Esc back"
+  },
+  "pause": {
+    "title": "Paused",
+    "resume": "Resume",
+    "options": "Options",
+    "toMenu": "Main menu",
+    "help": "↑↓ choose · E confirm · Esc close",
+    "map": "Map"
+  },
+  "map": {
+    "title": "Starter town",
+    "help": "Arrows choose · E go there · Esc close",
+    "travel": "E to go there",
+    "soon": "(inside: coming soon)",
+    "soonLong": "{place} opens soon!"
+  },
+  "places": {
+    "home": "Home",
+    "bakery": "Bakery",
+    "cafe": "Café",
+    "market": "Market",
+    "factory": "Factory",
+    "hotel": "Hotel",
+    "construction": "Builders",
+    "clothes": "Clothes shop",
+    "petPharmacy": "Pet pharmacy",
+    "careHome": "Care home",
+    "park": "Park",
+    "harbor": "Harbor"
+  },
+  "pet": {
+    "hint": "E",
+    "menuTitle": "{name}",
+    "pet": "Pet",
+    "feed": "Feed ({count})",
+    "follow": "Follow me",
+    "stay": "Stay here",
+    "sleep": "Go to sleep",
+    "info": "View card",
+    "close": "Close",
+    "help": "↑↓ choose · E confirm · Esc close",
+    "feedNoItem": "No food!",
+    "feedOk": "Yum! Energy {energy}",
+    "following": "Coming with you!",
+    "staying": "I'll stay here!",
+    "happy": "That felt nice!",
+    "infoTitle": "Card",
+    "infoSpecies": "Species: {species}",
+    "infoEnergy": "Energy: {energy}/{max}",
+    "infoStatus": "Status: {status}",
+    "infoActivity": "Now: {activity}",
+    "infoClose": "E / Esc"
+  },
+  "bowl": {
+    "menuTitle": "Bowl ({bowl}/{cap})",
+    "fill": "Add food ({count})",
+    "close": "Close",
+    "full": "The bowl is full!",
+    "noItem": "No food!",
+    "filled": "Bowl: {bowl}/{cap}"
+  },
+  "status": {
+    "idle": "free",
+    "working": "working",
+    "resting": "resting"
+  },
+  "activity": {
+    "idle": "standing",
+    "wander": "wandering",
+    "eat": "eating",
+    "sleep": "sleeping",
+    "lounge": "lying on the sofa",
+    "askPet": "asking for pets",
+    "petted": "being petted",
+    "follow": "following you"
+  },
+  "species": {
+    "rabbit": "Rabbit",
+    "pigeon": "Pigeon",
+    "cat": "Cat",
+    "monkey": "Monkey"
+  },
+  "languages": {
+    "pt-BR": "Português",
+    "en": "English"
+  },
+  "town": {
+    "hint": "Arrows walk · M map · Esc pause"
+  }
+}

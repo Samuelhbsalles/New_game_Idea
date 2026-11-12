@@ -5,8 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Creature Game</title>
     <style>
+      @font-face {
+        font-family: 'Pixelify Sans';
+        src: url('/assets/fonts/PixelifySans.ttf') format('truetype');
+        font-weight: 400 700;
+      }
       html, body { margin: 0; height: 100%; background: #1d2b1f; }
       #game { display: flex; align-items: center; justify-content: center; height: 100%; }
+      #game canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
     </style>
   </head>
   <body>

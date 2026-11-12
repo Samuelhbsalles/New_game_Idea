@@ -1,0 +1,15 @@
+[
+  { "id": "bed", "sprite": "home_cottage_bed", "w": 63, "h": 85, "solid": true, "price": 120 },
+  { "id": "armchair", "sprite": "home_cottage_armchair", "w": 34, "h": 69, "solid": true, "price": 110,
+    "use": { "kind": "lounge", "dx": -2, "dy": -8, "approachDy": 44 } },
+  { "id": "bookshelf", "sprite": "home_cottage_bookshelf", "w": 49, "h": 54, "solid": true, "price": 90 },
+  { "id": "plant", "sprite": "home_cottage_plant", "w": 43, "h": 50, "solid": true, "price": 30 },
+  { "id": "petbed", "sprite": "home_cottage_petbed", "w": 42, "h": 36, "solid": false, "price": 50,
+    "use": { "kind": "sleep", "dx": 0, "dy": -4 } },
+  { "id": "bowl", "sprite": "home_bowl", "w": 32, "h": 32, "solid": false, "price": 20,
+    "use": { "kind": "eat", "dx": 0, "dy": -30, "capacity": 3 } },
+  { "id": "sofa", "sprite": "home_sofa", "w": 64, "h": 40, "solid": true, "price": 150,
+    "use": { "kind": "lounge", "dx": 0, "dy": -6, "approachDy": 30 } },
+  { "id": "table", "sprite": "home_table", "w": 48, "h": 48, "solid": true, "price": 60 },
+  { "id": "rug", "sprite": "home_rug", "w": 64, "h": 48, "solid": false, "price": 40 }
+]

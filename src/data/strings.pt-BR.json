@@ -1,20 +1,115 @@
 {
-  "interactHint": "E",
-  "menuTitle": "{name}",
-  "menuPet": "Fazer carinho",
-  "menuFeed": "Dar comida ({count})",
-  "menuSleep": "Mandar dormir",
-  "menuInfo": "Ver ficha",
-  "menuClose": "Fechar",
-  "menuHelp": "↑↓ escolher · E confirmar · Esc fechar",
-  "feedNoItem": "Sem comida!",
-  "feedOk": "Nham! Energia {energy}",
-  "infoTitle": "Ficha",
-  "infoSpecies": "Espécie: {species}",
-  "infoEnergy": "Energia: {energy}/{max}",
-  "infoStatus": "Status: {status}",
-  "infoActivity": "Agora: {activity}",
-  "status": { "idle": "livre", "working": "trabalhando", "resting": "descansando" },
-  "activity": { "idle": "parado", "wander": "passeando", "eat": "comendo", "sleep": "dormindo", "petted": "recebendo carinho" },
-  "species": { "rabbit": "Coelho", "pigeon": "Pombo", "cat": "Gato", "monkey": "Macaco" }
+  "title": {
+    "game": "Jogo de Criaturas",
+    "tag": "título provisório"
+  },
+  "mainMenu": {
+    "continue": "Continuar",
+    "newGame": "Novo jogo",
+    "options": "Opções",
+    "credits": "Créditos",
+    "help": "↑↓ escolher · E/Enter confirmar",
+    "confirmNew": "Apagar o jogo salvo? E = sim · Esc = não"
+  },
+  "options": {
+    "title": "Opções",
+    "language": "Idioma: {value}",
+    "music": "Música: {value}%",
+    "sfx": "Efeitos: {value}%",
+    "back": "Voltar",
+    "help": "↑↓ escolher · ←→ mudar · Esc voltar"
+  },
+  "credits": {
+    "title": "Créditos",
+    "body": "Arte: PixelLab\nMúsica: em breve\nFeito com Phaser",
+    "back": "Esc voltar"
+  },
+  "pause": {
+    "title": "Pausa",
+    "resume": "Continuar",
+    "options": "Opções",
+    "toMenu": "Menu principal",
+    "help": "↑↓ escolher · E confirmar · Esc fechar",
+    "map": "Mapa"
+  },
+  "map": {
+    "title": "Cidade inicial",
+    "help": "Setas escolher · E ir até lá · Esc fechar",
+    "travel": "E para ir até lá",
+    "soon": "(por dentro: em breve)",
+    "soonLong": "{place} abre em breve!"
+  },
+  "places": {
+    "home": "Casa",
+    "bakery": "Padaria",
+    "cafe": "Café",
+    "market": "Mercado",
+    "factory": "Fábrica",
+    "hotel": "Hotel",
+    "construction": "Construtora",
+    "clothes": "Loja de roupas",
+    "petPharmacy": "Farmácia animal",
+    "careHome": "Casa de cuidados",
+    "park": "Parque",
+    "harbor": "Porto"
+  },
+  "pet": {
+    "hint": "E",
+    "menuTitle": "{name}",
+    "pet": "Fazer carinho",
+    "feed": "Dar comida ({count})",
+    "follow": "Me seguir",
+    "stay": "Ficar aqui",
+    "sleep": "Mandar dormir",
+    "info": "Ver ficha",
+    "close": "Fechar",
+    "help": "↑↓ escolher · E confirmar · Esc fechar",
+    "feedNoItem": "Sem comida!",
+    "feedOk": "Nham! Energia {energy}",
+    "following": "Vou com você!",
+    "staying": "Fico aqui!",
+    "happy": "Que carinho bom!",
+    "infoTitle": "Ficha",
+    "infoSpecies": "Espécie: {species}",
+    "infoEnergy": "Energia: {energy}/{max}",
+    "infoStatus": "Status: {status}",
+    "infoActivity": "Agora: {activity}",
+    "infoClose": "E / Esc"
+  },
+  "bowl": {
+    "menuTitle": "Tigela ({bowl}/{cap})",
+    "fill": "Pôr comida ({count})",
+    "close": "Fechar",
+    "full": "A tigela está cheia!",
+    "noItem": "Sem comida!",
+    "filled": "Tigela: {bowl}/{cap}"
+  },
+  "status": {
+    "idle": "livre",
+    "working": "trabalhando",
+    "resting": "descansando"
+  },
+  "activity": {
+    "idle": "parado",
+    "wander": "passeando",
+    "eat": "comendo",
+    "sleep": "dormindo",
+    "lounge": "deitado no sofá",
+    "askPet": "pedindo carinho",
+    "petted": "recebendo carinho",
+    "follow": "seguindo você"
+  },
+  "species": {
+    "rabbit": "Coelho",
+    "pigeon": "Pombo",
+    "cat": "Gato",
+    "monkey": "Macaco"
+  },
+  "languages": {
+    "pt-BR": "Português",
+    "en": "English"
+  },
+  "town": {
+    "hint": "Setas andar · M mapa · Esc pausa"
+  }
 }
