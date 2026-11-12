@@ -1,5 +1,9 @@
 {
   "player": { "name": "player", "folder": "characters/player", "walkFrames": 4, "extras": [] },
+  "npc_baker": { "name": "npc_baker", "folder": "characters/npc_baker", "walkFrames": 4, "extras": [] },
+  "npc_elder": { "name": "npc_elder", "folder": "characters/npc_elder", "walkFrames": 4, "extras": [] },
+  "npc_girl": { "name": "npc_girl", "folder": "characters/npc_girl", "walkFrames": 4, "extras": [] },
+  "npc_fisher": { "name": "npc_fisher", "folder": "characters/npc_fisher", "walkFrames": 4, "extras": [] },
   "rabbit": {
     "name": "rabbit",
     "folder": "creatures/rabbit",
