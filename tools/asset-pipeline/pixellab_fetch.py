@@ -143,6 +143,9 @@ def object_anim(oid, dest):
 
 def image_frames(job_id, dest):
     """Writes each frame of an image job (e.g. animate_image) as dest_NN.png (01-based)."""
+    import os
+
+    os.makedirs(os.path.dirname(dest) or ".", exist_ok=True)
     k = 0
     while True:
         try:

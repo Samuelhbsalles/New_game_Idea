@@ -111,5 +111,36 @@
   },
   "town": {
     "hint": "Setas andar · M mapa · Esc pausa"
+  },
+  "creator": {
+    "title": "Crie seu personagem",
+    "body": "Corpo: {value}",
+    "skin": "Pele: {value}",
+    "hair": "Cabelo: {value}",
+    "hairColor": "Cor do cabelo: {value}",
+    "top": "Blusa: {value}",
+    "topColor": "Cor da blusa: {value}",
+    "bottom": "Parte de baixo: {value}",
+    "bottomColor": "Cor de baixo: {value}",
+    "start": "Começar!",
+    "help": "↑↓ escolher · ←→ mudar · E confirmar · Esc voltar"
+  },
+  "cosmetics": {
+    "body_m": "Masculino",
+    "body_f": "Feminino",
+    "hair_short": "Curto",
+    "hair_long": "Longo",
+    "hair_ponytail": "Rabo de cavalo",
+    "hair_curly": "Cacheado",
+    "hair_bob": "Chanel",
+    "top_tee": "Camiseta",
+    "top_hoodie": "Moletom",
+    "top_collar": "Camisa",
+    "top_sweater": "Suéter",
+    "top_jacket": "Jaqueta",
+    "bottom_shorts": "Bermuda",
+    "bottom_trousers": "Calça",
+    "bottom_skirt": "Saia",
+    "bottom_cargo": "Bermuda cargo"
   }
 }

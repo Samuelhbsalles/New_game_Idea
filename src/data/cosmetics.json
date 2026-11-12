@@ -1,0 +1,148 @@
+{
+  "frameSize": 48,
+  "baseSkin": "#f4c18c",
+  "skinTones": [
+    "#fbe0c2",
+    "#f4c18c",
+    "#dca36d",
+    "#b67d50",
+    "#86573a",
+    "#563624"
+  ],
+  "hairColors": [
+    "#5a3420",
+    "#2a1d17",
+    "#a0612f",
+    "#e0b25a",
+    "#c9452e",
+    "#d8d4cc",
+    "#3d5a99",
+    "#d77fb0"
+  ],
+  "clothColors": [
+    "#f2efe8",
+    "#c94f4f",
+    "#e39a3c",
+    "#e8d06a",
+    "#6aa35a",
+    "#4f86c6",
+    "#7d5ab8",
+    "#3b3b46",
+    "#8a6a4f",
+    "#e58fb0"
+  ],
+  "items": [
+    {
+      "id": "body_m",
+      "slot": "body",
+      "layer": "body_m",
+      "starter": true,
+      "price": 0
+    },
+    {
+      "id": "body_f",
+      "slot": "body",
+      "layer": "body_f",
+      "starter": true,
+      "price": 0
+    },
+    {
+      "id": "hair_short",
+      "slot": "hair",
+      "layer": "hair_short",
+      "starter": true,
+      "price": 0
+    },
+    {
+      "id": "hair_long",
+      "slot": "hair",
+      "layer": "hair_long",
+      "starter": true,
+      "price": 0
+    },
+    {
+      "id": "hair_ponytail",
+      "slot": "hair",
+      "layer": "hair_ponytail",
+      "starter": true,
+      "price": 0
+    },
+    {
+      "id": "hair_curly",
+      "slot": "hair",
+      "layer": "hair_curly",
+      "starter": true,
+      "price": 0
+    },
+    {
+      "id": "hair_bob",
+      "slot": "hair",
+      "layer": "hair_bob",
+      "starter": true,
+      "price": 0
+    },
+    {
+      "id": "top_tee",
+      "slot": "top",
+      "layer": null,
+      "starter": true,
+      "price": 0
+    },
+    {
+      "id": "top_hoodie",
+      "slot": "top",
+      "layer": "top_hoodie",
+      "starter": true,
+      "price": 0
+    },
+    {
+      "id": "top_collar",
+      "slot": "top",
+      "layer": "top_collar",
+      "starter": true,
+      "price": 0
+    },
+    {
+      "id": "top_sweater",
+      "slot": "top",
+      "layer": "top_sweater",
+      "starter": false,
+      "price": 120
+    },
+    {
+      "id": "top_jacket",
+      "slot": "top",
+      "layer": "top_jacket",
+      "starter": false,
+      "price": 180
+    },
+    {
+      "id": "bottom_shorts",
+      "slot": "bottom",
+      "layer": null,
+      "starter": true,
+      "price": 0
+    },
+    {
+      "id": "bottom_trousers",
+      "slot": "bottom",
+      "layer": "bottom_trousers",
+      "starter": true,
+      "price": 0
+    },
+    {
+      "id": "bottom_skirt",
+      "slot": "bottom",
+      "layer": "bottom_skirt",
+      "starter": true,
+      "price": 0
+    },
+    {
+      "id": "bottom_cargo",
+      "slot": "bottom",
+      "layer": "bottom_cargo",
+      "starter": false,
+      "price": 90
+    }
+  ]
+}

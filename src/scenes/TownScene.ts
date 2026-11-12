@@ -9,13 +9,15 @@ import { parseMap, type TownMap } from '../logic/map';
 import { followTarget } from '../logic/petBrain';
 import { nextDelay, planBird, strollStep, type StrollState } from '../logic/ambient';
 import { arrivalPoint, doorAt, parseTown, tileFlip, townLayers, townSolids, type Building, type NpcDef, type TownDef } from '../logic/town';
+import { AVATAR_ART, buildAvatar, savedAppearance } from './avatar';
 import { openOverlay } from './overlay';
 import { services } from './services';
 import { createCharacterAnims, facingFor, loadCharacter, showMotion, type CharacterArt, type Dir } from './sprites';
 import { Keys } from './ui/input';
 import { MenuPanel, textStyle, type MenuItem } from './ui/MenuPanel';
 
-const art = spritesJson as Record<string, CharacterArt>;
+/** Every sprite set, plus the player's avatar (built at runtime, not loaded from files). */
+const art: Record<string, CharacterArt> = { ...(spritesJson as Record<string, CharacterArt>), [AVATAR_ART.name]: AVATAR_ART };
 
 /** Bird flap frames: assets/town/town_bird_fly_01..05.png. */
 const BIRD_KEY = 'town_bird_fly';
@@ -95,7 +97,7 @@ export class TownScene extends Phaser.Scene {
     for (const p of this.town.props) if (p.anim) anims.set(p.anim.key, p.anim.frames);
     if (this.town.birds) anims.set(BIRD_KEY, BIRD_FRAMES);
     for (const [key, n] of anims) for (let i = 1; i <= n; i++) this.load.image(`${key}_${pad2(i)}`, `assets/town/${key}_${pad2(i)}.png`);
-    for (const a of Object.values(art)) loadCharacter(this, a);
+    for (const a of Object.values(art)) if (a !== AVATAR_ART) loadCharacter(this, a);
   }
 
   create(): void {
@@ -147,6 +149,7 @@ export class TownScene extends Phaser.Scene {
     // Player, at the door they came out of or the place they travelled to.
     const pDef = homeJson.player;
     const pArt = art[pDef.character];
+    if (pArt === AVATAR_ART) buildAvatar(this, savedAppearance(this.world));
     createCharacterAnims(this, pArt, pDef.walkFps);
     const start = (this.data_.place && arrivalPoint(this.town, this.data_.place)) || arrivalPoint(this.town, 'home') || this.town.spawn;
     this.player = this.physics.add.sprite(start.x, start.y, `${pArt.name}_idle_down`);

@@ -50,8 +50,7 @@ export class TitleScene extends Phaser.Scene {
     const input = this.keys.read();
     if (this.confirmingNew) {
       if (input.confirm) {
-        services(this).newGame();
-        this.enterGame();
+        this.enterGame('CreatorScene');
       } else if (input.cancel) {
         this.confirmingNew = false;
         this.build();
@@ -61,11 +60,14 @@ export class TitleScene extends Phaser.Scene {
     this.menu?.handle(input);
   }
 
-  /** Fades to black, then opens the home. */
-  private enterGame(): void {
+  /**
+   * Fades to black, then opens the home (continue) or the character creator
+   * (new game; the save is only replaced when the creator's "Start" is chosen).
+   */
+  private enterGame(scene: 'HomeScene' | 'CreatorScene' = 'HomeScene'): void {
     this.leaving = true;
     this.cameras.main.fadeOut(300, 0, 0, 0);
-    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => this.scene.start('HomeScene'));
+    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => this.scene.start(scene));
   }
 
   private build(): void {
@@ -84,8 +86,7 @@ export class TitleScene extends Phaser.Scene {
           this.menu?.destroy();
           this.menu = new MenuPanel(this, { lines: [t('mainMenu.confirmNew')], anchor: { kind: 'center', y: title.menuY } });
         } else {
-          s.newGame();
-          this.enterGame();
+          this.enterGame('CreatorScene');
         }
       },
     });

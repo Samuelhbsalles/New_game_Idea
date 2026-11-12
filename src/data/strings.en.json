@@ -111,5 +111,36 @@
   },
   "town": {
     "hint": "Arrows walk · M map · Esc pause"
+  },
+  "creator": {
+    "title": "Create your character",
+    "body": "Body: {value}",
+    "skin": "Skin: {value}",
+    "hair": "Hair: {value}",
+    "hairColor": "Hair colour: {value}",
+    "top": "Top: {value}",
+    "topColor": "Top colour: {value}",
+    "bottom": "Bottom: {value}",
+    "bottomColor": "Bottom colour: {value}",
+    "start": "Start!",
+    "help": "↑↓ choose · ←→ change · E confirm · Esc back"
+  },
+  "cosmetics": {
+    "body_m": "Male",
+    "body_f": "Female",
+    "hair_short": "Short",
+    "hair_long": "Long",
+    "hair_ponytail": "Ponytail",
+    "hair_curly": "Curly",
+    "hair_bob": "Bob",
+    "top_tee": "T-shirt",
+    "top_hoodie": "Hoodie",
+    "top_collar": "Shirt",
+    "top_sweater": "Sweater",
+    "top_jacket": "Jacket",
+    "bottom_shorts": "Shorts",
+    "bottom_trousers": "Trousers",
+    "bottom_skirt": "Skirt",
+    "bottom_cargo": "Cargo shorts"
   }
 }

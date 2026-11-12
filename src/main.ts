@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { BootScene } from './scenes/BootScene';
+import { CreatorScene } from './scenes/CreatorScene';
 import { CreditsScene } from './scenes/CreditsScene';
 import { HomeScene } from './scenes/HomeScene';
 import { MapScene } from './scenes/MapScene';
@@ -35,7 +36,7 @@ const game = new Phaser.Game({
   physics: { default: 'arcade' },
   // Centring is done by index.html's flex container; Phaser's autoCenter would add a second offset.
   scale: { mode: Phaser.Scale.NONE, autoCenter: Phaser.Scale.NO_CENTER, zoom: pixelPerfectZoom() },
-  scene: [BootScene, TitleScene, HomeScene, TownScene, MapScene, OptionsScene, CreditsScene],
+  scene: [BootScene, TitleScene, CreatorScene, HomeScene, TownScene, MapScene, OptionsScene, CreditsScene],
 });
 installServices(game);
 window.addEventListener('resize', () => game.scale.setZoom(pixelPerfectZoom()));

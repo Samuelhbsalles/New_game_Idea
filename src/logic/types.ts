@@ -1,3 +1,5 @@
+import type { Appearance } from './appearance';
+
 /** Static definition of a creature species, loaded from creatures.json. */
 export interface Species {
   id: string;
@@ -73,4 +75,8 @@ export interface GameState {
   shifts: Shift[];
   /** Food portions waiting in the home bowl. Optional so older saves still load (missing = 0). */
   bowl?: number;
+  /** The player's look from the character creator; scenes vet it against the cosmetics catalog. */
+  appearance?: Appearance;
+  /** Ids of cosmetics bought beyond the starter set. */
+  cosmetics?: string[];
 }

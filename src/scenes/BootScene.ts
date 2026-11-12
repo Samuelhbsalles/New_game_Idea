@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import ui from '../data/ui.json';
+import { preloadCreatorLayers } from './avatar';
 
 /** Texture keys of the shared UI art loaded here. */
 export const UI_TEX = { panel: 'ui_menu_panel', titleBg: 'ui_title_bg' } as const;
@@ -17,6 +18,7 @@ export class BootScene extends Phaser.Scene {
   preload(): void {
     this.load.image(UI_TEX.panel, 'assets/ui/menu_panel.png');
     this.load.image(UI_TEX.titleBg, 'assets/ui/title_bg.png');
+    preloadCreatorLayers(this);
   }
 
   create(): void {
@@ -30,7 +32,7 @@ export class BootScene extends Phaser.Scene {
 
   /** TitleScene, or in dev `?scene=home` / `?scene=town` jumps straight in for quick testing. */
   private firstScene(): string {
-    const dev: Record<string, string> = { home: 'HomeScene', town: 'TownScene' };
+    const dev: Record<string, string> = { home: 'HomeScene', town: 'TownScene', creator: 'CreatorScene' };
     const want = import.meta.env.DEV ? new URLSearchParams(location.search).get('scene') : null;
     return (want && dev[want]) || 'TitleScene';
   }

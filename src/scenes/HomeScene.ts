@@ -5,6 +5,7 @@ import spritesJson from '../data/sprites.json';
 import ui from '../data/ui.json';
 import type { Game } from '../logic/game';
 import { buildFloorGrid, exitAt, findUseSpot, parseCatalog, parseRoom, solidRects, wallRects, type ExitDef, type Placed, type RoomDef } from '../logic/room';
+import { AVATAR_ART, buildAvatar, savedAppearance } from './avatar';
 import { openOverlay } from './overlay';
 import { PetController } from './PetController';
 import { services } from './services';
@@ -12,7 +13,8 @@ import { createCharacterAnims, facingFor, loadCharacter, showMotion, type Charac
 import { Keys } from './ui/input';
 import { MenuPanel, textStyle, type MenuItem } from './ui/MenuPanel';
 
-const art = spritesJson as Record<string, CharacterArt>;
+/** Every sprite set, plus the player's avatar (built at runtime, not loaded from files). */
+const art: Record<string, CharacterArt> = { ...(spritesJson as Record<string, CharacterArt>), [AVATAR_ART.name]: AVATAR_ART };
 
 /** Scene opened by each exit's `to` in home.json. */
 const EXIT_SCENES: Record<string, string> = { town: 'TownScene' };
@@ -67,9 +69,8 @@ export class HomeScene extends Phaser.Scene {
     const { background, furniture } = this.room;
     this.load.image(background, `assets/home/${background}.png`);
     for (const f of furniture) this.load.image(f.sprite, `assets/home/${f.sprite}.png`);
-    loadCharacter(this, art[this.room.player.character]);
-    // Species art is chosen in create() once the save is known; preload every species we have art for.
-    for (const [key, a] of Object.entries(art)) if (key !== this.room.player.character) loadCharacter(this, a);
+    // Species art is chosen in create() once the save is known; preload every file-based sprite set.
+    for (const a of Object.values(art)) if (a !== AVATAR_ART) loadCharacter(this, a);
   }
 
   create(): void {
@@ -112,6 +113,7 @@ export class HomeScene extends Phaser.Scene {
 
     // Player.
     const playerArt = art[p.character];
+    if (playerArt === AVATAR_ART) buildAvatar(this, savedAppearance(this.world));
     createCharacterAnims(this, playerArt, p.walkFps);
     const door = this.room.exits.find((e) => e.to === this.arrivedFrom);
     const spawn = door ? door.arrive : p;

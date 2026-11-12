@@ -12,7 +12,7 @@ export interface MenuItem {
 }
 
 /** Where the panel goes: centred on screen (optionally at a set y), or above a world point (clamped to the screen). */
-export type PanelAnchor = { kind: 'center'; y?: number } | { kind: 'above'; x: number; y: number };
+export type PanelAnchor = { kind: 'center'; y?: number } | { kind: 'right'; y: number; margin: number } | { kind: 'above'; x: number; y: number };
 
 export interface MenuPanelOptions {
   title?: string;
@@ -99,6 +99,9 @@ export class MenuPanel {
     if (opts.anchor.kind === 'center') {
       x = (cam.width - w) / 2;
       top = opts.anchor.y ?? (cam.height - h) / 2;
+    } else if (opts.anchor.kind === 'right') {
+      x = cam.width - w - opts.anchor.margin;
+      top = opts.anchor.y;
     } else {
       // World point -> screen point (the camera may be scrolled to centre the room).
       x = opts.anchor.x - cam.scrollX - w / 2;

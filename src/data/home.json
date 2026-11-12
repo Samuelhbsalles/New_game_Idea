@@ -18,7 +18,7 @@
     { "item": "plant", "x": 37.5, "y": 214 },
     { "item": "bowl", "x": 84, "y": 152 }
   ],
-  "player": { "character": "player", "x": 128, "y": 206, "speed": 90, "walkFps": 8, "interactRange": 40 },
+  "player": { "character": "avatar", "x": 128, "y": 206, "speed": 90, "walkFps": 8, "interactRange": 40 },
   "pet": {
     "creatureId": "c1",
     "x": 128,
