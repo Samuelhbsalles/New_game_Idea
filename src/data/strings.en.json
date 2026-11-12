@@ -142,5 +142,16 @@
     "bottom_trousers": "Trousers",
     "bottom_skirt": "Skirt",
     "bottom_cargo": "Cargo shorts"
+  },
+  "npc": {
+    "angry1": "Hey! Watch where you're going!",
+    "angry2": "How rude!",
+    "angry3": "Hmph! Leave me alone!",
+    "chat1": "Good morning!",
+    "chat2": "Nice weather today?",
+    "chat3": "Hehe, true!",
+    "happy1": "♪",
+    "happy2": "What a lovely day!",
+    "happy3": "Mm, smells nice!"
   }
 }

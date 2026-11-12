@@ -1,3 +1,5 @@
+import type { NpcPersona } from './npcMind';
+
 /** Terrain letters used in the town corner grid. */
 export type Terrain = 'g' | 'c' | 'w';
 const TERRAINS: Terrain[] = ['g', 'c', 'w'];
@@ -58,20 +60,31 @@ export interface Prop {
   glow?: Glow;
 }
 
-/** A townsperson walking a looping route, pausing at each point. */
-export interface NpcDef {
+/** A townsperson with a home, favourite places and a temper (see npcMind.ts). */
+export interface NpcDef extends NpcPersona {
   /** Key in sprites.json. */
   art: string;
-  route: { x: number; y: number }[];
+  /** Walking speed, px/s. */
   speed: number;
-  pauseMs: [number, number];
 }
 
-/** Birds crossing the screen now and then. */
+/** A flock that now and then flies in, lands in an area (the plaza) and later leaves. */
 export interface BirdsDef {
+  /** Delay before the first flock (ms). */
+  firstMs: number;
+  /** Wait between flocks (ms). */
   everyMs: [number, number];
+  /** Birds per flock. */
+  flock: [number, number];
+  /** How long a flock stays on the ground (ms). */
+  stayMs: [number, number];
+  /** Where they land. */
+  landing: Box;
+  /** Flight speed, px/s. */
   speed: [number, number];
   fps: number;
+  /** A moving player closer than this (px) scares a bird away. */
+  scareRadius: number;
 }
 
 /** A validated walkable town. */
@@ -236,17 +249,38 @@ export function parseTown(raw: unknown): TownDef {
   let birds: BirdsDef | null = null;
   if (o.birds !== undefined) {
     const bo = obj(o.birds, 'town.birds');
-    birds = { everyMs: pair(bo.everyMs, 'town.birds.everyMs'), speed: pair(bo.speed, 'town.birds.speed'), fps: num(bo, 'fps', 'town.birds', 1) };
+    const lo = obj(bo.landing, 'town.birds.landing');
+    birds = {
+      firstMs: num(bo, 'firstMs', 'town.birds', 0),
+      everyMs: pair(bo.everyMs, 'town.birds.everyMs'),
+      flock: pair(bo.flock, 'town.birds.flock'),
+      stayMs: pair(bo.stayMs, 'town.birds.stayMs'),
+      landing: { x: num(lo, 'x', 'town.birds.landing'), y: num(lo, 'y', 'town.birds.landing'), w: num(lo, 'w', 'town.birds.landing', 1), h: num(lo, 'h', 'town.birds.landing', 1) },
+      speed: pair(bo.speed, 'town.birds.speed'),
+      fps: num(bo, 'fps', 'town.birds', 1),
+      scareRadius: num(bo, 'scareRadius', 'town.birds', 0),
+    };
+    if (birds.flock[0] < 1) fail('town.birds.flock', 'expected at least one bird');
   }
+  const ids = new Set(buildings.map((b) => b.id));
+  const building = (v: unknown, path: string) => {
+    if (typeof v !== 'string' || !ids.has(v)) fail(path, `expected a building id (${[...ids].join(', ')})`);
+    return v;
+  };
   const npcs = (Array.isArray(o.npcs) ? o.npcs : []).map((n, i): NpcDef => {
     const p = `town.npcs[${i}]`;
     const no = obj(n, p);
-    if (!Array.isArray(no.route) || no.route.length < 2) fail(`${p}.route`, 'expected at least 2 points');
+    const wo = obj(no.weights, `${p}.weights`);
+    if (!Array.isArray(no.favorites) || no.favorites.length === 0) fail(`${p}.favorites`, 'expected at least one building');
     return {
       art: str(no, 'art', p),
-      route: (no.route as unknown[]).map((v, j) => point(v, `${p}.route[${j}]`)),
       speed: num(no, 'speed', p, 1),
-      pauseMs: pair(no.pauseMs, `${p}.pauseMs`),
+      home: building(no.home, `${p}.home`),
+      favorites: (no.favorites as unknown[]).map((f, j) => building(f, `${p}.favorites[${j}]`)),
+      weights: { visit: num(wo, 'visit', `${p}.weights`, 0), home: num(wo, 'home', `${p}.weights`, 0), stroll: num(wo, 'stroll', `${p}.weights`, 0), idle: num(wo, 'idle', `${p}.weights`, 0) },
+      insideMs: pair(no.insideMs, `${p}.insideMs`),
+      idleMs: pair(no.idleMs, `${p}.idleMs`),
+      temper: num(no, 'temper', p, 1),
     };
   });
   const npcEmotes = Array.isArray(o.npcEmotes) ? o.npcEmotes.filter((e): e is string => typeof e === 'string' && e !== '') : [];

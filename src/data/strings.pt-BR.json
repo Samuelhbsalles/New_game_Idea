@@ -142,5 +142,16 @@
     "bottom_trousers": "Calça",
     "bottom_skirt": "Saia",
     "bottom_cargo": "Bermuda cargo"
+  },
+  "npc": {
+    "angry1": "Ei! Olha por onde anda!",
+    "angry2": "Que falta de educação!",
+    "angry3": "Hmpf! Me deixa!",
+    "chat1": "Bom dia!",
+    "chat2": "Viu o tempo hoje?",
+    "chat3": "Hehe, verdade!",
+    "happy1": "♪",
+    "happy2": "Que dia bonito!",
+    "happy3": "Hum, que cheiro bom!"
   }
 }

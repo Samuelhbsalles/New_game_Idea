@@ -7,10 +7,12 @@ import ui from '../data/ui.json';
 import type { Game } from '../logic/game';
 import { parseMap, type TownMap } from '../logic/map';
 import { followTarget } from '../logic/petBrain';
-import { nextDelay, planBird, strollStep, type StrollState } from '../logic/ambient';
-import { arrivalPoint, doorAt, parseTown, tileFlip, townLayers, townSolids, type Building, type NpcDef, type TownDef } from '../logic/town';
+import { buildNavGrid } from '../logic/npcMind';
+import { arrivalPoint, doorAt, parseTown, tileFlip, townLayers, townSolids, type Building, type TownDef } from '../logic/town';
 import { AVATAR_ART, buildAvatar, savedAppearance } from './avatar';
 import { openOverlay } from './overlay';
+import { TownBirds } from './TownBirds';
+import { TownNpc } from './TownNpc';
 import { services } from './services';
 import { createCharacterAnims, facingFor, loadCharacter, showMotion, type CharacterArt, type Dir } from './sprites';
 import { Keys } from './ui/input';
@@ -19,25 +21,15 @@ import { MenuPanel, textStyle, type MenuItem } from './ui/MenuPanel';
 /** Every sprite set, plus the player's avatar (built at runtime, not loaded from files). */
 const art: Record<string, CharacterArt> = { ...(spritesJson as Record<string, CharacterArt>), [AVATAR_ART.name]: AVATAR_ART };
 
-/** Bird flap frames: assets/town/town_bird_fly_01..05.png. */
-const BIRD_KEY = 'town_bird_fly';
-const BIRD_FRAMES = 5;
 /** How often (ms) a water sparkle appears somewhere in view. */
 const SPARKLE_EVERY_MS = 180;
 /** How often (ms) a chimney puffs. */
 const SMOKE_EVERY_MS = 650;
-/** Chance an NPC shows an emote bubble when it stops. */
-const EMOTE_CHANCE = 0.35;
+/** Nav grid cell (px) for NPC paths, and how far paths keep from walls. */
+const NAV_CELL = 16;
+const NAV_PAD = 6;
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
-
-/** A townsperson on its route. */
-interface Npc {
-  def: NpcDef;
-  sprite: Phaser.GameObjects.Sprite;
-  state: StrollState;
-  facing: Dir;
-}
 
 /** How the town was entered. */
 export interface TownData {
@@ -95,9 +87,9 @@ export class TownScene extends Phaser.Scene {
     for (const k of sprites) this.load.image(k, `assets/town/${k}.png`);
     const anims = new Map<string, number>();
     for (const p of this.town.props) if (p.anim) anims.set(p.anim.key, p.anim.frames);
-    if (this.town.birds) anims.set(BIRD_KEY, BIRD_FRAMES);
     for (const [key, n] of anims) for (let i = 1; i <= n; i++) this.load.image(`${key}_${pad2(i)}`, `assets/town/${key}_${pad2(i)}.png`);
     for (const a of Object.values(art)) if (a !== AVATAR_ART) loadCharacter(this, a);
+    if (this.town.birds) TownBirds.preload(this);
   }
 
   create(): void {
@@ -140,7 +132,6 @@ export class TownScene extends Phaser.Scene {
       }
       if (p.glow) this.addGlow(p.x, p.y + p.glow.dy, p.glow.r);
     }
-    this.startAmbient();
 
     const solids = this.physics.add.staticGroup();
     for (const r of townSolids(this.town)) solids.add(this.add.zone(r.x + r.w / 2, r.y + r.h / 2, r.w, r.h));
@@ -169,6 +160,8 @@ export class TownScene extends Phaser.Scene {
       this.pet.setCollideWorldBounds(true);
       this.physics.add.collider(this.pet, solids);
     }
+
+    this.startAmbient(solids);
 
     const cam = this.cameras.main;
     cam.setBounds(0, 0, width, height).startFollow(this.player, true, 0.15, 0.15).setRoundPixels(true);
@@ -238,28 +231,30 @@ export class TownScene extends Phaser.Scene {
 
   // ---- ambient life ----------------------------------------------------------------
 
-  /** NPCs, birds, chimney smoke and water sparkles. Purely visual; nothing here is saved. */
-  private startAmbient(): void {
+  /**
+   * NPCs (own decisions, solid to the player, get angry when bumped), bird
+   * flocks landing in the plaza, chimney smoke and water sparkles.
+   * Nothing here is saved.
+   */
+  private startAmbient(solids: Phaser.Physics.Arcade.StaticGroup): void {
+    const t = services(this).i18n;
+    const lines = (prefix: string) => [1, 2, 3].map((n) => t.t(`npc.${prefix}${n}`));
+    const texts = { angry: lines('angry'), chat: lines('chat'), happy: lines('happy') };
+    const nav = buildNavGrid(this.town.cols * this.town.tileSize, this.town.rows * this.town.tileSize, NAV_CELL, townSolids(this.town), NAV_PAD);
     this.npcs = this.town.npcs.map((def) => {
       const a = art[def.art];
       createCharacterAnims(this, a, 6);
-      const start = def.route[0];
-      const sprite = this.add.sprite(start.x, start.y, `${a.name}_idle_down`).setOrigin(0.5, 0.92);
-      return { def, sprite, state: { pos: { ...start }, target: 1, waitMs: 0 }, facing: 'down' as Dir };
+      const npc = new TownNpc(this, def, a.name, this.town, nav, texts, Math.random);
+      this.physics.add.collider(npc.sprite, solids);
+      // Solid to the player; walking into one counts as a bump.
+      this.physics.add.collider(this.player, npc.sprite, () => {
+        if (this.player.body.velocity.lengthSq() > 0) npc.bumpedBy({ x: this.player.x, y: this.player.y }, this.time.now);
+      });
+      if (this.pet) this.physics.add.collider(this.pet, npc.sprite);
+      return npc;
     });
 
-    if (this.town.birds) {
-      const birds = this.town.birds;
-      if (!this.anims.exists('bird_flap')) {
-        this.anims.create({ key: 'bird_flap', frames: Array.from({ length: BIRD_FRAMES }, (_, i) => ({ key: `${BIRD_KEY}_${pad2(i + 1)}` })), frameRate: birds.fps, repeat: -1 });
-      }
-      const schedule = () => this.time.delayedCall(nextDelay(birds.everyMs, Math.random), () => {
-        this.flyBird();
-        schedule();
-      });
-      this.time.delayedCall(800, () => this.flyBird());
-      schedule();
-    }
+    if (this.town.birds) this.birds = new TownBirds(this, this.town.birds, Math.random);
 
     for (const c of this.town.smoke) {
       this.time.addEvent({ delay: SMOKE_EVERY_MS, loop: true, callback: () => this.puff(c.x, c.y) });
@@ -267,39 +262,12 @@ export class TownScene extends Phaser.Scene {
     this.time.addEvent({ delay: SPARKLE_EVERY_MS, loop: true, callback: () => this.sparkle() });
   }
 
-  private npcs: Npc[] = [];
+  private npcs: TownNpc[] = [];
+  private birds: TownBirds | null = null;
 
   private moveNpcs(dt: number): void {
-    for (const n of this.npcs) {
-      const wasWalking = n.state.waitMs === 0;
-      const step = strollStep(n.state, n.def.route, n.def.speed, n.def.pauseMs, dt, Math.random);
-      n.state = step.state;
-      const moving = step.dx !== 0 || step.dy !== 0;
-      n.facing = facingFor(step.dx, step.dy, n.facing);
-      showMotion(n.sprite, art[n.def.art].name, n.facing, moving && n.state.waitMs === 0);
-      n.sprite.setPosition(n.state.pos.x, n.state.pos.y).setDepth(n.state.pos.y);
-      if (wasWalking && n.state.waitMs > 0 && Math.random() < EMOTE_CHANCE) this.emote(n);
-    }
-  }
-
-  /** A little bubble over a pausing NPC. */
-  private emote(n: Npc): void {
-    const list = this.town.npcEmotes;
-    if (list.length === 0) return;
-    const txt = this.add
-      .text(n.sprite.x, n.sprite.y - 40, list[Math.floor(Math.random() * list.length)], { ...textStyle(true, 10), color: ui.ink, backgroundColor: ui.panel, padding: { x: 3, y: 1 } })
-      .setOrigin(0.5, 1)
-      .setDepth(50_000);
-    this.tweens.add({ targets: txt, y: txt.y - 6, alpha: 0, delay: 1200, duration: 500, onComplete: () => txt.destroy() });
-  }
-
-  /** One bird crossing the visible part of the town, above everything. */
-  private flyBird(): void {
-    const view = this.cameras.main.worldView;
-    const f = planBird(view.width, view.height, this.town.birds!.speed, 24, Math.random);
-    const bird = this.add.sprite(view.x + f.from.x, view.y + f.from.y, `${BIRD_KEY}_01`).setDepth(40_000).play('bird_flap');
-    bird.setFlipX(f.to.x < f.from.x);
-    this.tweens.add({ targets: bird, x: view.x + f.to.x, y: view.y + f.to.y, duration: f.durationMs, onComplete: () => bird.destroy() });
+    for (const n of this.npcs) n.update(dt, this.npcs);
+    this.birds?.update(this.time.now, { x: this.player.x, y: this.player.body.bottom, moving: this.player.body.velocity.lengthSq() > 0 });
   }
 
   /** A grey puff rising and fading from a chimney. */

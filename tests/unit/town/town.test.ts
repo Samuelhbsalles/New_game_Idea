@@ -3,6 +3,7 @@ import mapJson from '../../../src/data/map.json';
 import spritesJson from '../../../src/data/sprites.json';
 import townJson from '../../../src/data/town.json';
 import { parseMap } from '../../../src/logic/map';
+import { buildNavGrid, findPath } from '../../../src/logic/npcMind';
 import { arrivalPoint, doorAt, doorBox, paintCorners, parseTown, tileFlip, townLayers, townSolids, type Box } from '../../../src/logic/town';
 
 const WANG = [6, 7, 10, 9, 2, 11, 4, 15, 5, 14, 1, 8, 3, 0, 13, 12];
@@ -115,24 +116,31 @@ describe('town', () => {
     for (const n of town.npcs) expect(Object.keys(spritesJson), n.art).toContain(n.art);
   });
 
-  it('rejects an NPC route with fewer than two points', () => {
-    expect(() => parseTown({ ...raw(), npcs: [{ art: 'a', route: [{ x: 1, y: 1 }], speed: 10, pauseMs: [0, 1] }] })).toThrow(/npcs\[0\]\.route/);
+  it('rejects an NPC whose home or favourite is not a building', () => {
+    const npc = { art: 'a', speed: 10, home: 'home', favorites: ['home'], weights: { visit: 1, home: 1, stroll: 1, idle: 1 }, insideMs: [1, 2], idleMs: [1, 2], temper: 2 };
+    expect(() => parseTown({ ...raw(), npcs: [{ ...npc, home: 'castle' }] })).toThrow(/npcs\[0\]\.home/);
+    expect(() => parseTown({ ...raw(), npcs: [{ ...npc, favorites: ['moon'] }] })).toThrow(/npcs\[0\]\.favorites\[0\]/);
   });
 
-  it('shipped town: every NPC route segment stays clear of buildings and water', () => {
+  it('shipped town: every NPC can walk from its home door to each favourite door', () => {
     const town = parseTown(townJson);
-    // Water runs and building footprints; small props (lamps, bushes) only get brushed past.
-    const blockers = townSolids({ ...town, props: [] });
+    const nav = buildNavGrid(town.cols * town.tileSize, town.rows * town.tileSize, 16, townSolids(town), 6);
     expect(town.npcs.length).toBeGreaterThan(0);
     for (const n of town.npcs) {
-      for (let i = 0; i < n.route.length; i++) {
-        const a = n.route[i];
-        const b = n.route[(i + 1) % n.route.length];
-        for (let k = 0; k <= 20; k++) {
-          const p = { x: a.x + ((b.x - a.x) * k) / 20, y: a.y + ((b.y - a.y) * k) / 20 };
-          expect(blockers.some((s) => contains(s, p)), `${n.art} at ${Math.round(p.x)},${Math.round(p.y)}`).toBe(false);
-        }
+      const from = arrivalPoint(town, n.home)!;
+      for (const f of n.favorites) {
+        const to = arrivalPoint(town, f)!;
+        expect(findPath(nav, from, to).length, `${n.art}: ${n.home} -> ${f}`).toBeGreaterThan(0);
       }
+    }
+  });
+
+  it('shipped town: the bird landing area is open ground inside the plaza', () => {
+    const town = parseTown(townJson);
+    const L = town.birds!.landing;
+    const blockers = townSolids({ ...town, props: [] });
+    for (const p of [{ x: L.x, y: L.y }, { x: L.x + L.w, y: L.y + L.h }, { x: L.x + L.w / 2, y: L.y + L.h / 2 }]) {
+      expect(blockers.some((s) => contains(s, p))).toBe(false);
     }
   });
 

@@ -90,10 +90,10 @@
    "sprite": "town_home",
    "x": 144,
    "y": 320,
-   "doorDx": 1,
+   "doorDx": 0,
    "solid": {
-    "w": 120,
-    "h": 70
+    "w": 118,
+    "h": 68
    }
   },
   {
@@ -103,7 +103,7 @@
    "y": 320,
    "doorDx": 0,
    "solid": {
-    "w": 124,
+    "w": 125,
     "h": 70
    }
   },
@@ -114,8 +114,8 @@
    "y": 320,
    "doorDx": 0,
    "solid": {
-    "w": 132,
-    "h": 70
+    "w": 140,
+    "h": 69
    }
   },
   {
@@ -123,10 +123,10 @@
    "sprite": "town_careHome",
    "x": 1000,
    "y": 320,
-   "doorDx": -2,
+   "doorDx": 0,
    "solid": {
-    "w": 150,
-    "h": 80
+    "w": 123,
+    "h": 76
    }
   },
   {
@@ -136,8 +136,8 @@
    "y": 320,
    "doorDx": 0,
    "solid": {
-    "w": 140,
-    "h": 70
+    "w": 162,
+    "h": 69
    }
   },
   {
@@ -145,10 +145,10 @@
    "sprite": "town_petPharmacy",
    "x": 1440,
    "y": 320,
-   "doorDx": 2,
+   "doorDx": 0,
    "solid": {
-    "w": 112,
-    "h": 60
+    "w": 98,
+    "h": 58
    }
   },
   {
@@ -156,10 +156,10 @@
    "sprite": "town_factory",
    "x": 160,
    "y": 704,
-   "doorDx": -17,
+   "doorDx": 0,
    "solid": {
-    "w": 116,
-    "h": 80
+    "w": 141,
+    "h": 72
    }
   },
   {
@@ -169,8 +169,8 @@
    "y": 704,
    "doorDx": 0,
    "solid": {
-    "w": 160,
-    "h": 90
+    "w": 122,
+    "h": 84
    }
   },
   {
@@ -178,10 +178,10 @@
    "sprite": "town_construction",
    "x": 1090,
    "y": 704,
-   "doorDx": -8,
+   "doorDx": 0,
    "solid": {
-    "w": 120,
-    "h": 70
+    "w": 126,
+    "h": 65
    }
   },
   {
@@ -189,10 +189,10 @@
    "sprite": "town_clothes",
    "x": 1290,
    "y": 704,
-   "doorDx": 0,
+   "doorDx": 30,
    "solid": {
-    "w": 120,
-    "h": 70
+    "w": 94,
+    "h": 52
    }
   }
  ],
@@ -217,7 +217,7 @@
    "y": 470,
    "solid": {
     "w": 40,
-    "h": 10
+    "h": 8
    }
   },
   {
@@ -226,7 +226,7 @@
    "y": 470,
    "solid": {
     "w": 40,
-    "h": 10
+    "h": 8
    }
   },
   {
@@ -235,7 +235,7 @@
    "y": 540,
    "solid": {
     "w": 40,
-    "h": 10
+    "h": 8
    }
   },
   {
@@ -1307,116 +1307,133 @@
   }
  ],
  "birds": {
+  "firstMs": 8000,
   "everyMs": [
-   3500,
-   8000
+   60000,
+   120000
   ],
+  "flock": [
+   2,
+   4
+  ],
+  "stayMs": [
+   30000,
+   60000
+  ],
+  "landing": {
+   "x": 640,
+   "y": 430,
+   "w": 320,
+   "h": 160
+  },
   "speed": [
    70,
    110
   ],
-  "fps": 8
+  "fps": 8,
+  "scareRadius": 30
  },
  "npcs": [
   {
    "art": "npc_baker",
-   "route": [
-    {
-     "x": 384,
-     "y": 352
-    },
-    {
-     "x": 560,
-     "y": 362
-    },
-    {
-     "x": 700,
-     "y": 356
-    },
-    {
-     "x": 470,
-     "y": 372
-    }
+   "home": "bakery",
+   "favorites": [
+    "cafe",
+    "market",
+    "bakery"
    ],
-   "speed": 32,
-   "pauseMs": [
-    1500,
-    4000
-   ]
+   "speed": 34,
+   "weights": {
+    "visit": 3,
+    "home": 2,
+    "stroll": 2,
+    "idle": 2
+   },
+   "insideMs": [
+    8000,
+    16000
+   ],
+   "idleMs": [
+    2500,
+    6000
+   ],
+   "temper": 3
   },
   {
    "art": "npc_elder",
-   "route": [
-    {
-     "x": 650,
-     "y": 500
-    },
-    {
-     "x": 950,
-     "y": 500
-    },
-    {
-     "x": 950,
-     "y": 640
-    },
-    {
-     "x": 650,
-     "y": 640
-    }
+   "home": "careHome",
+   "favorites": [
+    "cafe",
+    "petPharmacy",
+    "market"
    ],
-   "speed": 18,
-   "pauseMs": [
-    2500,
-    6000
-   ]
+   "speed": 20,
+   "weights": {
+    "visit": 2,
+    "home": 2,
+    "stroll": 1,
+    "idle": 4
+   },
+   "insideMs": [
+    12000,
+    24000
+   ],
+   "idleMs": [
+    4000,
+    9000
+   ],
+   "temper": 2
   },
   {
    "art": "npc_girl",
-   "route": [
-    {
-     "x": 300,
-     "y": 742
-    },
-    {
-     "x": 900,
-     "y": 752
-    },
-    {
-     "x": 1300,
-     "y": 742
-    },
-    {
-     "x": 880,
-     "y": 762
-    }
+   "home": "hotel",
+   "favorites": [
+    "clothes",
+    "cafe",
+    "bakery",
+    "market"
    ],
-   "speed": 44,
-   "pauseMs": [
-    800,
-    2500
-   ]
+   "speed": 46,
+   "weights": {
+    "visit": 3,
+    "home": 1,
+    "stroll": 3,
+    "idle": 1
+   },
+   "insideMs": [
+    6000,
+    12000
+   ],
+   "idleMs": [
+    1500,
+    4000
+   ],
+   "temper": 4
   },
   {
    "art": "npc_fisher",
-   "route": [
-    {
-     "x": 1388,
-     "y": 470
-    },
-    {
-     "x": 1388,
-     "y": 780
-    },
-    {
-     "x": 1370,
-     "y": 620
-    }
+   "home": "market",
+   "favorites": [
+    "cafe",
+    "construction",
+    "factory"
    ],
-   "speed": 24,
-   "pauseMs": [
+   "speed": 28,
+   "weights": {
+    "visit": 2,
+    "home": 2,
+    "stroll": 3,
+    "idle": 2
+   },
+   "insideMs": [
+    10000,
+    20000
+   ],
+   "idleMs": [
     3000,
     7000
-   ]
+   ],
+   "temper": 3
   }
  ],
  "npcEmotes": [
