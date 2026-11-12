@@ -110,7 +110,8 @@
     "en": "English"
   },
   "town": {
-    "hint": "Setas andar · M mapa · Esc pausa"
+    "hint": "Setas andar · M mapa · Esc pausa",
+    "bait": "Iscas: {count}"
   },
   "creator": {
     "title": "Crie seu personagem",
@@ -153,5 +154,11 @@
     "happy1": "♪",
     "happy2": "Que dia bonito!",
     "happy3": "Hum, que cheiro bom!"
+  },
+  "catch": {
+    "caught": "Você capturou: {name}!",
+    "newAlbum": "Novo no álbum!",
+    "noBait": "Sem isca!",
+    "escaped": "Fugiu!"
   }
 }

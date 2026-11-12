@@ -1,0 +1,13 @@
+{
+  "baitItemId": "bait",
+  "catchRange": 30,
+  "species": {
+    "pigeon": { "chance": 1 },
+    "rabbit": { "chance": 1 },
+    "cat": { "chance": 1 },
+    "monkey": { "chance": 1 }
+  },
+  "spawns": [
+    { "species": "rabbit", "area": { "x": 60, "y": 470, "w": 220, "h": 70 }, "max": 2, "everyMs": [20000, 45000] }
+  ]
+}

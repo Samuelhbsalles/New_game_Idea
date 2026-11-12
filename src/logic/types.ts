@@ -79,4 +79,6 @@ export interface GameState {
   appearance?: Appearance;
   /** Ids of cosmetics bought beyond the starter set. */
   cosmetics?: string[];
+  /** Species ids caught at least once (the album). Starting creatures do not count. */
+  caught?: string[];
 }

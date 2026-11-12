@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import homeJson from '../data/home.json';
+import catchingJson from '../data/catching.json';
 import mapJson from '../data/map.json';
 import spritesJson from '../data/sprites.json';
 import townJson from '../data/town.json';
@@ -7,12 +8,15 @@ import ui from '../data/ui.json';
 import type { Game } from '../logic/game';
 import { parseMap, type TownMap } from '../logic/map';
 import { followTarget } from '../logic/petBrain';
+import { attemptCatch, baitCount, parseCatchRules, type CatchRules } from '../logic/catching';
 import { buildNavGrid } from '../logic/npcMind';
 import { arrivalPoint, doorAt, parseTown, tileFlip, townLayers, townSolids, type Building, type TownDef } from '../logic/town';
 import { AVATAR_ART, buildAvatar, savedAppearance } from './avatar';
 import { openOverlay } from './overlay';
 import { TownBirds } from './TownBirds';
 import { TownNpc } from './TownNpc';
+import { TownWild, type Critter } from './TownWild';
+import type { Bird } from './TownBirds';
 import { services } from './services';
 import { createCharacterAnims, facingFor, loadCharacter, showMotion, type CharacterArt, type Dir } from './sprites';
 import { Keys } from './ui/input';
@@ -30,6 +34,9 @@ const NAV_CELL = 16;
 const NAV_PAD = 6;
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
+
+/** Something the player can try to catch right now. */
+type CatchTarget = { kind: 'bird'; bird: Bird; species: string; sprite: Phaser.GameObjects.Sprite } | { kind: 'wild'; critter: Critter; species: string; sprite: Phaser.GameObjects.Sprite };
 
 /** How the town was entered. */
 export interface TownData {
@@ -95,6 +102,7 @@ export class TownScene extends Phaser.Scene {
   create(): void {
     const t = (k: string, v?: Record<string, string | number>) => services(this).i18n.t(k, v);
     this.world = services(this).loadGame();
+    this.rules = parseCatchRules(catchingJson, this.world.config.species.map((sp) => sp.id));
     const { tileSize: s, cols, rows } = this.town;
     const width = cols * s;
     const height = rows * s;
@@ -172,6 +180,14 @@ export class TownScene extends Phaser.Scene {
       .text(6, 6, t('town.hint'), { ...textStyle(false, 9), color: ui.panel, stroke: ui.ink, strokeThickness: 3 })
       .setScrollFactor(0)
       .setDepth(60_000);
+    this.baitText = this.add.text(6, 18, '', { ...textStyle(true, 9), color: ui.panel, stroke: ui.ink, strokeThickness: 3 }).setScrollFactor(0).setDepth(60_000);
+    this.refreshBait();
+
+    // "Press E" bubble over whatever can be caught.
+    const bubble = this.add.rectangle(0, 0, 14, 14, Phaser.Display.Color.HexStringToColor(ui.panel).color).setStrokeStyle(1, Phaser.Display.Color.HexStringToColor(ui.ink).color);
+    const letter = this.add.text(0, 0, t('pet.hint'), textStyle(true)).setOrigin(0.5);
+    this.catchHint = this.add.container(0, 0, [bubble, letter]).setDepth(45_000).setVisible(false);
+    this.tweens.add({ targets: this.catchHint, scale: 1.15, yoyo: true, repeat: -1, duration: 450 });
 
     this.keys = new Keys(this);
     const kb = this.input.keyboard;
@@ -196,6 +212,10 @@ export class TownScene extends Phaser.Scene {
     this.movePet();
     if (input.cancel) return this.openPause();
     if (Phaser.Input.Keyboard.JustDown(this.mapKey)) return this.openMap();
+    const target = this.catchTarget();
+    this.catchHint.setVisible(target !== null);
+    if (target) this.catchHint.setPosition(target.sprite.x, target.sprite.y - target.sprite.displayHeight - 6);
+    if (target && input.confirm) return this.tryCatch(target);
     this.checkDoor();
   }
 
@@ -255,6 +275,11 @@ export class TownScene extends Phaser.Scene {
     });
 
     if (this.town.birds) this.birds = new TownBirds(this, this.town.birds, Math.random);
+    for (const r of this.rules.spawns) {
+      const a = art[r.species];
+      if (a) createCharacterAnims(this, a, 6);
+    }
+    this.wild = new TownWild(this, this.rules.spawns, (species) => art[species]?.name ?? null, Math.random);
 
     for (const c of this.town.smoke) {
       this.time.addEvent({ delay: SMOKE_EVERY_MS, loop: true, callback: () => this.puff(c.x, c.y) });
@@ -264,9 +289,14 @@ export class TownScene extends Phaser.Scene {
 
   private npcs: TownNpc[] = [];
   private birds: TownBirds | null = null;
+  private wild: TownWild | null = null;
+  private rules!: CatchRules;
+  private baitText!: Phaser.GameObjects.Text;
+  private catchHint!: Phaser.GameObjects.Container;
 
   private moveNpcs(dt: number): void {
     for (const n of this.npcs) n.update(dt, this.npcs);
+    this.wild?.update(dt);
     this.birds?.update(this.time.now, { x: this.player.x, y: this.player.body.bottom, moving: this.player.body.velocity.lengthSq() > 0 });
   }
 
@@ -295,6 +325,66 @@ export class TownScene extends Phaser.Scene {
     if (!row || !below || [row[tx], row[tx + 1], below[tx], below[tx + 1]].some((c) => c !== 'w')) return;
     const g = this.add.rectangle(Math.round(x), Math.round(y), 2, 1, 0xffffff, 0).setDepth(-1800);
     this.tweens.add({ targets: g, alpha: 0.9, scaleX: 2, yoyo: true, duration: 450, onComplete: () => g.destroy() });
+  }
+
+  // ---- catching ----------------------------------------------------------------------
+
+  /** The nearest grounded bird or wild creature within catch range of the player's feet. */
+  private catchTarget(): CatchTarget | null {
+    const feet = { x: this.player.x, y: this.player.body.bottom };
+    const range = this.rules.catchRange;
+    const bird = this.birds?.grounded(feet, range)[0];
+    const critter = this.wild?.nearest(feet, range) ?? null;
+    const dist = (o: { x: number; y: number }) => Math.hypot(o.x - feet.x, o.y - feet.y);
+    if (bird && (!critter || dist(bird.sprite) <= dist(critter.sprite))) return { kind: 'bird', bird, species: 'pigeon', sprite: bird.sprite };
+    if (critter) return { kind: 'wild', critter, species: critter.species, sprite: critter.sprite };
+    return null;
+  }
+
+  /** One bait, one try (rules in src/logic/catching.ts). */
+  private tryCatch(target: CatchTarget): void {
+    const t = (k: string, v?: Record<string, string | number>) => services(this).i18n.t(k, v);
+    const at = { x: target.sprite.x, y: target.sprite.y - target.sprite.displayHeight };
+    const r = attemptCatch(this.world, this.rules, target.species, Math.random);
+    if (!r.ok) {
+      if (r.reason === 'no_bait') this.floatText(t('catch.noBait'), at);
+      if (r.reason === 'escaped') {
+        this.world.save();
+        this.refreshBait();
+        this.floatText(t('catch.escaped'), at);
+        if (target.kind === 'bird') this.birds?.scare(target.bird, this.player);
+      }
+      return;
+    }
+    this.world.save();
+    this.refreshBait();
+    if (target.kind === 'bird') this.birds?.take(target.bird);
+    else this.wild?.remove(target.critter);
+    this.sparkleBurst(target.sprite.x, target.sprite.y - target.sprite.displayHeight / 2);
+    this.tweens.add({ targets: target.sprite, scale: 0, alpha: 0, duration: 350, ease: 'Back.easeIn', onComplete: () => target.sprite.destroy() });
+    this.floatText(t('catch.caught', { name: t(`species.${target.species}`) }), at);
+    if (r.firstOfSpecies) this.time.delayedCall(700, () => this.floatText(t('catch.newAlbum'), { x: at.x, y: at.y - 12 }));
+  }
+
+  private refreshBait(): void {
+    this.baitText.setText(services(this).i18n.t('town.bait', { count: baitCount(this.world, this.rules) }));
+  }
+
+  private floatText(msg: string, at: { x: number; y: number }): void {
+    const txt = this.add
+      .text(at.x, at.y, msg, { ...textStyle(true, 10), color: ui.ink, backgroundColor: ui.panel, padding: { x: 3, y: 1 } })
+      .setOrigin(0.5, 1)
+      .setDepth(55_000);
+    this.tweens.add({ targets: txt, y: txt.y - 12, alpha: 0, delay: 1100, duration: 700, onComplete: () => txt.destroy() });
+  }
+
+  /** Little stars bursting out where something was caught. */
+  private sparkleBurst(x: number, y: number): void {
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      const star = this.add.rectangle(x, y, 3, 3, 0xffe58a).setDepth(55_000);
+      this.tweens.add({ targets: star, x: x + Math.cos(a) * 18, y: y + Math.sin(a) * 18, alpha: 0, angle: 90, duration: 500, ease: 'Quad.easeOut', onComplete: () => star.destroy() });
+    }
   }
 
   // ---- doors -----------------------------------------------------------------------

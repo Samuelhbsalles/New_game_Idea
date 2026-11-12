@@ -84,6 +84,7 @@ export function deserialize(data: string | null): GameState | null {
   // Appearance details are vetted against the cosmetics catalog by the scenes; here only the shape.
   if (raw.appearance !== undefined && !isObj(raw.appearance)) return null;
   if (raw.cosmetics !== undefined && !(Array.isArray(raw.cosmetics) && raw.cosmetics.every((c) => typeof c === 'string'))) return null;
+  if (raw.caught !== undefined && !(Array.isArray(raw.caught) && raw.caught.every((c) => typeof c === 'string'))) return null;
   return raw as unknown as GameState;
 }
 

@@ -110,7 +110,8 @@
     "en": "English"
   },
   "town": {
-    "hint": "Arrows walk · M map · Esc pause"
+    "hint": "Arrows walk · M map · Esc pause",
+    "bait": "Bait: {count}"
   },
   "creator": {
     "title": "Create your character",
@@ -153,5 +154,11 @@
     "happy1": "♪",
     "happy2": "What a lovely day!",
     "happy3": "Mm, smells nice!"
+  },
+  "catch": {
+    "caught": "You caught: {name}!",
+    "newAlbum": "New in the album!",
+    "noBait": "No bait!",
+    "escaped": "It got away!"
   }
 }

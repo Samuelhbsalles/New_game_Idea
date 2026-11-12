@@ -58,9 +58,21 @@ export class TownBirds {
     scene.load.image(BIRD_TEX.ground, `assets/town/${BIRD_TEX.ground}.png`);
   }
 
-  /** Grounded birds within `range` px of a point (for capture later). */
+  /** Grounded birds within `range` px of a point, nearest first. */
   grounded(near: { x: number; y: number }, range: number): Bird[] {
-    return this.birds.filter((b) => b.state === 'grounded' && Math.hypot(b.sprite.x - near.x, b.sprite.y - near.y) <= range);
+    const d = (b: Bird) => Math.hypot(b.sprite.x - near.x, b.sprite.y - near.y);
+    return this.birds.filter((b) => b.state === 'grounded' && d(b) <= range).sort((a, b) => d(a) - d(b));
+  }
+
+  /** Takes a caught bird out of the flock (the scene plays the effect). */
+  take(b: Bird): void {
+    const i = this.birds.indexOf(b);
+    if (i >= 0) this.birds.splice(i, 1);
+  }
+
+  /** A bird that got away: it takes off like a startled one. */
+  scare(b: Bird, from: { x: number; y: number }): void {
+    if (b.state === 'grounded') this.flyAway(b, from);
   }
 
   /** Per frame: hops, leaving on time, and fleeing from a moving player. */
