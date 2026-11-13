@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import ui from '../data/ui.json';
+import { joinWorld, SESSION_KEY } from '../net/world';
 import { preloadCreatorLayers } from './avatar';
+import { services } from './services';
 
 /** Texture keys of the shared UI art loaded here. */
 export const UI_TEX = { panel: 'ui_menu_panel', titleBg: 'ui_title_bg' } as const;
@@ -26,7 +28,30 @@ export class BootScene extends Phaser.Scene {
     const fonts = [`${ui.fontSize}px ${ui.fontFamily}`, `bold ${ui.fontSize}px ${ui.fontFamily}`];
     Promise.all(fonts.map((f) => document.fonts.load(f)))
       .catch(() => undefined) // a missing font only costs looks; the fallback is in the family list
+      .then(() => this.devLogin(next))
       .then(() => this.scene.start(next));
+  }
+
+  /**
+   * Dev shortcut scenes skip the title screen, and with it the login. Online,
+   * log in straight away as `?name=` (or the last name used, or "Dev").
+   */
+  private async devLogin(next: string): Promise<void> {
+    const s = services(this);
+    if (next === 'TitleScene' || !s.online || this.registry.get(SESSION_KEY)) return;
+    let name = new URLSearchParams(location.search).get('name');
+    try {
+      name ??= window.localStorage.getItem('creatureGame.lastName');
+    } catch {
+      /* no storage: use the default */
+    }
+    try {
+      const session = await joinWorld(`dev:${name ?? 'Dev'}`, s.localSave);
+      s.useSaveStorage(session.storage);
+      this.registry.set(SESSION_KEY, session);
+    } catch (e) {
+      console.warn('[world] dev login failed; playing on the browser save', e);
+    }
   }
 
   /** TitleScene, or in dev `?scene=home` / `?scene=town` jumps straight in for quick testing. */

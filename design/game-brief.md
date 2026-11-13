@@ -23,7 +23,7 @@
 7. Foundation: all rules (coins, capture, production, timers) in a render-independent logic module. All creatures, shops, items, prices and shift length come from JSON config. Saves go through a swappable storage interface, with localStorage first.
 
 ## Out of scope — not building this
-- Multiplayer, shared server, WebSockets, other players on the map.
+- ~~Multiplayer, shared server, WebSockets, other players on the map.~~ **Now in scope (2026-11-13):** the game is online from here on — see docs/architecture/adr-0001-online-architecture.md.
 - Player market and player shops.
 - Shops beyond the bakery (cafe, market, factory, hotel, construction, clothing store, animal pharmacy, elder care home).
 - Legendary-creature capture minigame, breeding, more cities.

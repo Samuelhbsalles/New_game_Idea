@@ -246,5 +246,12 @@
     "back": "Back",
     "close": "Close",
     "help": "↑↓ choose · E buy/sell · Esc back"
+  },
+  "login": {
+    "title": "What's your name?",
+    "help": "Type it and press Enter",
+    "connecting": "Connecting to the world…",
+    "failed": "Can't reach the server. Try again.",
+    "badName": "Use 2 to 16 letters or digits"
   }
 }

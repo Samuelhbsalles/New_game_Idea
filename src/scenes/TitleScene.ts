@@ -4,8 +4,29 @@ import ui from '../data/ui.json';
 import { UI_TEX } from './BootScene';
 import { openOverlay } from './overlay';
 import { services, SETTINGS_CHANGED } from './services';
+import { joinWorld, SESSION_KEY } from '../net/world';
 import { Keys } from './ui/input';
+import { NameInput } from './ui/nameInput';
 import { MenuPanel, textStyle, type MenuItem } from './ui/MenuPanel';
+
+/** Browser key remembering the last dev login name. */
+const LAST_NAME_KEY = 'creatureGame.lastName';
+
+function safeGet(k: string): string | null {
+  try {
+    return window.localStorage.getItem(k);
+  } catch {
+    return null;
+  }
+}
+
+function safeSet(k: string, v: string): void {
+  try {
+    window.localStorage.setItem(k, v);
+  } catch {
+    /* private mode: just not remembered */
+  }
+}
 
 /**
  * Main menu over an illustrated street: the game's name in the sky and
@@ -38,15 +59,72 @@ export class TitleScene extends Phaser.Scene {
       .setOrigin(0.5);
     this.tweens.add({ targets: this.titleText, y: title.titleY - 3, yoyo: true, repeat: -1, duration: 1600, ease: 'Sine.easeInOut' });
 
-    this.build();
+    // Online: log in first (once per page load); the save then comes from the server.
+    if (services(this).online && !this.registry.get(SESSION_KEY)) this.showLogin();
+    else this.build();
     this.cameras.main.fadeIn(350, 0, 0, 0);
-    const onChange = () => this.build();
+    const onChange = () => (this.login ? this.showLogin() : this.build());
     this.registry.events.on(SETTINGS_CHANGED, onChange);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.registry.events.off(SETTINGS_CHANGED, onChange));
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.registry.events.off(SETTINGS_CHANGED, onChange);
+      this.endLogin();
+    });
+  }
+
+  // ---- login (dev name; a platform login replaces it later) ---------------------------
+
+  private login: NameInput | null = null;
+
+  /** "What's your name?" box; Enter connects to the world server. */
+  private showLogin(status?: string): void {
+    const t = services(this).i18n.t;
+    this.menu?.destroy();
+    const lines = [t('login.title'), '', '', '', status ?? t('login.help')];
+    this.menu = new MenuPanel(this, { lines, anchor: { kind: 'center', y: title.menuY }, minWidth: title.menuMinWidth });
+    if (this.login) return;
+    const kb = this.input.keyboard;
+    kb?.disableGlobalCapture(); // let the text box receive E, Enter and the arrows
+    if (kb) kb.enabled = false;
+    const remembered = safeGet(LAST_NAME_KEY) ?? '';
+    // Over the two blank lines under the question (panel padding + title row + one line).
+    const y = title.menuY + ui.panelPad + (ui.fontSize + 7) * 2 + 4;
+    this.login = new NameInput(this.game.canvas, { x: this.scale.width / 2, y }, this.scale, remembered, (name) => this.connect(name));
+  }
+
+  private async connect(raw: string): Promise<void> {
+    const s = services(this);
+    const t = s.i18n.t;
+    const name = raw.trim();
+    if (name.length < 2) return this.showLogin(t('login.badName'));
+    this.login?.setEnabled(false);
+    this.showLogin(t('login.connecting'));
+    try {
+      const session = await joinWorld(`dev:${name}`, s.localSave, (reason) => console.warn('[world] save not stored:', reason));
+      safeSet(LAST_NAME_KEY, name);
+      s.useSaveStorage(session.storage);
+      this.registry.set(SESSION_KEY, session);
+      this.endLogin();
+      this.build();
+    } catch (e) {
+      console.warn('[world] join failed', e);
+      this.login?.setEnabled(true);
+      this.showLogin(t('login.failed'));
+    }
+  }
+
+  private endLogin(): void {
+    if (!this.login) return;
+    this.login.destroy();
+    this.login = null;
+    const kb = this.input.keyboard;
+    if (kb) {
+      kb.enabled = true;
+      kb.enableGlobalCapture();
+    }
   }
 
   update(): void {
-    if (this.leaving) return;
+    if (this.leaving || this.login) return;
     const input = this.keys.read();
     if (this.confirmingNew) {
       if (input.confirm) {

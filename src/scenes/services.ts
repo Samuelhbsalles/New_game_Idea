@@ -38,6 +38,12 @@ export interface Services {
   newGame(): Game;
   /** Stores new settings, rebuilds the translator and notifies scenes. */
   updateSettings(next: Settings): void;
+  /** True when the game plays through the server (the default); false with dev `?offline=1`. */
+  readonly online: boolean;
+  /** Where saves go from now on (the server's, once logged in). */
+  useSaveStorage(storage: Storage): void;
+  /** The browser's own save slot: offline play, and the one-time import into a new account. */
+  readonly localSave: Storage;
 }
 
 function browserStorage(key: string): Storage {
@@ -55,7 +61,9 @@ export function installServices(game: Phaser.Game): Services {
   const config = parseConfig({ species: creaturesJson, shops: shopsJson, items: itemsJson, start: startJson, time: timeJson });
   // Dev only: `?save=<name>` plays on a separate save slot, so testing never touches the real save.
   const slot = import.meta.env.DEV ? new URLSearchParams(location.search).get('save') : null;
-  const saveStorage = browserStorage(slot ? `${SAVE_KEY}.${slot}` : SAVE_KEY);
+  const localSave = browserStorage(slot ? `${SAVE_KEY}.${slot}` : SAVE_KEY);
+  let saveStorage: Storage = localSave;
+  const online = !(import.meta.env.DEV && new URLSearchParams(location.search).get('offline') === '1');
   const settingsStorage = browserStorage(SETTINGS_KEY);
   const languages = Object.keys(TABLES);
   const browserLang = navigator.language.toLowerCase().startsWith('pt') ? 'pt-BR' : 'en';
@@ -79,6 +87,11 @@ export function installServices(game: Phaser.Game): Services {
       const g = Game.create(config, systemClock, saveStorage);
       g.save();
       return g;
+    },
+    online,
+    localSave,
+    useSaveStorage(storage) {
+      saveStorage = storage;
     },
     updateSettings(next) {
       services.settings = next;

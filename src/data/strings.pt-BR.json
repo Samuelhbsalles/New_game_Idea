@@ -246,5 +246,12 @@
     "back": "Voltar",
     "close": "Fechar",
     "help": "↑↓ escolher · E comprar/vender · Esc voltar"
+  },
+  "login": {
+    "title": "Qual é o seu nome?",
+    "help": "Digite e aperte Enter",
+    "connecting": "Conectando ao mundo…",
+    "failed": "Sem conexão com o servidor. Tente de novo.",
+    "badName": "Use de 2 a 16 letras ou números"
   }
 }
