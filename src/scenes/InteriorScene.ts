@@ -10,6 +10,7 @@ import { exitAt, wallRects } from '../logic/room';
 import { shiftOutput } from '../logic/work';
 import { AVATAR_ART, buildAvatar, savedAppearance } from './avatar';
 import { SESSION_KEY, type WorldSession } from '../net/world';
+import { addBackdrop, preloadBackdrop } from './backdrop';
 import { openOverlay } from './overlay';
 import { RemotePlayers } from './RemotePlayers';
 import { services } from './services';
@@ -94,6 +95,7 @@ export class InteriorScene extends Phaser.Scene {
     this.def = def;
     const base = `assets/interiors/${def.dir}`;
     this.load.image(this.tex('floor'), `${base}/floor.png`);
+    preloadBackdrop(this, def.backdrop);
     for (const p of def.pieces) {
       this.load.image(this.tex(`piece_${p.n}`), `${base}/piece_${p.n}.png`);
       if (p.shadow) this.load.image(this.tex(`shadow_${p.n}`), `${base}/shadow_${p.n}.png`);
@@ -114,6 +116,7 @@ export class InteriorScene extends Phaser.Scene {
     cam.setBackgroundColor(ui.ink);
 
     // Floor, shadows under everything standing, pieces sorted by their foot line.
+    addBackdrop(this, def.backdrop);
     this.add.image(0, 0, this.tex('floor')).setOrigin(0, 0).setDepth(-1000);
     for (const p of def.pieces) {
       if (p.shadow) this.add.image(p.shadow.x, p.shadow.y, this.tex(`shadow_${p.n}`)).setOrigin(0, 0).setDepth(-900);

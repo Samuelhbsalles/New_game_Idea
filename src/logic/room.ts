@@ -23,6 +23,10 @@ export interface FurnitureItem {
   solid: boolean;
   price: number;
   use?: FurnitureUse;
+  /** Lies flat on the floor (rugs): drawn under every other piece. */
+  flat?: boolean;
+  /** Its own shadow picture, drawn at the piece's centre + (dx, dy) (top-left), so it moves with it. */
+  shadow?: { sprite: string; dx: number; dy: number };
 }
 
 /** A furniture item placed in a room; x/y are the sprite centre in pixels. */
@@ -74,6 +78,8 @@ export interface ExitDef {
 
 /** A validated room layout, ready for a scene to draw. */
 export interface RoomDef {
+  /** Texture tiled around the room picture (public/assets/backdrops/<key>.png), or null. */
+  backdrop: string | null;
   /** Painted room picture (walls, floor, rug, shadows) under assets/home/. */
   background: string;
   width: number;
@@ -140,6 +146,14 @@ export function parseCatalog(raw: unknown): FurnitureItem[] {
       solid: o.solid,
       price: num(o, 'price', p, 0),
     };
+    if (o.flat !== undefined) {
+      if (typeof o.flat !== 'boolean') fail(`${p}.flat`, 'expected boolean');
+      item.flat = o.flat;
+    }
+    if (o.shadow !== undefined) {
+      const sh = obj(o.shadow, `${p}.shadow`);
+      item.shadow = { sprite: str(sh, 'sprite', `${p}.shadow`), dx: num(sh, 'dx', `${p}.shadow`), dy: num(sh, 'dy', `${p}.shadow`) };
+    }
     if (seen.has(item.id)) fail(p, `duplicate id "${item.id}"`);
     seen.add(item.id);
     if (o.use !== undefined) {
@@ -193,6 +207,7 @@ export function parseRoom(raw: unknown, catalog: FurnitureItem[]): RoomDef {
     interactRange: num(po, 'interactRange', 'room.player', 1),
   };
   return {
+    backdrop: o.backdrop === undefined ? null : str(o, 'backdrop', 'room'),
     background: str(o, 'background', 'room'),
     width,
     height,

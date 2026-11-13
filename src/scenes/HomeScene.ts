@@ -4,13 +4,19 @@ import homeJson from '../data/home.json';
 import spritesJson from '../data/sprites.json';
 import ui from '../data/ui.json';
 import type { Game } from '../logic/game';
-import { buildFloorGrid, exitAt, findUseSpot, parseCatalog, parseRoom, solidRects, wallRects, type ExitDef, type Placed, type RoomDef } from '../logic/room';
+import { defaultLayout, parseLayout, pieceDepth, SHADOW_DEPTH, type HomeLayout } from '../logic/home';
+import { buildFloorGrid, exitAt, findUseSpot, parseCatalog, parseRoom, solidRects, wallRects, type ExitDef, type FurnitureItem, type Placed, type RoomDef } from '../logic/room';
+import { SESSION_KEY, type WorldSession } from '../net/world';
 import { AVATAR_ART, buildAvatar, savedAppearance } from './avatar';
 import { openOverlay } from './overlay';
+import { addBackdrop, preloadBackdrop } from './backdrop';
+import { HomeDecorator } from './HomeDecorator';
 import { PetController } from './PetController';
+import { RemotePlayers } from './RemotePlayers';
 import { services } from './services';
 import { createCharacterAnims, facingFor, loadCharacter, showMotion, type CharacterArt, type Dir } from './sprites';
 import { Keys } from './ui/input';
+import { HudChip } from './ui/HudChip';
 import { MenuPanel, textStyle, type MenuItem } from './ui/MenuPanel';
 
 /** Every sprite set, plus the player's avatar (built at runtime, not loaded from files). */
@@ -18,6 +24,22 @@ const art: Record<string, CharacterArt> = { ...(spritesJson as Record<string, Ch
 
 /** Scene opened by each exit's `to` in home.json. */
 const EXIT_SCENES: Record<string, string> = { town: 'TownScene' };
+
+/** Visiting another player's apartment. */
+export interface HomeVisit {
+  accountId: string;
+  name: string;
+  /** Their furniture as the server sent it; vetted with parseLayout. */
+  home: unknown;
+}
+
+/** How HomeScene was entered. */
+export interface HomeData {
+  from?: string;
+  petFollowing?: boolean;
+  visit?: HomeVisit;
+  resumeAt?: { x: number; y: number };
+}
 
 /** Something the player can walk up to and press E on. */
 interface Interactable {
@@ -60,17 +82,37 @@ export class HomeScene extends Phaser.Scene {
   /** True while the pet is away working a shift: hidden, paused, not interactable. */
   private petAway = false;
 
-  init(data: { from?: string; petFollowing?: boolean }): void {
+  /** Visiting someone else's apartment (online): whose, and their furniture as the server sent it. */
+  private visit: HomeVisit | null = null;
+  /** Where to put the player back after decorating. */
+  private resumeAt: { x: number; y: number } | null = null;
+  private catalog: FurnitureItem[] = [];
+  /** This apartment's furniture (ours, or the host's when visiting). */
+  private layout!: HomeLayout;
+  /** Everything drawn for the furniture, hidden while decorating. */
+  private furnitureObjs: Phaser.GameObjects.GameObject[] = [];
+  private decorator: HomeDecorator | null = null;
+  private others: RemotePlayers | null = null;
+
+  init(data: HomeData): void {
     this.arrivedFrom = data?.from ?? null;
     this.petCameAlong = data?.petFollowing === true;
+    this.visit = data?.visit ?? null;
+    this.resumeAt = data?.resumeAt ?? null;
     this.leaving = false;
+    this.decorator = null;
+    this.furnitureObjs = [];
   }
 
   preload(): void {
-    this.room = parseRoom(homeJson, parseCatalog(furnitureJson));
-    const { background, furniture } = this.room;
-    this.load.image(background, `assets/home/${background}.png`);
-    for (const f of furniture) this.load.image(f.sprite, `assets/home/${f.sprite}.png`);
+    // Every catalog piece: the layout (ours or a host's) is only known in create().
+    this.catalog = parseCatalog(furnitureJson);
+    this.load.image(homeJson.background, `assets/home/${homeJson.background}.png`);
+    preloadBackdrop(this, homeJson.backdrop ?? null);
+    for (const f of this.catalog) {
+      this.load.image(f.sprite, `assets/home/${f.sprite}.png`);
+      if (f.shadow) this.load.image(f.shadow.sprite, `assets/home/${f.shadow.sprite}.png`);
+    }
     // Species art is chosen in create() once the save is known; preload every file-based sprite set.
     for (const a of Object.values(art)) if (a !== AVATAR_ART) loadCharacter(this, a);
   }
@@ -78,11 +120,15 @@ export class HomeScene extends Phaser.Scene {
   create(): void {
     const svc = services(this);
     const t = (k: string, v?: Record<string, string | number>) => services(this).i18n.t(k, v);
-    const { background, width, height, gridSize, furniture, player: p, pet: petDef } = this.room;
     this.world = svc.loadGame();
+    const starter = defaultLayout(homeJson.placements);
+    this.layout = (this.visit ? parseLayout(this.visit.home, this.catalog) : parseLayout(this.world.state.home, this.catalog)) ?? starter;
+    this.room = parseRoom({ ...homeJson, placements: this.layout.placements }, this.catalog);
+    const { background, width, height, gridSize, furniture, player: p, pet: petDef } = this.room;
     this.cameras.main.setBackgroundColor(ui.ink);
 
     // The painted room; walls are invisible static bodies; the camera centres the (small) room.
+    addBackdrop(this, this.room.backdrop);
     this.add.image(0, 0, background).setOrigin(0, 0).setDepth(-1000);
     const walls = this.physics.add.staticGroup();
     for (const r of wallRects(this.room)) {
@@ -96,12 +142,14 @@ export class HomeScene extends Phaser.Scene {
     // Furniture: solid pieces block with their lower half and depth-sort by their bottom edge.
     const solids = this.physics.add.staticGroup();
     for (const f of furniture) {
+      if (f.shadow) this.furnitureObjs.push(this.add.image(f.x + f.shadow.dx, f.y + f.shadow.dy, f.shadow.sprite).setOrigin(0, 0).setDepth(SHADOW_DEPTH));
       if (f.solid) {
         const s = solids.create(f.x, f.y, f.sprite) as Phaser.Physics.Arcade.Sprite;
         s.setDepth(f.y + f.h / 2);
         (s.body as Phaser.Physics.Arcade.StaticBody).setSize(f.w, f.h / 2).setOffset(0, f.h / 2);
+        this.furnitureObjs.push(s);
       } else {
-        this.add.image(f.x, f.y, f.sprite).setDepth(-500);
+        this.furnitureObjs.push(this.add.image(f.x, f.y, f.sprite).setDepth(pieceDepth(f, f.y)));
       }
     }
     this.bowl = furniture.find((f) => f.use?.kind === 'eat') ?? null;
@@ -109,7 +157,9 @@ export class HomeScene extends Phaser.Scene {
       this.bowlLabel = this.add
         .text(this.bowl.x, this.bowl.y + this.bowl.h / 2 - 2, '', { ...textStyle(true, 9), color: ui.panel, backgroundColor: ui.ink, padding: { x: 2, y: 0 } })
         .setOrigin(0.5, 0)
-        .setDepth(-400);
+        .setDepth(-400)
+        .setVisible(!this.visit); // the host's bowl count is not ours to show
+      this.furnitureObjs.push(this.bowlLabel);
       this.refreshBowl();
     }
 
@@ -118,8 +168,8 @@ export class HomeScene extends Phaser.Scene {
     if (playerArt === AVATAR_ART) buildAvatar(this, savedAppearance(this.world));
     createCharacterAnims(this, playerArt, p.walkFps);
     const door = this.room.exits.find((e) => e.to === this.arrivedFrom);
-    const spawn = door ? door.arrive : p;
-    this.facing = door ? 'up' : 'down';
+    const spawn = this.resumeAt ?? (door ? door.arrive : p);
+    this.facing = door && !this.resumeAt ? 'up' : 'down';
     this.player = this.physics.add.sprite(spawn.x, spawn.y, `${playerArt.name}_idle_${this.facing}`);
     this.player.body.setSize(16, 10).setOffset(16, 34);
     this.player.setCollideWorldBounds(true);
@@ -152,8 +202,8 @@ export class HomeScene extends Phaser.Scene {
     }
     this.physics.add.collider(this.pet.sprite, walls);
     this.physics.add.collider(this.pet.sprite, solids);
-    // A pet on a shift is at its workplace, not at home.
-    this.petAway = this.world.state.creatures.find((c) => c.id === petDef.creatureId)?.status === 'working';
+    // A pet on a shift is at its workplace, not at home; and our pet is not in someone else's apartment.
+    this.petAway = this.visit !== null || this.world.state.creatures.find((c) => c.id === petDef.creatureId)?.status === 'working';
     if (this.petAway) {
       this.pet.setPaused(true);
       this.pet.sprite.setVisible(false);
@@ -165,6 +215,16 @@ export class HomeScene extends Phaser.Scene {
     const letter = this.add.text(0, 0, t('pet.hint'), textStyle(true)).setOrigin(0.5);
     this.hint = this.add.container(0, 0, [bubble, letter]).setDepth(45_000).setVisible(false);
     this.tweens.add({ targets: this.hint, scale: 1.15, yoyo: true, repeat: -1, duration: 450 });
+
+    // Online: whoever else is in this apartment (the host and other visitors).
+    const session = this.registry.get(SESSION_KEY) as WorldSession | undefined;
+    if (session) {
+      const owner = this.visit?.accountId ?? session.accountId;
+      this.others = new RemotePlayers(this, session.room, `home:${owner}`, JSON.stringify(savedAppearance(this.world)), p.walkFps);
+    } else {
+      this.others = null;
+    }
+    if (this.visit) new HudChip(this, this.cameras.main.width / 2, 4, { anchor: 'topCenter', fixed: true, depth: 60_000 }).setText(t('home.visiting', { name: this.visit.name }));
 
     this.keys = new Keys(this);
     // Coming back from an overlay: drop the key press that closed it.
@@ -179,6 +239,12 @@ export class HomeScene extends Phaser.Scene {
 
   update(_t: number, dt: number): void {
     if (this.leaving) return;
+    this.others?.update({ x: this.player.x, y: this.player.y, facing: this.facing, moving: this.player.body.velocity.lengthSq() > 0 }, this.time.now);
+    if (this.decorator) {
+      this.player.setVelocity(0, 0);
+      this.decorator.update(dt);
+      return;
+    }
     if (!this.petAway) this.pet.update(dt);
     const input = this.keys.read();
 
@@ -231,7 +297,7 @@ export class HomeScene extends Phaser.Scene {
   /** The closest interactable in reach, or null. */
   private nearest(): Interactable | null {
     const list: Interactable[] = this.petAway ? [] : [{ x: this.pet.sprite.x, y: this.pet.sprite.y, open: () => this.openPetMenu() }];
-    if (this.bowl) list.push({ x: this.bowl.x, y: this.bowl.y, open: () => this.openBowlMenu() });
+    if (this.bowl && !this.visit) list.push({ x: this.bowl.x, y: this.bowl.y, open: () => this.openBowlMenu() });
     let best: Interactable | null = null;
     let bestD = this.room.player.interactRange;
     for (const it of list) {
@@ -351,6 +417,7 @@ export class HomeScene extends Phaser.Scene {
   private openPause(): void {
     const items: MenuItem[] = [
       { label: () => this.t('pause.resume'), onSelect: () => this.closePanel() },
+      ...(this.visit ? [] : [{ label: () => this.t('decor.start'), onSelect: () => this.startDecorating() }]),
       {
         label: () => this.t('pause.options'),
         onSelect: () => {
@@ -402,6 +469,35 @@ export class HomeScene extends Phaser.Scene {
       // Waking up frees the creature again; energy recovery over time is Story 004.
       this.world.creature(id).status = 'idle';
       this.world.save();
+    });
+  }
+
+  // ---- decorating -------------------------------------------------------------------
+
+  /** Arrange our own furniture (src/scenes/HomeDecorator.ts). */
+  private startDecorating(): void {
+    this.closePanel();
+    this.hint.setVisible(false);
+    this.pet.setPaused(true);
+    this.player.setVisible(false);
+    for (const o of this.furnitureObjs) (o as unknown as { setVisible(v: boolean): void }).setVisible(false);
+    this.decorator = new HomeDecorator(this, {
+      catalog: this.catalog,
+      plan: this.room,
+      layout: this.layout,
+      keys: this.keys,
+      t: (k, v) => this.t(k, v),
+      onChange: (layout) => {
+        this.layout = layout;
+        this.world.state.home = layout;
+        this.world.save();
+      },
+      // Rebuild the room (bodies, pet paths, use spots) from the new layout.
+      onExit: () => {
+        this.decorator?.destroy();
+        this.decorator = null;
+        this.scene.restart({ resumeAt: { x: this.player.x, y: this.player.y }, petFollowing: false } satisfies HomeData);
+      },
     });
   }
 

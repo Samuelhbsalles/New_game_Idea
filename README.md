@@ -17,9 +17,14 @@ doing the same in a shared online town.
 ### Your character and home
 - **Character creator** — pick a body, hairstyle, top and bottom, plus skin,
   hair and clothing colours. Your look is built from layered sprites at runtime.
-- **A cottage to call home**, with a pet that lives its own life: it wanders,
-  naps in its bed, lounges on the armchair, eats from its bowl, asks to be
-  petted, and can follow you outside.
+- **Your own apartment** in the town's apartment building. Everyone starts
+  in the same cosy flat, but each player has their own copy.
+- **Decorate it, Habbo-style:** pick furniture up, move it around, pack it
+  away and bring it back out (pause menu → Decorate). Pieces can't block the
+  door or stand inside each other, and rugs lie underneath everything.
+- **A pet** that lives its own life: it wanders, naps in its bed, lounges on
+  the armchair, eats from its bowl, asks to be petted, and can follow you
+  outside.
 
 ### The town
 - **A walkable town** with ten buildings (bakery, café, market, factory,
@@ -63,9 +68,11 @@ doing the same in a shared online town.
   the browser.
 - On your first login, an existing browser save moves into your new account
   automatically.
-- **You can see other players.** Everyone in the same place (the town or a
-  building) appears with their own look and a name tag, walking around in
-  real time.
+- **You can see other players.** Everyone in the same place (the town, a
+  building or an apartment) appears with their own look and a name tag,
+  walking around in real time.
+- **Visit your neighbours:** at the apartment building's door, choose a
+  player who is online and walk around their apartment as they arranged it.
 
 ### Also included
 - English and Brazilian Portuguese (switch in Options).
@@ -171,14 +178,15 @@ production/     stories, QA evidence screenshots
 
 **Done:** town, home and pet, character creator, building interiors with
 work shifts, creature data and bait-based catching, market, game clock,
-crisp pixel UI, and the first two online steps (server, login, saves in a
-database, and seeing other players walk around).
+crisp pixel UI, the first two online steps (server, login, saves in a
+database, and seeing other players walk around), apartments with
+decorating, and visiting other players' apartments.
 
 **Up next (planned, not built yet):**
 - The server applying the game rules itself (fair play), and work stations
   shared by all players
-- Apartment building: every player starts in their own small apartment, with
-  upgrades and visits
+- A furniture shop, bigger apartments to move into, and a classifieds board
+  where players sell furniture to each other
 - Dialogue with townsfolk, friendship and visiting their homes
 - Creature energy and resting, and the album screen
 - Sprites for more species, plus new areas (lake, shore, countryside)

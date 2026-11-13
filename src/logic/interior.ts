@@ -47,6 +47,8 @@ export interface InteriorDef extends FloorPlan {
   effect: WorkEffect;
   /** A shop counter the player trades at (the market), or null. */
   counter: Counter | null;
+  /** Texture tiled around the room picture (public/assets/backdrops/<key>.png), or null. */
+  backdrop: string | null;
 }
 
 /** Where the player trades, and what the shelves stock (item ids, one menu per shelf). */
@@ -166,7 +168,8 @@ export function parseInteriors(raw: unknown, shops: { id: string; slots: number 
       });
       counter = { x: num(c, 'x', cp, 0), y: num(c, 'y', cp, 0), shelves };
     }
-    out[id] = { id, shopId, dir: str(o, 'dir', p), width, height, gridSize, walkable, exits, pieces, stations, effect, counter };
+    const backdrop = o.backdrop === undefined ? null : str(o, 'backdrop', p);
+    out[id] = { id, shopId, dir: str(o, 'dir', p), width, height, gridSize, walkable, exits, pieces, stations, effect, counter, backdrop };
   }
   return out;
 }

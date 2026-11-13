@@ -10,9 +10,16 @@ export const MAX_SAVE_BYTES = 256 * 1024;
 
 /** Answer to the 'load' request. */
 export interface LoadReply {
+  accountId: string;
   displayName: string;
   /** Their save, or null for a brand-new account. */
   save: string | null;
+}
+
+/** Answer to the 'homeOf' request: whose apartment, and its furniture as saved (the client vets it against the catalog). */
+export interface HomeOfReply {
+  name: string;
+  home: unknown;
 }
 
 /** Answer to the 'save' and 'import' requests. */
@@ -47,7 +54,21 @@ export class WorldRoom extends Room<{ state: WorldState }> {
     this.onMessage('load', (client): LoadReply | null => {
       const auth = client.auth as AuthData | undefined;
       if (!auth) return null;
-      return { displayName: auth.account.displayName, save: world().accounts.loadSave(auth.account.id) };
+      return { accountId: auth.account.id, displayName: auth.account.displayName, save: world().accounts.loadSave(auth.account.id) };
+    });
+    // Visiting: another player's apartment furniture (and name), read from their save.
+    this.onMessage('homeOf', (_client, raw: unknown): HomeOfReply | null => {
+      const accountId = typeof raw === 'object' && raw !== null ? (raw as { accountId?: unknown }).accountId : null;
+      if (typeof accountId !== 'string') return null;
+      const found = world().accounts.findById(accountId);
+      if (!found) return null;
+      let home: unknown = null;
+      try {
+        home = found.save ? ((JSON.parse(found.save) as { home?: unknown }).home ?? null) : null;
+      } catch {
+        home = null;
+      }
+      return { name: found.displayName, home };
     });
     this.onMessage('save', (client, data: unknown) => this.store(client, data, false));
     // Phase 2, presence: where each player is and how they look, shared with everyone.
@@ -70,7 +91,7 @@ export class WorldRoom extends Room<{ state: WorldState }> {
   }
 
   onJoin(client: Client, _options: unknown, auth: AuthData): void {
-    this.state.players.set(client.sessionId, new PlayerState({ name: auth.account.displayName, place: '', x: 0, y: 0, face: 'down', moving: false, look: '' }));
+    this.state.players.set(client.sessionId, new PlayerState({ account: auth.account.id, name: auth.account.displayName, place: '', x: 0, y: 0, face: 'down', moving: false, look: '' }));
   }
 
   onLeave(client: Client): void {

@@ -58,7 +58,28 @@ describe('world room (phase 1: accounts and saves on the server)', () => {
   it('a new player gets an account with no save', async () => {
     const room = await join('Ana');
     const reply = (await room.request('load')) as LoadReply;
-    expect(reply).toEqual({ displayName: 'Ana', save: null });
+    expect(reply).toMatchObject({ displayName: 'Ana', save: null });
+    expect(reply.accountId).toMatch(/[0-9a-f-]{36}/);
+  });
+
+  it('a visitor can read another player’s apartment furniture, not their whole save', async () => {
+    const host = await join('Host');
+    const hostId = ((await host.request('load')) as LoadReply).accountId;
+    const game = newGame(config, createFakeClock(1_700_000_000_000));
+    game.home = { placements: [{ item: 'bed', x: 60, y: 80 }], stored: { rug: 1 } };
+    expect(await host.request('save', serialize(game))).toEqual({ ok: true });
+    const guest = await join('Guest');
+    expect(await guest.request('homeOf', { accountId: hostId })).toEqual({ name: 'Host', home: game.home });
+    expect(await guest.request('homeOf', { accountId: 'nobody' })).toBeNull();
+    expect(await guest.request('homeOf', 'junk')).toBeNull();
+  });
+
+  it('each player in the shared state carries their account id (for visits)', async () => {
+    const ana = await join('Ana');
+    const anaId = ((await ana.request('load')) as LoadReply).accountId;
+    const bo = await join('Bo');
+    await until(() => (bo.state as WorldState).players.has(ana.sessionId));
+    expect((bo.state as WorldState).players.get(ana.sessionId)?.account).toBe(anaId);
   });
 
   it('a save sent by the client comes back on the next login', async () => {

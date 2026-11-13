@@ -3,6 +3,8 @@ import { schema, t, type SchemaType } from '@colyseus/schema';
 /** One connected player as everyone else sees them. */
 export const PlayerState = schema(
   {
+    /** Their account id: how others visit their apartment. */
+    account: t.string(),
     name: t.string(),
     /** Where they are: 'town', 'interior:<building>' ('' until their first move). */
     place: t.string(),

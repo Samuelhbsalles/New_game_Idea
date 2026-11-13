@@ -3,6 +3,7 @@ import type { Storage } from '../logic/storage';
 
 /** Answer to the server's 'load' request (server/src/rooms/WorldRoom.ts). */
 interface LoadReply {
+  accountId: string;
   displayName: string;
   save: string | null;
 }
@@ -37,12 +38,25 @@ export class RemoteStorage implements Storage {
   }
 }
 
+/** Another player's apartment as the server returns it (furniture still to be vetted). */
+export interface HomeOf {
+  name: string;
+  home: unknown;
+}
+
+/** Fetches another player's apartment furniture for a visit; null if there is no such player. */
+export async function fetchHomeOf(room: Room, accountId: string): Promise<HomeOf | null> {
+  return ((await room.request('homeOf', { accountId })) as HomeOf | null) ?? null;
+}
+
 /** Game-registry key of the logged-in WorldSession. */
 export const SESSION_KEY = 'world-session';
 
 /** A logged-in session in the shared world. */
 export interface WorldSession {
   room: Room;
+  /** Our account id: our apartment is 'home:<accountId>'. */
+  accountId: string;
   displayName: string;
   storage: RemoteStorage;
   /** True when this login moved the browser's old save into a brand-new account. */
@@ -75,5 +89,5 @@ export async function joinWorld(token: string, localSave: Storage, onSaveError?:
       imported = true;
     }
   }
-  return { room, displayName: reply.displayName, storage: new RemoteStorage(room, save, onSaveError), imported };
+  return { room, accountId: reply.accountId, displayName: reply.displayName, storage: new RemoteStorage(room, save, onSaveError), imported };
 }

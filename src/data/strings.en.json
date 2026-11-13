@@ -40,7 +40,7 @@
     "soonLong": "{place} opens soon!"
   },
   "places": {
-    "home": "Home",
+    "home": "Apartments",
     "bakery": "Bakery",
     "cafe": "Café",
     "market": "Market",
@@ -253,5 +253,42 @@
     "connecting": "Connecting to the world…",
     "failed": "Can't reach the server. Try again.",
     "badName": "Use 2 to 16 letters or digits"
+  },
+  "decor": {
+    "start": "Decorate",
+    "title": "Decorating",
+    "help": "Arrows cursor · E pick up/put down · G store · I stored · Esc leave",
+    "inventory": "Stored furniture",
+    "storedRow": "{name} ({count})",
+    "nothingStored": "Nothing stored",
+    "close": "Close",
+    "no": {
+      "outside": "It doesn't fit there",
+      "overlap": "Something's already there",
+      "door": "Keep the door clear",
+      "unknown": "Unknown piece"
+    }
+  },
+  "home": {
+    "visiting": "{name}'s apartment",
+    "buildingTitle": "Apartments",
+    "mine": "My apartment",
+    "visit": "Visit a neighbour",
+    "neighbours": "Who do you want to visit?",
+    "nobody": "Nobody is online right now",
+    "visitFailed": "Couldn't visit right now",
+    "close": "Close"
+  },
+  "furniture": {
+    "bed": "Bed",
+    "armchair": "Armchair",
+    "bookshelf": "Bookshelf",
+    "plant": "Plant",
+    "petbed": "Pet bed",
+    "bowl": "Bowl",
+    "sofa": "Sofa",
+    "table": "Table",
+    "rug": "Rug",
+    "cottage_rug": "Cottage rug"
   }
 }

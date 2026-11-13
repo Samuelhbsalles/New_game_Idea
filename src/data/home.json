@@ -1,24 +1,82 @@
 {
-  "background": "home_cottage_floor",
+  "background": "home_cottage_floor_bare",
   "width": 256,
   "height": 256,
   "gridSize": 16,
   "walkable": [
-    { "x": 16, "y": 48, "w": 224, "h": 192 },
-    { "x": 112, "y": 240, "w": 32, "h": 16 }
+    {
+      "x": 16,
+      "y": 48,
+      "w": 224,
+      "h": 192
+    },
+    {
+      "x": 112,
+      "y": 240,
+      "w": 32,
+      "h": 16
+    }
   ],
   "exits": [
-    { "to": "town", "rect": { "x": 112, "y": 242, "w": 32, "h": 14 }, "arrive": { "x": 128, "y": 206 } }
+    {
+      "to": "town",
+      "rect": {
+        "x": 112,
+        "y": 242,
+        "w": 32,
+        "h": 14
+      },
+      "arrive": {
+        "x": 128,
+        "y": 206
+      }
+    }
   ],
   "placements": [
-    { "item": "bed", "x": 48.5, "y": 72.5 },
-    { "item": "bookshelf", "x": 214.5, "y": 60 },
-    { "item": "petbed", "x": 38, "y": 145 },
-    { "item": "armchair", "x": 222, "y": 156.5 },
-    { "item": "plant", "x": 37.5, "y": 214 },
-    { "item": "bowl", "x": 84, "y": 152 }
+    {
+      "item": "cottage_rug",
+      "x": 129,
+      "y": 158.5
+    },
+    {
+      "item": "bed",
+      "x": 48.5,
+      "y": 72.5
+    },
+    {
+      "item": "bookshelf",
+      "x": 214.5,
+      "y": 60
+    },
+    {
+      "item": "petbed",
+      "x": 38,
+      "y": 145
+    },
+    {
+      "item": "armchair",
+      "x": 222,
+      "y": 156.5
+    },
+    {
+      "item": "plant",
+      "x": 37.5,
+      "y": 214
+    },
+    {
+      "item": "bowl",
+      "x": 84,
+      "y": 152
+    }
   ],
-  "player": { "character": "avatar", "x": 128, "y": 206, "speed": 72, "walkFps": 10, "interactRange": 40 },
+  "player": {
+    "character": "avatar",
+    "x": 128,
+    "y": 206,
+    "speed": 72,
+    "walkFps": 10,
+    "interactRange": 40
+  },
   "pet": {
     "creatureId": "c1",
     "x": 128,
@@ -29,15 +87,44 @@
     "followDistance": 26,
     "tuning": {
       "durations": {
-        "idle": [1500, 3500],
-        "wander": [2000, 4000],
-        "eat": [3000, 4500],
-        "sleep": [6000, 10000],
-        "lounge": [5000, 9000],
-        "askPet": [4000, 6000],
-        "petted": [1200, 1200]
+        "idle": [
+          1500,
+          3500
+        ],
+        "wander": [
+          2000,
+          4000
+        ],
+        "eat": [
+          3000,
+          4500
+        ],
+        "sleep": [
+          6000,
+          10000
+        ],
+        "lounge": [
+          5000,
+          9000
+        ],
+        "askPet": [
+          4000,
+          6000
+        ],
+        "petted": [
+          1200,
+          1200
+        ]
       },
-      "weights": { "idle": 2, "wander": 3, "eat": 2, "sleep": 1, "lounge": 2, "askPet": 2 }
+      "weights": {
+        "idle": 2,
+        "wander": 3,
+        "eat": 2,
+        "sleep": 1,
+        "lounge": 2,
+        "askPet": 2
+      }
     }
-  }
+  },
+  "backdrop": "backdrop_floral_paper"
 }

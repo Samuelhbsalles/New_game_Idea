@@ -149,7 +149,8 @@
   "effect": {
    "color": "#f4ead2",
    "everyMs": 500
-  }
+  },
+  "backdrop": "backdrop_brick"
  },
  "factory": {
   "shopId": "factory",
@@ -340,7 +341,8 @@
   "effect": {
    "color": "#c89a5a",
    "everyMs": 450
-  }
+  },
+  "backdrop": "backdrop_metal_plates"
  },
  "construction": {
   "shopId": "construction",
@@ -547,7 +549,8 @@
   "effect": {
    "color": "#b9ad9a",
    "everyMs": 550
-  }
+  },
+  "backdrop": "backdrop_stone_blocks"
  },
  "cafe": {
   "shopId": "cafe",
@@ -673,7 +676,8 @@
     },
     "name": "stacked crates with bags"
    }
-  ]
+  ],
+  "backdrop": "backdrop_coffee_panels"
  },
  "clothes": {
   "shopId": "clothes",
@@ -812,7 +816,8 @@
     },
     "name": "basket of yarn"
    }
-  ]
+  ],
+  "backdrop": "backdrop_plum_quilt"
  },
  "petPharmacy": {
   "shopId": "petPharmacy",
@@ -964,7 +969,8 @@
     },
     "name": "stack of wooden crates"
    }
-  ]
+  ],
+  "backdrop": "backdrop_green_tiles"
  },
  "hotel": {
   "shopId": "hotel",
@@ -1129,7 +1135,8 @@
     },
     "name": "mop bucket"
    }
-  ]
+  ],
+  "backdrop": "backdrop_slate_tiles"
  },
  "careHome": {
   "shopId": "careHome",
@@ -1281,7 +1288,8 @@
     },
     "name": "potted spider plant"
    }
-  ]
+  ],
+  "backdrop": "backdrop_striped_paper"
  },
  "market": {
   "shopId": "market",
@@ -1475,6 +1483,7 @@
      ]
     }
    ]
-  }
+  },
+  "backdrop": "backdrop_warm_planks"
  }
 }

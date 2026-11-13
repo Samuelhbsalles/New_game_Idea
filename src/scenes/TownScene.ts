@@ -14,7 +14,8 @@ import { buildNavGrid } from '../logic/npcMind';
 import { arrivalPoint, doorAt, parseTown, tileFlip, townLayers, townSolids, type Building, type TownDef } from '../logic/town';
 import { AVATAR_ART, buildAvatar, savedAppearance } from './avatar';
 import { addClock } from './clockHud';
-import { SESSION_KEY, type WorldSession } from '../net/world';
+import { fetchHomeOf, SESSION_KEY, type WorldSession } from '../net/world';
+import type { HomeData } from './HomeScene';
 import { openOverlay } from './overlay';
 import { RemotePlayers } from './RemotePlayers';
 import { TownBirds } from './TownBirds';
@@ -433,8 +434,50 @@ export class TownScene extends Phaser.Scene {
     if (this.facing !== 'up' || this.player.body.velocity.y >= 0 || this.atDoor === b.id) return;
     this.atDoor = b.id;
     const place = this.map.places.find((p) => p.id === b.id);
+    // The apartment building, online: your own apartment, or visit a neighbour's.
+    if (b.id === 'home' && this.registry.get(SESSION_KEY)) return this.openApartments(b);
     if (place?.status === 'open' && place.scene) return this.enter(place.scene, b.id);
     this.toast(b, services(this).i18n.t('map.soonLong', { place: services(this).i18n.t(`places.${b.id}`) }));
+  }
+
+  /** "My apartment" / "Visit a neighbour" at the apartment building's door. */
+  private openApartments(b: Building): void {
+    const t = (k: string, v?: Record<string, string | number>) => services(this).i18n.t(k, v);
+    this.player.setVelocity(0, 0);
+    const items: MenuItem[] = [
+      { label: () => t('home.mine'), onSelect: () => (this.closePanel(), this.enter('HomeScene', 'home')) },
+      { label: () => t('home.visit'), onSelect: () => this.openNeighbours(b) },
+      { label: () => t('home.close'), onSelect: () => this.closePanel() },
+    ];
+    this.panel?.destroy();
+    this.panel = new MenuPanel(this, { title: t('home.buildingTitle'), items, help: t('work.help'), anchor: { kind: 'center' } });
+  }
+
+  /** Everyone online but us, once per account, to visit. */
+  private openNeighbours(b: Building): void {
+    const t = (k: string, v?: Record<string, string | number>) => services(this).i18n.t(k, v);
+    const session = this.registry.get(SESSION_KEY) as WorldSession;
+    const seen = new Map<string, string>();
+    (session.room.state as { players?: Map<string, { account: string; name: string }> }).players?.forEach((p) => {
+      if (p.account && p.account !== session.accountId) seen.set(p.account, p.name);
+    });
+    const items: MenuItem[] = [...seen].map(([accountId, name]) => ({ label: () => name, onSelect: () => this.visitHome(b, accountId) }));
+    items.push({ label: () => t('home.close'), onSelect: () => this.closePanel() });
+    const lines = seen.size === 0 ? [t('home.nobody')] : undefined;
+    this.panel?.destroy();
+    this.panel = new MenuPanel(this, { title: t('home.neighbours'), lines, items, help: t('work.help'), anchor: { kind: 'center' } });
+  }
+
+  private async visitHome(b: Building, accountId: string): Promise<void> {
+    const session = this.registry.get(SESSION_KEY) as WorldSession;
+    this.closePanel();
+    const host = await fetchHomeOf(session.room, accountId).catch(() => null);
+    if (!host) return this.toast(b, services(this).i18n.t('home.visitFailed'));
+    this.leaving = true;
+    this.cameras.main.fadeOut(250, 0, 0, 0);
+    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () =>
+      this.scene.start('HomeScene', { from: 'town', visit: { accountId, name: host.name, home: host.home } } satisfies HomeData),
+    );
   }
 
   private enter(scene: string, place: string): void {

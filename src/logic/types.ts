@@ -1,5 +1,6 @@
 import type { Appearance } from './appearance';
 import type { TimeConfig } from './gameTime';
+import type { HomeLayout } from './home';
 
 /** Rarity tiers (design/creatures.md): how often a species appears and how it is caught. */
 export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
@@ -120,6 +121,8 @@ export interface GameState {
   cosmetics?: string[];
   /** Species ids caught at least once (the album). Starting creatures do not count. */
   caught?: string[];
+  /** The apartment's furniture: what stands where and what is stored. Missing = the starter layout. */
+  home?: HomeLayout;
   /** Timestamp (ms) at which in-game day 1 began. Optional so older saves load (filled in on load). */
   worldStartAt?: number;
 }

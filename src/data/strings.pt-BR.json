@@ -40,7 +40,7 @@
     "soonLong": "{place} abre em breve!"
   },
   "places": {
-    "home": "Casa",
+    "home": "Apartamentos",
     "bakery": "Padaria",
     "cafe": "Café",
     "market": "Mercado",
@@ -253,5 +253,42 @@
     "connecting": "Conectando ao mundo…",
     "failed": "Sem conexão com o servidor. Tente de novo.",
     "badName": "Use de 2 a 16 letras ou números"
+  },
+  "decor": {
+    "start": "Decorar",
+    "title": "Decorando",
+    "help": "Setas cursor · E pegar/soltar · G guardar · I guardados · Esc sair",
+    "inventory": "Móveis guardados",
+    "storedRow": "{name} ({count})",
+    "nothingStored": "Nada guardado",
+    "close": "Fechar",
+    "no": {
+      "outside": "Não cabe aí",
+      "overlap": "Tem outro móvel aí",
+      "door": "Deixe a porta livre",
+      "unknown": "Móvel desconhecido"
+    }
+  },
+  "home": {
+    "visiting": "Apartamento de {name}",
+    "buildingTitle": "Apartamentos",
+    "mine": "Meu apartamento",
+    "visit": "Visitar um vizinho",
+    "neighbours": "Quem você quer visitar?",
+    "nobody": "Ninguém online agora",
+    "visitFailed": "Não deu para visitar agora",
+    "close": "Fechar"
+  },
+  "furniture": {
+    "bed": "Cama",
+    "armchair": "Poltrona",
+    "bookshelf": "Estante",
+    "plant": "Planta",
+    "petbed": "Caminha do pet",
+    "bowl": "Potinho",
+    "sofa": "Sofá",
+    "table": "Mesa",
+    "rug": "Tapete",
+    "cottage_rug": "Tapete da casa"
   }
 }

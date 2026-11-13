@@ -50,6 +50,12 @@ export class AccountStore {
     return { id, platform: identity.platform, platformUserId: identity.userId, displayName: identity.displayName };
   }
 
+  /** An account's public name and save by id, or null if there is no such account. */
+  findById(accountId: string): { displayName: string; save: string | null } | null {
+    const row = this.db.prepare('SELECT display_name, save FROM accounts WHERE id = ?').get(accountId) as { display_name: string; save: string | null } | undefined;
+    return row ? { displayName: row.display_name, save: row.save } : null;
+  }
+
   /** The account's save string, or null when it has none yet. */
   loadSave(accountId: string): string | null {
     const row = this.db.prepare('SELECT save FROM accounts WHERE id = ?').get(accountId) as { save: string | null } | undefined;

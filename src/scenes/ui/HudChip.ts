@@ -3,7 +3,7 @@ import ui from '../../data/ui.json';
 import { textStyle } from './MenuPanel';
 
 /** Where the chip hangs from its x,y. */
-export type ChipAnchor = 'topLeft' | 'topRight' | 'bottomCenter';
+export type ChipAnchor = 'topLeft' | 'topRight' | 'topCenter' | 'bottomCenter';
 
 export interface HudChipOptions {
   anchor: ChipAnchor;
@@ -49,7 +49,7 @@ export class HudChip {
     this.label.setText(text).setColor(c);
     const w = Math.ceil(this.label.width) + PAD_X * 2;
     const h = Math.ceil(this.label.height) + PAD_Y * 2;
-    const left = this.opts.anchor === 'topLeft' ? 0 : this.opts.anchor === 'topRight' ? -w : -Math.round(w / 2);
+    const left = this.opts.anchor === 'topLeft' ? 0 : this.opts.anchor === 'topRight' ? -w : -Math.round(w / 2); // centred anchors
     const top = this.opts.anchor === 'bottomCenter' ? -h : 0;
     this.label.setPosition(left + PAD_X, top + PAD_Y);
     this.bg.clear();
