@@ -1,4 +1,5 @@
 import { gameHoursToMs, parseTimeConfig } from './gameTime';
+import { COINS_PRODUCT } from './work';
 import type { Config, Item, Shop, Species, StartConfig } from './types';
 
 type Obj = Record<string, unknown>;
@@ -103,10 +104,11 @@ export function parseConfig(raw: { species: unknown; shops: unknown; items: unkn
   uniqueIds(species, 'species');
   uniqueIds(shops, 'shops');
   uniqueIds(items, 'items');
+  if (items.some((i) => i.id === COINS_PRODUCT)) fail('items', `"${COINS_PRODUCT}" is reserved for coin-paying workplaces`);
   const itemIds = new Set(items.map((i) => i.id));
   const speciesIds = new Set(species.map((s) => s.id));
   const shopIds = new Set(shops.map((s) => s.id));
-  for (const s of shops) if (!itemIds.has(s.productItemId)) fail(`shops.${s.id}.productItemId`, `unknown item "${s.productItemId}"`);
+  for (const s of shops) if (s.productItemId !== COINS_PRODUCT && !itemIds.has(s.productItemId)) fail(`shops.${s.id}.productItemId`, `unknown item "${s.productItemId}"`);
   for (const s of species) for (const k of Object.keys(s.affinities)) if (!shopIds.has(k)) fail(`species.${s.id}.affinities`, `unknown shop "${k}"`);
   for (const k of Object.keys(start.inventory)) if (!itemIds.has(k)) fail('start.inventory', `unknown item "${k}"`);
   for (const id of start.creatures) if (!speciesIds.has(id)) fail('start.creatures', `unknown species "${id}"`);

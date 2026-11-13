@@ -1,5 +1,8 @@
 import type { Shop, Species } from './types';
 
+/** Reserved productItemId: the shift pays coins instead of yielding an item. */
+export const COINS_PRODUCT = 'coins';
+
 /**
  * Items one finished shift yields:
  *   round(baseProduction × affinity × shiftHours × rate), at least 1,

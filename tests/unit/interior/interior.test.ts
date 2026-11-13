@@ -9,7 +9,7 @@ const shops = shopsJson.map((s) => ({ id: s.id, slots: s.slots }));
 describe('interiors', () => {
   it('parses every building and gives each shop slot a station', () => {
     const all = parseInteriors(interiorsJson, shops);
-    expect(Object.keys(all).sort()).toEqual(['bakery', 'construction', 'factory']);
+    expect(Object.keys(all).sort()).toEqual(['bakery', 'cafe', 'careHome', 'clothes', 'construction', 'factory', 'hotel', 'market', 'petPharmacy']);
     for (const def of Object.values(all)) {
       expect(def.stations.length).toBe(shops.find((s) => s.id === def.shopId)!.slots);
       expect(wallRects(def).length).toBeGreaterThan(0);
@@ -20,6 +20,22 @@ describe('interiors', () => {
     const bakery = parseInteriors(interiorsJson, shops).bakery;
     expect(exitAt(bakery, { x: 128, y: 250 })?.to).toBe('town');
     expect(exitAt(bakery, { x: 128, y: 150 })).toBeNull();
+  });
+
+  it('no worker is hidden behind furniture other than the piece it works at', () => {
+    // A worker's body: about 24px wide and 36px tall above its feet.
+    for (const def of Object.values(parseInteriors(interiorsJson, shops))) {
+      def.stations.forEach((s, i) => {
+        const wp = workPoint(s, WORK_REACH);
+        for (const p of def.pieces) {
+          if (p.foot <= s.y) continue; // drawn behind the worker
+          const worksAt = wp.x >= p.x && wp.x < p.x + p.w && wp.y >= p.y && wp.y < p.y + p.h;
+          if (worksAt) continue;
+          const overlaps = s.x + 12 > p.x && s.x - 12 < p.x + p.w && s.y > p.y && s.y - 36 < p.y + p.h;
+          expect(overlaps, `${def.id} station ${i} hidden by piece ${p.n}`).toBe(false);
+        }
+      });
+    }
   });
 
   it('no station stands inside a piece of furniture', () => {

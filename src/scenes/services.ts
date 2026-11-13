@@ -53,7 +53,9 @@ function browserStorage(key: string): Storage {
 /** Builds the shared services once at boot and stores them on the game registry. */
 export function installServices(game: Phaser.Game): Services {
   const config = parseConfig({ species: creaturesJson, shops: shopsJson, items: itemsJson, start: startJson, time: timeJson });
-  const saveStorage = browserStorage(SAVE_KEY);
+  // Dev only: `?save=<name>` plays on a separate save slot, so testing never touches the real save.
+  const slot = import.meta.env.DEV ? new URLSearchParams(location.search).get('save') : null;
+  const saveStorage = browserStorage(slot ? `${SAVE_KEY}.${slot}` : SAVE_KEY);
   const settingsStorage = browserStorage(SETTINGS_KEY);
   const languages = Object.keys(TABLES);
   const browserLang = navigator.language.toLowerCase().startsWith('pt') ? 'pt-BR' : 'en';

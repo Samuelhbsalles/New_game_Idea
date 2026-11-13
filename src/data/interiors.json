@@ -190,7 +190,7 @@
   ],
   "stations": [
    {
-    "x": 80,
+    "x": 90,
     "y": 112,
     "face": "up"
    },
@@ -548,5 +548,904 @@
    "color": "#b9ad9a",
    "everyMs": 550
   }
+ },
+ "cafe": {
+  "shopId": "cafe",
+  "dir": "cafe",
+  "width": 256,
+  "height": 256,
+  "gridSize": 16,
+  "blockDepth": 14,
+  "blockInset": 3,
+  "walkable": [
+   {
+    "x": 16,
+    "y": 48,
+    "w": 224,
+    "h": 192
+   },
+   {
+    "x": 112,
+    "y": 240,
+    "w": 32,
+    "h": 16
+   }
+  ],
+  "exits": [
+   {
+    "to": "town",
+    "rect": {
+     "x": 112,
+     "y": 242,
+     "w": 32,
+     "h": 14
+    },
+    "arrive": {
+     "x": 128,
+     "y": 222
+    }
+   }
+  ],
+  "stations": [
+   {
+    "x": 75,
+    "y": 118,
+    "face": "up"
+   },
+   {
+    "x": 190,
+    "y": 140,
+    "face": "down"
+   },
+   {
+    "x": 100,
+    "y": 210,
+    "face": "left"
+   }
+  ],
+  "effect": {
+   "color": "#8a6440",
+   "everyMs": 500
+  },
+  "pieces": [
+   {
+    "n": "01",
+    "x": 16,
+    "y": 11,
+    "w": 223,
+    "h": 109,
+    "foot": 106,
+    "shadow": {
+     "x": 16,
+     "y": 31
+    },
+    "name": "iron stove with pipe"
+   },
+   {
+    "n": "02",
+    "x": 38,
+    "y": 118,
+    "w": 66,
+    "h": 69,
+    "foot": 174,
+    "shadow": {
+     "x": 48,
+     "y": 130
+    },
+    "name": "round table with coffee pot and cups"
+   },
+   {
+    "n": "03",
+    "x": 140,
+    "y": 108,
+    "w": 112,
+    "h": 69,
+    "foot": 164,
+    "shadow": {
+     "x": 150,
+     "y": 117
+    },
+    "name": "counter with coffee grinder and scale"
+   },
+   {
+    "n": "04",
+    "x": 5,
+    "y": 179,
+    "w": 82,
+    "h": 72,
+    "foot": 239,
+    "shadow": {
+     "x": 16,
+     "y": 190
+    },
+    "name": "pile of coffee sacks"
+   },
+   {
+    "n": "05",
+    "x": 180,
+    "y": 174,
+    "w": 72,
+    "h": 78,
+    "foot": 240,
+    "shadow": {
+     "x": 190,
+     "y": 185
+    },
+    "name": "stacked crates with bags"
+   }
+  ]
+ },
+ "clothes": {
+  "shopId": "clothes",
+  "dir": "clothes",
+  "width": 256,
+  "height": 256,
+  "gridSize": 16,
+  "blockDepth": 14,
+  "blockInset": 3,
+  "walkable": [
+   {
+    "x": 16,
+    "y": 48,
+    "w": 224,
+    "h": 192
+   },
+   {
+    "x": 112,
+    "y": 240,
+    "w": 32,
+    "h": 16
+   }
+  ],
+  "exits": [
+   {
+    "to": "town",
+    "rect": {
+     "x": 112,
+     "y": 242,
+     "w": 32,
+     "h": 14
+    },
+    "arrive": {
+     "x": 128,
+     "y": 222
+    }
+   }
+  ],
+  "stations": [
+   {
+    "x": 50,
+    "y": 126,
+    "face": "up"
+   },
+   {
+    "x": 136,
+    "y": 104,
+    "face": "up"
+   },
+   {
+    "x": 190,
+    "y": 150,
+    "face": "right"
+   }
+  ],
+  "effect": {
+   "color": "#f2e6d8",
+   "everyMs": 450
+  },
+  "pieces": [
+   {
+    "n": "01",
+    "x": 8,
+    "y": 34,
+    "w": 81,
+    "h": 93,
+    "foot": 114,
+    "shadow": {
+     "x": 18,
+     "y": 44
+    },
+    "name": "loom"
+   },
+   {
+    "n": "02",
+    "x": 79,
+    "y": 39,
+    "w": 114,
+    "h": 65,
+    "foot": 92,
+    "shadow": {
+     "x": 89,
+     "y": 48
+    },
+    "name": "sewing table with sewing machines"
+   },
+   {
+    "n": "03",
+    "x": 194,
+    "y": 30,
+    "w": 52,
+    "h": 76,
+    "foot": 93,
+    "shadow": {
+     "x": 205,
+     "y": 44
+    },
+    "name": "dress mannequin"
+   },
+   {
+    "n": "04",
+    "x": 204,
+    "y": 86,
+    "w": 48,
+    "h": 125,
+    "foot": 198,
+    "shadow": {
+     "x": 213,
+     "y": 95
+    },
+    "name": "fabric bolt shelf"
+   },
+   {
+    "n": "05",
+    "x": 7,
+    "y": 129,
+    "w": 87,
+    "h": 83,
+    "foot": 198,
+    "shadow": {
+     "x": 17,
+     "y": 140
+    },
+    "name": "round table with fabric and scissors"
+   },
+   {
+    "n": "06",
+    "x": 194,
+    "y": 193,
+    "w": 56,
+    "h": 57,
+    "foot": 237,
+    "shadow": {
+     "x": 205,
+     "y": 203
+    },
+    "name": "basket of yarn"
+   }
+  ]
+ },
+ "petPharmacy": {
+  "shopId": "petPharmacy",
+  "dir": "petPharmacy",
+  "width": 256,
+  "height": 256,
+  "gridSize": 16,
+  "blockDepth": 14,
+  "blockInset": 3,
+  "walkable": [
+   {
+    "x": 16,
+    "y": 48,
+    "w": 224,
+    "h": 192
+   },
+   {
+    "x": 112,
+    "y": 240,
+    "w": 32,
+    "h": 16
+   }
+  ],
+  "exits": [
+   {
+    "to": "town",
+    "rect": {
+     "x": 112,
+     "y": 242,
+     "w": 32,
+     "h": 14
+    },
+    "arrive": {
+     "x": 128,
+     "y": 222
+    }
+   }
+  ],
+  "stations": [
+   {
+    "x": 110,
+    "y": 140,
+    "face": "left"
+   },
+   {
+    "x": 205,
+    "y": 120,
+    "face": "down"
+   },
+   {
+    "x": 118,
+    "y": 94,
+    "face": "up"
+   }
+  ],
+  "effect": {
+   "color": "#8fcf7a",
+   "everyMs": 550
+  },
+  "pieces": [
+   {
+    "n": "01",
+    "x": 6,
+    "y": 29,
+    "w": 66,
+    "h": 63,
+    "foot": 79,
+    "shadow": {
+     "x": 16,
+     "y": 47
+    },
+    "name": "planter with purple flowers"
+   },
+   {
+    "n": "02",
+    "x": 52,
+    "y": 32,
+    "w": 82,
+    "h": 60,
+    "foot": 79,
+    "shadow": {
+     "x": 62,
+     "y": 44
+    },
+    "name": "planter with white flowers and bushes"
+   },
+   {
+    "n": "03",
+    "x": 180,
+    "y": 24,
+    "w": 71,
+    "h": 74,
+    "foot": 85,
+    "shadow": {
+     "x": 190,
+     "y": 48
+    },
+    "name": "tall bottle shelf"
+   },
+   {
+    "n": "04",
+    "x": 9,
+    "y": 75,
+    "w": 89,
+    "h": 93,
+    "foot": 157,
+    "shadow": {
+     "x": 19,
+     "y": 84
+    },
+    "name": "drying rack with herbs"
+   },
+   {
+    "n": "05",
+    "x": 161,
+    "y": 94,
+    "w": 90,
+    "h": 60,
+    "foot": 142,
+    "shadow": {
+     "x": 171,
+     "y": 104
+    },
+    "name": "table with mortar and pestle"
+   },
+   {
+    "n": "06",
+    "x": 196,
+    "y": 143,
+    "w": 55,
+    "h": 99,
+    "foot": 230,
+    "shadow": {
+     "x": 206,
+     "y": 153
+    },
+    "name": "tall planter with green shrub"
+   },
+   {
+    "n": "07",
+    "x": 6,
+    "y": 166,
+    "w": 94,
+    "h": 86,
+    "foot": 239,
+    "shadow": {
+     "x": 16,
+     "y": 176
+    },
+    "name": "stack of wooden crates"
+   }
+  ]
+ },
+ "hotel": {
+  "shopId": "hotel",
+  "dir": "hotel",
+  "width": 256,
+  "height": 256,
+  "gridSize": 16,
+  "blockDepth": 14,
+  "blockInset": 3,
+  "walkable": [
+   {
+    "x": 16,
+    "y": 48,
+    "w": 224,
+    "h": 192
+   },
+   {
+    "x": 112,
+    "y": 240,
+    "w": 32,
+    "h": 16
+   }
+  ],
+  "exits": [
+   {
+    "to": "town",
+    "rect": {
+     "x": 112,
+     "y": 242,
+     "w": 32,
+     "h": 14
+    },
+    "arrive": {
+     "x": 128,
+     "y": 222
+    }
+   }
+  ],
+  "stations": [
+   {
+    "x": 118,
+    "y": 106,
+    "face": "up"
+   },
+   {
+    "x": 200,
+    "y": 128,
+    "face": "down"
+   },
+   {
+    "x": 180,
+    "y": 200,
+    "face": "right"
+   }
+  ],
+  "effect": {
+   "color": "#d6eef7",
+   "everyMs": 450
+  },
+  "pieces": [
+   {
+    "n": "01",
+    "x": 19,
+    "y": 35,
+    "w": 75,
+    "h": 71,
+    "foot": 94,
+    "shadow": {
+     "x": 29,
+     "y": 47
+    },
+    "name": "wooden tub (left)"
+   },
+   {
+    "n": "02",
+    "x": 80,
+    "y": 36,
+    "w": 74,
+    "h": 70,
+    "foot": 94,
+    "shadow": {
+     "x": 89,
+     "y": 50
+    },
+    "name": "wooden tub (right)"
+   },
+   {
+    "n": "03",
+    "x": 180,
+    "y": 25,
+    "w": 72,
+    "h": 76,
+    "foot": 88,
+    "shadow": {
+     "x": 190,
+     "y": 51
+    },
+    "name": "towel shelf"
+   },
+   {
+    "n": "04",
+    "x": 8,
+    "y": 96,
+    "w": 71,
+    "h": 78,
+    "foot": 162,
+    "shadow": {
+     "x": 18,
+     "y": 107
+    },
+    "name": "laundry basket on wheels"
+   },
+   {
+    "n": "05",
+    "x": 154,
+    "y": 99,
+    "w": 98,
+    "h": 69,
+    "foot": 155,
+    "shadow": {
+     "x": 165,
+     "y": 112
+    },
+    "name": "ironing board with iron"
+   },
+   {
+    "n": "06",
+    "x": 194,
+    "y": 153,
+    "w": 56,
+    "h": 57,
+    "foot": 198,
+    "shadow": {
+     "x": 202,
+     "y": 158
+    },
+    "name": "laundry basket (upper)"
+   },
+   {
+    "n": "07",
+    "x": 194,
+    "y": 188,
+    "w": 56,
+    "h": 57,
+    "foot": 233,
+    "shadow": {
+     "x": 204,
+     "y": 198
+    },
+    "name": "laundry basket (lower)"
+   },
+   {
+    "n": "08",
+    "x": 12,
+    "y": 174,
+    "w": 51,
+    "h": 72,
+    "foot": 233,
+    "shadow": {
+     "x": 24,
+     "y": 186
+    },
+    "name": "mop bucket"
+   }
+  ]
+ },
+ "careHome": {
+  "shopId": "careHome",
+  "dir": "careHome",
+  "width": 256,
+  "height": 256,
+  "gridSize": 16,
+  "blockDepth": 14,
+  "blockInset": 3,
+  "walkable": [
+   {
+    "x": 16,
+    "y": 48,
+    "w": 224,
+    "h": 192
+   },
+   {
+    "x": 112,
+    "y": 240,
+    "w": 32,
+    "h": 16
+   }
+  ],
+  "exits": [
+   {
+    "to": "town",
+    "rect": {
+     "x": 112,
+     "y": 242,
+     "w": 32,
+     "h": 14
+    },
+    "arrive": {
+     "x": 128,
+     "y": 222
+    }
+   }
+  ],
+  "stations": [
+   {
+    "x": 190,
+    "y": 131,
+    "face": "up"
+   },
+   {
+    "x": 60,
+    "y": 104,
+    "face": "up"
+   },
+   {
+    "x": 132,
+    "y": 150,
+    "face": "down"
+   }
+  ],
+  "effect": {
+   "color": "#f2a7b8",
+   "everyMs": 700
+  },
+  "pieces": [
+   {
+    "n": "01",
+    "x": 7,
+    "y": 2,
+    "w": 147,
+    "h": 103,
+    "foot": 93,
+    "shadow": {
+     "x": 16,
+     "y": 14
+    },
+    "name": "bookshelf"
+   },
+   {
+    "n": "02",
+    "x": 119,
+    "y": 26,
+    "w": 96,
+    "h": 96,
+    "foot": 119,
+    "shadow": {
+     "x": 130,
+     "y": 14
+    },
+    "name": "upright piano"
+   },
+   {
+    "n": "03",
+    "x": 182,
+    "y": 24,
+    "w": 70,
+    "h": 83,
+    "foot": 94,
+    "shadow": {
+     "x": 205,
+     "y": 48
+    },
+    "name": "potted fern"
+   },
+   {
+    "n": "04",
+    "x": 28,
+    "y": 109,
+    "w": 83,
+    "h": 97,
+    "foot": 194,
+    "shadow": {
+     "x": 39,
+     "y": 120
+    },
+    "name": "green armchair"
+   },
+   {
+    "n": "05",
+    "x": 93,
+    "y": 127,
+    "w": 79,
+    "h": 87,
+    "foot": 202,
+    "shadow": {
+     "x": 102,
+     "y": 136
+    },
+    "name": "round table"
+   },
+   {
+    "n": "06",
+    "x": 161,
+    "y": 162,
+    "w": 88,
+    "h": 87,
+    "foot": 236,
+    "shadow": {
+     "x": 171,
+     "y": 161
+    },
+    "name": "red armchair"
+   },
+   {
+    "n": "07",
+    "x": 6,
+    "y": 188,
+    "w": 57,
+    "h": 62,
+    "foot": 237,
+    "shadow": {
+     "x": 16,
+     "y": 198
+    },
+    "name": "potted spider plant"
+   }
+  ]
+ },
+ "market": {
+  "shopId": "market",
+  "dir": "market",
+  "width": 256,
+  "height": 256,
+  "gridSize": 16,
+  "blockDepth": 14,
+  "blockInset": 3,
+  "walkable": [
+   {
+    "x": 16,
+    "y": 48,
+    "w": 224,
+    "h": 192
+   },
+   {
+    "x": 112,
+    "y": 240,
+    "w": 32,
+    "h": 16
+   }
+  ],
+  "exits": [
+   {
+    "to": "town",
+    "rect": {
+     "x": 112,
+     "y": 242,
+     "w": 32,
+     "h": 14
+    },
+    "arrive": {
+     "x": 128,
+     "y": 222
+    }
+   }
+  ],
+  "stations": [
+   {
+    "x": 100,
+    "y": 135,
+    "face": "down"
+   },
+   {
+    "x": 92,
+    "y": 210,
+    "face": "left"
+   },
+   {
+    "x": 163,
+    "y": 210,
+    "face": "right"
+   }
+  ],
+  "effect": {
+   "color": "#e8c98f",
+   "everyMs": 600
+  },
+  "pieces": [
+   {
+    "n": "01",
+    "x": 6,
+    "y": 158,
+    "w": 74,
+    "h": 93,
+    "foot": 238,
+    "shadow": {
+     "x": 16,
+     "y": 168
+    },
+    "name": "grain sacks pile"
+   },
+   {
+    "n": "02",
+    "x": 6,
+    "y": 37,
+    "w": 89,
+    "h": 95,
+    "foot": 118,
+    "shadow": {
+     "x": 16,
+     "y": 47
+    },
+    "name": "shelf with jars and cloth bundles"
+   },
+   {
+    "n": "03",
+    "x": 4,
+    "y": 107,
+    "w": 188,
+    "h": 63,
+    "foot": 157,
+    "shadow": {
+     "x": 16,
+     "y": 107
+    },
+    "name": "shop counter"
+   },
+   {
+    "n": "04",
+    "x": 127,
+    "y": 82,
+    "w": 124,
+    "h": 96,
+    "foot": 166,
+    "shadow": {
+     "x": 116,
+     "y": 91
+    },
+    "name": "barrels of grain"
+   },
+   {
+    "n": "05",
+    "x": 201,
+    "y": 166,
+    "w": 50,
+    "h": 51,
+    "foot": 205,
+    "shadow": {
+     "x": 212,
+     "y": 176
+    },
+    "name": "apple crate"
+   },
+   {
+    "n": "06",
+    "x": 175,
+    "y": 175,
+    "w": 49,
+    "h": 46,
+    "foot": 208,
+    "shadow": {
+     "x": 185,
+     "y": 185
+    },
+    "name": "tomato crate"
+   },
+   {
+    "n": "07",
+    "x": 175,
+    "y": 196,
+    "w": 49,
+    "h": 54,
+    "foot": 237,
+    "shadow": {
+     "x": 185,
+     "y": 209
+    },
+    "name": "cabbage crate"
+   },
+   {
+    "n": "08",
+    "x": 201,
+    "y": 192,
+    "w": 51,
+    "h": 58,
+    "foot": 237,
+    "shadow": {
+     "x": 214,
+     "y": 205
+    },
+    "name": "carrot crate"
+   }
+  ]
  }
 }

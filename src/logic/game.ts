@@ -3,7 +3,7 @@ import { deserialize, isShiftDone, newGame, serialize } from './state';
 import type { Storage } from './storage';
 import { gameTimeAt, type GameTime } from './gameTime';
 import type { Config, GameState, Shift, Shop } from './types';
-import { shiftOutput } from './work';
+import { COINS_PRODUCT, shiftOutput } from './work';
 
 /**
  * Holds state, config, clock and storage, all injected.
@@ -81,7 +81,8 @@ export class Game {
   }
 
   /**
-   * Collects a finished shift: its output goes to the inventory, the slot frees
+   * Collects a finished shift: its output goes to the inventory (or the coins,
+   * for a workplace whose product is COINS_PRODUCT), the slot frees
    * and the creature goes home tired ('resting'). Before the end it gives nothing
    * and leaves the shift running.
    */
@@ -92,10 +93,17 @@ export class Game {
     const shop = this.shop(shopId);
     const creature = this.creature(shift.creatureId);
     const count = shiftOutput(this.speciesOf(creature), shop);
-    this.state.inventory[shop.productItemId] = (this.state.inventory[shop.productItemId] ?? 0) + count;
+    if (shop.productItemId === COINS_PRODUCT) this.state.coins += count;
+    else this.state.inventory[shop.productItemId] = (this.state.inventory[shop.productItemId] ?? 0) + count;
     this.state.shifts = this.state.shifts.filter((s) => s !== shift);
     creature.status = 'resting';
     return { ok: true, itemId: shop.productItemId, count, creatureId: creature.id };
+  }
+
+  /** How many of a workplace's product the player holds (coins for coin-paying ones). */
+  productCount(shopId: string): number {
+    const id = this.shop(shopId).productItemId;
+    return id === COINS_PRODUCT ? this.state.coins : (this.state.inventory[id] ?? 0);
   }
 
   /** In-game day and time now. */

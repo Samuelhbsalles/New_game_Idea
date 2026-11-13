@@ -45,7 +45,7 @@ describe('story-001 logic core', () => {
     const config = parseConfig(rawConfig);
     expect(config.species.map((s) => s.id)).toEqual(['rabbit', 'pigeon', 'cat', 'monkey']);
     expect(config.species.find((s) => s.id === 'monkey')?.affinities.bakery).toBe(4);
-    expect(config.species.find((s) => s.id === 'pigeon')?.affinities).toEqual({});
+    expect(config.species.find((s) => s.id === 'pigeon')?.affinities.cafe).toBe(creatures.find((c) => c.id === 'pigeon')!.affinities.cafe);
     const bakery = config.shops.find((s) => s.id === 'bakery');
     expect(bakery?.slots).toBe(shops[0].slots);
     // Shift length is in game hours; a game hour is dayMs / 24 real ms.

@@ -166,7 +166,11 @@
     "planks": "Planks",
     "stone": "Stone",
     "bait": "Bait",
-    "food": "Food"
+    "food": "Food",
+    "coffee": "Coffee beans",
+    "fabric": "Fabric",
+    "herbs": "Herbs",
+    "coins": "Coins"
   },
   "clock": {
     "time": "Day {day} · {hh}:{mm}"

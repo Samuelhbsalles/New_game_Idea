@@ -21,7 +21,7 @@ export interface Shop {
   shiftHours: number;
   /** Shift length in real milliseconds, derived from shiftHours and the time config. */
   shiftMs: number;
-  /** Item a finished shift yields. */
+  /** Item a finished shift yields, or COINS_PRODUCT for workplaces that pay coins. */
   productItemId: string;
   /** Output scale: items = baseProduction × affinity × shiftHours × rate (see work.ts). */
   rate: number;

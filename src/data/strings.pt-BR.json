@@ -166,7 +166,11 @@
     "planks": "Tábuas",
     "stone": "Pedra",
     "bait": "Isca",
-    "food": "Ração"
+    "food": "Ração",
+    "coffee": "Grãos de café",
+    "fabric": "Tecido",
+    "herbs": "Ervas",
+    "coins": "Moedas"
   },
   "clock": {
     "time": "Dia {day} · {hh}:{mm}"

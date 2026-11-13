@@ -9,7 +9,7 @@ import { parseConfig } from '../../../src/logic/config';
 import { Game } from '../../../src/logic/game';
 import { gameTimeAt, parseTimeConfig } from '../../../src/logic/gameTime';
 import { MemoryStorage } from '../../../src/logic/memoryStorage';
-import { shiftOutput } from '../../../src/logic/work';
+import { COINS_PRODUCT, shiftOutput } from '../../../src/logic/work';
 
 const T = 1_700_000_000_000;
 const config = parseConfig({ species: creatures, shops, items, start, time });
@@ -90,6 +90,27 @@ describe('story-002 shifts (all workplaces)', () => {
     expect(game.state.inventory.stone).toBeUndefined();
     expect(game.shiftAt('construction', 0)).toBeDefined();
     expect(game.collectShift('construction', 1)).toEqual({ ok: false, reason: 'empty' });
+  });
+
+  it('a coin-paying workplace (hotel) adds coins, not an item', () => {
+    // Arrange
+    const { game, clock } = gameWith(['cat']);
+    const hotel = config.shops.find((s) => s.id === 'hotel')!;
+    const coinsBefore = game.state.coins;
+    game.startShift('c1', 'hotel', 0);
+    clock.advance(hotel.shiftMs);
+    // Act
+    const r = game.collectShift('hotel', 0);
+    // Assert
+    const paid = shiftOutput(sp('cat'), hotel);
+    expect(r).toEqual({ ok: true, itemId: COINS_PRODUCT, count: paid, creatureId: 'c1' });
+    expect(game.state.coins).toBe(coinsBefore + paid);
+    expect(game.state.inventory[COINS_PRODUCT]).toBeUndefined();
+    expect(game.productCount('hotel')).toBe(coinsBefore + paid);
+  });
+
+  it('"coins" cannot also be an item id', () => {
+    expect(() => parseConfig({ species: creatures, shops, items: [...items, { id: 'coins', name: 'Coins', price: 1 }], start, time })).toThrow(/reserved/);
   });
 
   it('each workplace yields its own material, and species affinities differ per job', () => {

@@ -153,7 +153,7 @@ export class InteriorScene extends Phaser.Scene {
     addClock(this, this.world, (k, v) => this.t(k, v));
     const stock = new HudChip(this, 4, 4, { anchor: 'topLeft', fixed: true, depth: 60_000 });
     const refreshStock = () =>
-      stock.setText(t('work.inventory', { item: t(`items.${shop.productItemId}`), count: this.world.state.inventory[shop.productItemId] ?? 0 }));
+      stock.setText(t('work.inventory', { item: t(`items.${shop.productItemId}`), count: this.world.productCount(def.shopId) }));
     refreshStock();
     this.events.on('stock-changed', refreshStock);
 
