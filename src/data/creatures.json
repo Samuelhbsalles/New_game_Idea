@@ -1,6 +1,6 @@
 [
-  { "id": "rabbit", "name": "Rabbit", "baseProduction": 10, "maxEnergy": 100, "affinities": {} },
+  { "id": "rabbit", "name": "Rabbit", "baseProduction": 10, "maxEnergy": 100, "affinities": { "construction": 3 } },
   { "id": "pigeon", "name": "Pigeon", "baseProduction": 8, "maxEnergy": 80, "affinities": {} },
   { "id": "cat", "name": "Cat", "baseProduction": 9, "maxEnergy": 90, "affinities": {} },
-  { "id": "monkey", "name": "Monkey", "baseProduction": 10, "maxEnergy": 90, "affinities": { "bakery": 4 } }
+  { "id": "monkey", "name": "Monkey", "baseProduction": 10, "maxEnergy": 90, "affinities": { "bakery": 4, "factory": 3 } }
 ]

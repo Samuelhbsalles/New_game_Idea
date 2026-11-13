@@ -3,6 +3,7 @@ import creaturesJson from '../data/creatures.json';
 import itemsJson from '../data/items.json';
 import shopsJson from '../data/shops.json';
 import startJson from '../data/start.json';
+import timeJson from '../data/time.json';
 import stringsEn from '../data/strings.en.json';
 import stringsPt from '../data/strings.pt-BR.json';
 import { systemClock } from '../logic/clock';
@@ -51,7 +52,7 @@ function browserStorage(key: string): Storage {
 
 /** Builds the shared services once at boot and stores them on the game registry. */
 export function installServices(game: Phaser.Game): Services {
-  const config = parseConfig({ species: creaturesJson, shops: shopsJson, items: itemsJson, start: startJson });
+  const config = parseConfig({ species: creaturesJson, shops: shopsJson, items: itemsJson, start: startJson, time: timeJson });
   const saveStorage = browserStorage(SAVE_KEY);
   const settingsStorage = browserStorage(SETTINGS_KEY);
   const languages = Object.keys(TABLES);

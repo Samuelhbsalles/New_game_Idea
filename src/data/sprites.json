@@ -10,7 +10,16 @@
     "walkFrames": 8,
     "extras": [
       { "action": "eat", "frames": 8, "fps": 8, "repeat": -1 },
-      { "action": "sleep", "frames": 3, "fps": 2, "repeat": -1 }
+      { "action": "sleep", "frames": 3, "fps": 2, "repeat": -1 },
+      { "action": "work", "frames": 8, "fps": 8, "repeat": -1, "dirs": ["down", "up", "right"] }
+    ]
+  },
+  "pigeon": {
+    "name": "pigeon",
+    "folder": "creatures/pigeon",
+    "walkFrames": 8,
+    "extras": [
+      { "action": "work", "frames": 8, "fps": 8, "repeat": -1, "dirs": ["down", "up", "right"] }
     ]
   }
 }

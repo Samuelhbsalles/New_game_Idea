@@ -3,6 +3,7 @@ import creatures from '../../../src/data/creatures.json';
 import items from '../../../src/data/items.json';
 import shops from '../../../src/data/shops.json';
 import start from '../../../src/data/start.json';
+import time from '../../../src/data/time.json';
 import { createFakeClock } from '../../../src/logic/clock';
 import { parseConfig } from '../../../src/logic/config';
 import { Game } from '../../../src/logic/game';
@@ -19,7 +20,7 @@ const logicSources = import.meta.glob('../../../src/logic/*.ts', {
 }) as Record<string, string>;
 
 const T = 1_700_000_000_000;
-const rawConfig = { species: creatures, shops, items, start };
+const rawConfig = { species: creatures, shops, items, start, time };
 
 function makeGame(storage: Storage = new MemoryStorage(), clockStart = T) {
   const clock = createFakeClock(clockStart);
@@ -44,10 +45,11 @@ describe('story-001 logic core', () => {
     const config = parseConfig(rawConfig);
     expect(config.species.map((s) => s.id)).toEqual(['rabbit', 'pigeon', 'cat', 'monkey']);
     expect(config.species.find((s) => s.id === 'monkey')?.affinities.bakery).toBe(4);
-    expect(config.species.find((s) => s.id === 'rabbit')?.affinities).toEqual({});
+    expect(config.species.find((s) => s.id === 'pigeon')?.affinities).toEqual({});
     const bakery = config.shops.find((s) => s.id === 'bakery');
-    expect(bakery?.slots).toBe(6);
-    expect(bakery?.shiftMs).toBe(4 * 60 * 60 * 1000);
+    expect(bakery?.slots).toBe(shops[0].slots);
+    // Shift length is in game hours; a game hour is dayMs / 24 real ms.
+    expect(bakery?.shiftMs).toBe((shops[0].shiftHours * time.dayMs) / 24);
     expect(config.items.map((i) => i.id)).toEqual(expect.arrayContaining(['bread', 'bait', 'food']));
     expect(config.items.every((i) => typeof i.price === 'number')).toBe(true);
 
@@ -57,7 +59,7 @@ describe('story-001 logic core', () => {
     expect(fresh.inventory).toEqual(start.inventory);
 
     // Invalid config is rejected at the boundary.
-    expect(() => parseConfig({ ...rawConfig, shops: [{ ...shops[0], shiftMs: -1 }] })).toThrow(/shiftMs/);
+    expect(() => parseConfig({ ...rawConfig, shops: [{ ...shops[0], shiftHours: -1 }] })).toThrow(/shiftHours/);
     expect(() => parseConfig({ ...rawConfig, shops: [{ ...shops[0], productItemId: 'nope' }] })).toThrow(/productItemId/);
   });
 
@@ -68,11 +70,9 @@ describe('story-001 logic core', () => {
       expect(src, file).not.toMatch(/new Date\s*\(/);
     }
     const { game, clock } = makeGame();
-    const shift = game.startShift('c1', 'bakery', 0);
-    expect(shift.startedAt).toBe(T);
     clock.advance(1234);
-    const second = game.startShift('c1', 'bakery', 1);
-    expect(second.startedAt).toBe(T + 1234);
+    const r = game.startShift('c1', 'bakery', 0);
+    expect(r.ok && r.shift.startedAt).toBe(T + 1234);
   });
 
   it('AC4: state saves and loads through the Storage interface (memory and localStorage adapters)', () => {

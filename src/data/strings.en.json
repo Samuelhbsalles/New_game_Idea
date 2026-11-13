@@ -160,5 +160,33 @@
     "newAlbum": "New in the album!",
     "noBait": "No bait!",
     "escaped": "It got away!"
+  },
+  "items": {
+    "bread": "Bread",
+    "planks": "Planks",
+    "stone": "Stone",
+    "bait": "Bait",
+    "food": "Food"
+  },
+  "clock": {
+    "time": "Day {day} · {hh}:{mm}"
+  },
+  "work": {
+    "hint": "Arrows walk · E work station · Esc pause",
+    "title": "{place}",
+    "freeTitle": "Station {slot} is free",
+    "put": "Put {name} to work",
+    "noneFree": "No free creature",
+    "busyTitle": "{name} is working",
+    "timeLeft": "{time} left",
+    "yields": "Will yield {count} {item}",
+    "doneTitle": "{name} is done!",
+    "collect": "Collect {count} {item}",
+    "collected": "+{count} {item}",
+    "started": "{name} started working",
+    "close": "Close",
+    "help": "↑↓ choose · E confirm · Esc close",
+    "ready": "Ready!",
+    "inventory": "{item}: {count}"
   }
 }

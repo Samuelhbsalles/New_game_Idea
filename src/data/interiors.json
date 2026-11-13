@@ -1,0 +1,552 @@
+{
+ "bakery": {
+  "shopId": "bakery",
+  "dir": "bakery",
+  "width": 256,
+  "height": 256,
+  "gridSize": 16,
+  "blockDepth": 14,
+  "blockInset": 3,
+  "walkable": [
+   {
+    "x": 16,
+    "y": 48,
+    "w": 224,
+    "h": 192
+   },
+   {
+    "x": 112,
+    "y": 240,
+    "w": 32,
+    "h": 16
+   }
+  ],
+  "exits": [
+   {
+    "to": "town",
+    "rect": {
+     "x": 112,
+     "y": 242,
+     "w": 32,
+     "h": 14
+    },
+    "arrive": {
+     "x": 128,
+     "y": 222
+    }
+   }
+  ],
+  "stations": [
+   {
+    "x": 128,
+    "y": 98,
+    "face": "up"
+   },
+   {
+    "x": 128,
+    "y": 146,
+    "face": "down"
+   },
+   {
+    "x": 196,
+    "y": 150,
+    "face": "right"
+   }
+  ],
+  "pieces": [
+   {
+    "n": "01",
+    "x": 5,
+    "y": 26,
+    "w": 73,
+    "h": 78,
+    "foot": 93,
+    "shadow": {
+     "x": 16,
+     "y": 35
+    },
+    "name": "flour sack pile"
+   },
+   {
+    "n": "02",
+    "x": 102,
+    "y": 8,
+    "w": 118,
+    "h": 83,
+    "foot": 88,
+    "shadow": {
+     "x": 100,
+     "y": 9
+    },
+    "name": "wooden bread shelf"
+   },
+   {
+    "n": "03",
+    "x": 81,
+    "y": 117,
+    "w": 95,
+    "h": 71,
+    "foot": 175,
+    "shadow": {
+     "x": 91,
+     "y": 127
+    },
+    "name": "wooden worktable"
+   },
+   {
+    "n": "04",
+    "x": 206,
+    "y": 78,
+    "w": 46,
+    "h": 110,
+    "foot": 175,
+    "shadow": {
+     "x": 216,
+     "y": 89
+    },
+    "name": "wooden bread rack"
+   },
+   {
+    "n": "05",
+    "x": 6,
+    "y": 176,
+    "w": 49,
+    "h": 48,
+    "foot": 212,
+    "shadow": {
+     "x": 16,
+     "y": 188
+    },
+    "name": "bread basket (top left)"
+   },
+   {
+    "n": "06",
+    "x": 7,
+    "y": 202,
+    "w": 49,
+    "h": 48,
+    "foot": 238,
+    "shadow": {
+     "x": 17,
+     "y": 213
+    },
+    "name": "bread basket (bottom left)"
+   },
+   {
+    "n": "07",
+    "x": 38,
+    "y": 203,
+    "w": 49,
+    "h": 47,
+    "foot": 238,
+    "shadow": {
+     "x": 47,
+     "y": 214
+    },
+    "name": "bread basket (bottom middle)"
+   }
+  ],
+  "effect": {
+   "color": "#f4ead2",
+   "everyMs": 500
+  }
+ },
+ "factory": {
+  "shopId": "factory",
+  "dir": "factory",
+  "width": 256,
+  "height": 256,
+  "gridSize": 16,
+  "blockDepth": 14,
+  "blockInset": 3,
+  "walkable": [
+   {
+    "x": 16,
+    "y": 48,
+    "w": 224,
+    "h": 192
+   },
+   {
+    "x": 112,
+    "y": 240,
+    "w": 32,
+    "h": 16
+   }
+  ],
+  "exits": [
+   {
+    "to": "town",
+    "rect": {
+     "x": 112,
+     "y": 242,
+     "w": 32,
+     "h": 14
+    },
+    "arrive": {
+     "x": 128,
+     "y": 222
+    }
+   }
+  ],
+  "stations": [
+   {
+    "x": 80,
+    "y": 112,
+    "face": "up"
+   },
+   {
+    "x": 172,
+    "y": 104,
+    "face": "up"
+   },
+   {
+    "x": 186,
+    "y": 166,
+    "face": "right"
+   }
+  ],
+  "pieces": [
+   {
+    "n": "01",
+    "x": 19,
+    "y": 47,
+    "w": 121,
+    "h": 65,
+    "foot": 100,
+    "shadow": {
+     "x": 29,
+     "y": 57
+    },
+    "name": "workbench with tools"
+   },
+   {
+    "n": "02",
+    "x": 128,
+    "y": 46,
+    "w": 87,
+    "h": 58,
+    "foot": 91,
+    "shadow": {
+     "x": 138,
+     "y": 56
+    },
+    "name": "wall shelf with saws and planes"
+   },
+   {
+    "n": "03",
+    "x": 8,
+    "y": 108,
+    "w": 68,
+    "h": 75,
+    "foot": 176,
+    "shadow": {
+     "x": 18,
+     "y": 117
+    },
+    "name": "wooden cabinet/table"
+   },
+   {
+    "n": "04",
+    "x": 29,
+    "y": 139,
+    "w": 36,
+    "h": 50,
+    "foot": 176,
+    "shadow": {
+     "x": 36,
+     "y": 155
+    },
+    "name": "leaning pole"
+   },
+   {
+    "n": "05",
+    "x": 197,
+    "y": 79,
+    "w": 53,
+    "h": 101,
+    "foot": 167,
+    "shadow": {
+     "x": 207,
+     "y": 91
+    },
+    "name": "planks rack"
+   },
+   {
+    "n": "06",
+    "x": 6,
+    "y": 173,
+    "w": 60,
+    "h": 77,
+    "foot": 237,
+    "shadow": {
+     "x": 16,
+     "y": 184
+    },
+    "name": "barrel of grain with scoop"
+   },
+   {
+    "n": "07",
+    "x": 168,
+    "y": 190,
+    "w": 54,
+    "h": 61,
+    "foot": 238,
+    "shadow": {
+     "x": 178,
+     "y": 200
+    },
+    "name": "open crate of grain"
+   },
+   {
+    "n": "08",
+    "x": 187,
+    "y": 174,
+    "w": 35,
+    "h": 41,
+    "foot": 203,
+    "shadow": {
+     "x": 197,
+     "y": 184
+    },
+    "name": "small crate"
+   },
+   {
+    "n": "09",
+    "x": 198,
+    "y": 164,
+    "w": 53,
+    "h": 60,
+    "foot": 212,
+    "shadow": {
+     "x": 208,
+     "y": 173
+    },
+    "name": "large crate on top"
+   },
+   {
+    "n": "10",
+    "x": 199,
+    "y": 192,
+    "w": 51,
+    "h": 59,
+    "foot": 238,
+    "shadow": {
+     "x": 211,
+     "y": 205
+    },
+    "name": "wooden crate below"
+   }
+  ],
+  "effect": {
+   "color": "#c89a5a",
+   "everyMs": 450
+  }
+ },
+ "construction": {
+  "shopId": "construction",
+  "dir": "construction",
+  "width": 256,
+  "height": 256,
+  "gridSize": 16,
+  "blockDepth": 14,
+  "blockInset": 3,
+  "walkable": [
+   {
+    "x": 16,
+    "y": 48,
+    "w": 224,
+    "h": 192
+   },
+   {
+    "x": 112,
+    "y": 240,
+    "w": 32,
+    "h": 16
+   }
+  ],
+  "exits": [
+   {
+    "to": "town",
+    "rect": {
+     "x": 112,
+     "y": 242,
+     "w": 32,
+     "h": 14
+    },
+    "arrive": {
+     "x": 128,
+     "y": 222
+    }
+   }
+  ],
+  "stations": [
+   {
+    "x": 100,
+    "y": 96,
+    "face": "left"
+   },
+   {
+    "x": 170,
+    "y": 100,
+    "face": "right"
+   },
+   {
+    "x": 188,
+    "y": 176,
+    "face": "right"
+   }
+  ],
+  "pieces": [
+   {
+    "n": "01",
+    "x": 5,
+    "y": 21,
+    "w": 83,
+    "h": 70,
+    "foot": 78,
+    "shadow": {
+     "x": 16,
+     "y": 32
+    },
+    "name": "stacked stone blocks"
+   },
+   {
+    "n": "02",
+    "x": 14,
+    "y": 64,
+    "w": 67,
+    "h": 41,
+    "foot": 98,
+    "shadow": {
+     "x": 24,
+     "y": 79
+    },
+    "name": "loose stone blocks"
+   },
+   {
+    "n": "03",
+    "x": 35,
+    "y": 79,
+    "w": 34,
+    "h": 32,
+    "foot": 98,
+    "shadow": {
+     "x": 44,
+     "y": 89
+    },
+    "solid": false,
+    "name": "pebble"
+   },
+   {
+    "n": "04",
+    "x": 181,
+    "y": 26,
+    "w": 71,
+    "h": 70,
+    "foot": 84,
+    "shadow": {
+     "x": 190,
+     "y": 48
+    },
+    "name": "brick pile"
+   },
+   {
+    "n": "05",
+    "x": 173,
+    "y": 56,
+    "w": 31,
+    "h": 36,
+    "foot": 79,
+    "shadow": {
+     "x": 183,
+     "y": 66
+    },
+    "solid": false,
+    "name": "single loose brick"
+   },
+   {
+    "n": "06",
+    "x": 185,
+    "y": 72,
+    "w": 63,
+    "h": 44,
+    "foot": 103,
+    "shadow": {
+     "x": 196,
+     "y": 85
+    },
+    "solid": false,
+    "name": "scattered bricks"
+   },
+   {
+    "n": "07",
+    "x": 6,
+    "y": 94,
+    "w": 76,
+    "h": 77,
+    "foot": 158,
+    "shadow": {
+     "x": 17,
+     "y": 104
+    },
+    "name": "wheelbarrow with gravel"
+   },
+   {
+    "n": "08",
+    "x": 86,
+    "y": 106,
+    "w": 102,
+    "h": 71,
+    "foot": 164,
+    "shadow": {
+     "x": 97,
+     "y": 116
+    },
+    "name": "cluster of burlap sacks"
+   },
+   {
+    "n": "09",
+    "x": 194,
+    "y": 114,
+    "w": 56,
+    "h": 94,
+    "foot": 195,
+    "shadow": {
+     "x": 203,
+     "y": 124
+    },
+    "name": "wooden crate with rope and jar"
+   },
+   {
+    "n": "10",
+    "x": 7,
+    "y": 173,
+    "w": 119,
+    "h": 45,
+    "foot": 205,
+    "shadow": {
+     "x": 16,
+     "y": 184
+    },
+    "name": "metal pipes"
+   },
+   {
+    "n": "11",
+    "x": 8,
+    "y": 187,
+    "w": 114,
+    "h": 63,
+    "foot": 238,
+    "shadow": {
+     "x": 17,
+     "y": 199
+    },
+    "name": "wooden planks"
+   }
+  ],
+  "effect": {
+   "color": "#b9ad9a",
+   "everyMs": 550
+  }
+ }
+}

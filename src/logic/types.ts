@@ -1,4 +1,5 @@
 import type { Appearance } from './appearance';
+import type { TimeConfig } from './gameTime';
 
 /** Static definition of a creature species, loaded from creatures.json. */
 export interface Species {
@@ -10,14 +11,20 @@ export interface Species {
   affinities: Record<string, number>;
 }
 
-/** Static definition of a shop, loaded from shops.json. */
+/** Static definition of a workplace (a building creatures work in), loaded from shops.json. */
 export interface Shop {
   id: string;
   name: string;
+  /** Work stations; one creature each. */
   slots: number;
-  /** Shift length in milliseconds. */
+  /** Shift length in in-game hours. */
+  shiftHours: number;
+  /** Shift length in real milliseconds, derived from shiftHours and the time config. */
   shiftMs: number;
+  /** Item a finished shift yields. */
   productItemId: string;
+  /** Output scale: items = baseProduction × affinity × shiftHours × rate (see work.ts). */
+  rate: number;
 }
 
 /** Static definition of an item, loaded from items.json. */
@@ -43,6 +50,7 @@ export interface Config {
   shops: Shop[];
   items: Item[];
   start: StartConfig;
+  time: TimeConfig;
 }
 
 export type CreatureStatus = 'idle' | 'working' | 'resting';
@@ -81,4 +89,6 @@ export interface GameState {
   cosmetics?: string[];
   /** Species ids caught at least once (the album). Starting creatures do not count. */
   caught?: string[];
+  /** Timestamp (ms) at which in-game day 1 began. Optional so older saves load (filled in on load). */
+  worldStartAt?: number;
 }

@@ -160,5 +160,33 @@
     "newAlbum": "Novo no álbum!",
     "noBait": "Sem isca!",
     "escaped": "Fugiu!"
+  },
+  "items": {
+    "bread": "Pão",
+    "planks": "Tábuas",
+    "stone": "Pedra",
+    "bait": "Isca",
+    "food": "Ração"
+  },
+  "clock": {
+    "time": "Dia {day} · {hh}:{mm}"
+  },
+  "work": {
+    "hint": "Setas andar · E posto de trabalho · Esc pausa",
+    "title": "{place}",
+    "freeTitle": "Posto {slot} livre",
+    "put": "Colocar {name}",
+    "noneFree": "Nenhum animal livre",
+    "busyTitle": "{name} trabalhando",
+    "timeLeft": "Falta {time}",
+    "yields": "Vai render {count} {item}",
+    "doneTitle": "{name} terminou!",
+    "collect": "Coletar {count} {item}",
+    "collected": "+{count} {item}",
+    "started": "{name} começou a trabalhar",
+    "close": "Fechar",
+    "help": "↑↓ escolher · E confirmar · Esc fechar",
+    "ready": "Pronto!",
+    "inventory": "{item}: {count}"
   }
 }

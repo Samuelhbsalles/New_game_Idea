@@ -96,6 +96,9 @@ export interface BirdsDef {
 /** A validated walkable town. */
 export interface TownDef {
   tileSize: number;
+  /** Camera follow lerp, 0-1. 1 = locked to the player; below 1 smooths but makes
+   *  the rounded sprite wobble 1-2px against the camera (worst on diagonals). */
+  cameraLerp: number;
   cols: number;
   rows: number;
   /** Corner grid, rows+1 strings of cols+1 terrain letters. */
@@ -305,7 +308,9 @@ export function parseTown(raw: unknown): TownDef {
   const sp = obj(o.spawn, 'town.spawn');
   const spawn = { x: num(sp, 'x', 'town.spawn'), y: num(sp, 'y', 'town.spawn') };
   inside(spawn.x, spawn.y, 'town.spawn');
-  return { tileSize, cols, rows, corners, ground: tileset(o.ground, 'town.ground'), water: tileset(o.water, 'town.water'), buildings, props, spots, spawn, smoke, birds, npcs, npcEmotes };
+  const cameraLerp = o.cameraLerp === undefined ? 1 : num(o, 'cameraLerp', 'town', 0);
+  if (cameraLerp <= 0 || cameraLerp > 1) throw new Error('town.cameraLerp must be in (0, 1]');
+  return { tileSize, cameraLerp, cols, rows, corners, ground: tileset(o.ground, 'town.ground'), water: tileset(o.water, 'town.water'), buildings, props, spots, spawn, smoke, birds, npcs, npcEmotes };
 }
 
 function wang(c: string[], upper: (t: string) => boolean): number {

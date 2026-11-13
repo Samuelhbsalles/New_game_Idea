@@ -163,11 +163,12 @@ def character(cid, dest):
         if "animations" in parts and n.endswith(".png"):
             i = parts.index("animations")
             # The animation's folder is its display name; "walk"/"walking..." is the walk
-            # cycle, "eat" and "sleep" are down-only extras (see src/data/sprites.json).
+            # cycle, "eat" and "sleep" are down-only extras, "work" is drawn down/up/right
+            # (see src/data/sprites.json).
             name = parts[i + 1].lower()
-            action = "walk" if name.startswith("walk") else name if name in ("eat", "sleep") else None
+            action = "walk" if name.startswith("walk") else name if name in ("eat", "sleep", "work") else None
             d = DIRS.get(parts[i + 2])
-            if not action or not d or d == "left" or (action != "walk" and d != "down"):
+            if not action or not d or d == "left" or (action not in ("walk", "work") and d != "down"):
                 continue
             k = int(parts[-1][6:9]) + 1
             open(f"{dest}_{action}_{d}_{k:02d}.png", "wb").write(z.read(n))
@@ -206,6 +207,38 @@ def image_frames(job_id, dest):
     print(json.dumps({"frames": k}))
 
 
+def room(layers_url, dest):
+    """A create_room's layers.json (URL from get_room) -> dest/floor.png (lit, no furniture),
+    dest/piece_NN.png and dest/shadow_NN.png. Prints each piece's placement as JSON:
+    top-left x,y, size, foot (lowest opaque row) and its shadow's top-left."""
+    import base64
+    import os
+
+    os.makedirs(dest, exist_ok=True)
+    data = json.loads(fetch(layers_url))
+
+    def save(url, path):
+        b = base64.b64decode(url.split(",", 1)[1])
+        open(path, "wb").write(b)
+        return struct.unpack(">II", b[16:24])
+
+    save(data["lit"], os.path.join(dest, "floor.png"))
+    pieces = []
+    for i, s in enumerate(data["sprites"]):
+        n = f"{i + 1:02d}"
+        w, h = save(s["img"], os.path.join(dest, f"piece_{n}.png"))
+        p = {"n": n, "name": s["name"], "x": s["x"], "y": s["y"], "w": w, "h": h, "foot": s["foot"]}
+        if s.get("shadow"):
+            # `f` is a gray multiply factor: 0 = untouched, v>0 = floor x v/255
+            # (measured against the painted room). As RGBA: black, alpha 255 - v.
+            sw, sh_, rows = decode_png(base64.b64decode(s["shadow"]["f"].split(",", 1)[1]))
+            out = [bytearray(b"".join(bytes([0, 0, 0, 0 if r[x * 4] == 0 else 255 - r[x * 4]]) for x in range(sw))) for r in rows]
+            encode_png(os.path.join(dest, f"shadow_{n}.png"), sw, sh_, out)
+            p["shadow"] = {"x": s["shadow"]["x"], "y": s["shadow"]["y"]}
+        pieces.append(p)
+    print(json.dumps({"w": data["w"], "h": data["h"], "pieces": pieces}, indent=1))
+
+
 if __name__ == "__main__":
     kind, ident, dest = sys.argv[1:4]
-    {"tileset": tileset, "object": obj, "character": character, "objanim": object_anim, "frames": image_frames}[kind](ident, dest)
+    {"tileset": tileset, "object": obj, "character": character, "objanim": object_anim, "frames": image_frames, "room": room}[kind](ident, dest)

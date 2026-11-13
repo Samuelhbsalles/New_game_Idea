@@ -57,6 +57,8 @@ export class HomeScene extends Phaser.Scene {
 
   /** True when the pet was following outside and walks back in with the player. */
   private petCameAlong = false;
+  /** True while the pet is away working a shift: hidden, paused, not interactable. */
+  private petAway = false;
 
   init(data: { from?: string; petFollowing?: boolean }): void {
     this.arrivedFrom = data?.from ?? null;
@@ -150,6 +152,13 @@ export class HomeScene extends Phaser.Scene {
     }
     this.physics.add.collider(this.pet.sprite, walls);
     this.physics.add.collider(this.pet.sprite, solids);
+    // A pet on a shift is at its workplace, not at home.
+    this.petAway = this.world.state.creatures.find((c) => c.id === petDef.creatureId)?.status === 'working';
+    if (this.petAway) {
+      this.pet.setPaused(true);
+      this.pet.sprite.setVisible(false);
+      this.pet.sprite.body.enable = false;
+    }
 
     // "Press E" bubble over whatever is in reach.
     const bubble = this.add.rectangle(0, 0, 14, 14, Phaser.Display.Color.HexStringToColor(ui.panel).color).setStrokeStyle(1, Phaser.Display.Color.HexStringToColor(ui.ink).color);
@@ -170,7 +179,7 @@ export class HomeScene extends Phaser.Scene {
 
   update(_t: number, dt: number): void {
     if (this.leaving) return;
-    this.pet.update(dt);
+    if (!this.petAway) this.pet.update(dt);
     const input = this.keys.read();
 
     if (this.panel) {
@@ -212,7 +221,7 @@ export class HomeScene extends Phaser.Scene {
     this.leaving = true;
     this.player.setVelocity(0, 0);
     this.world.save();
-    const petFollowing = this.pet.following;
+    const petFollowing = !this.petAway && this.pet.following;
     this.cameras.main.fadeOut(250, 0, 0, 0);
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () =>
       this.scene.start(EXIT_SCENES[exit.to] ?? exit.to, { from: 'home', place: 'home', petFollowing }),
@@ -221,7 +230,7 @@ export class HomeScene extends Phaser.Scene {
 
   /** The closest interactable in reach, or null. */
   private nearest(): Interactable | null {
-    const list: Interactable[] = [{ x: this.pet.sprite.x, y: this.pet.sprite.y, open: () => this.openPetMenu() }];
+    const list: Interactable[] = this.petAway ? [] : [{ x: this.pet.sprite.x, y: this.pet.sprite.y, open: () => this.openPetMenu() }];
     if (this.bowl) list.push({ x: this.bowl.x, y: this.bowl.y, open: () => this.openBowlMenu() });
     let best: Interactable | null = null;
     let bestD = this.room.player.interactRange;
@@ -260,7 +269,7 @@ export class HomeScene extends Phaser.Scene {
   private closePanel(): void {
     this.panel?.destroy();
     this.panel = null;
-    this.pet.setPaused(false);
+    if (!this.petAway) this.pet.setPaused(false);
   }
 
   private openPetMenu(): void {

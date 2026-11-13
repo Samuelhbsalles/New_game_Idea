@@ -4,6 +4,7 @@ import creatures from '../../../src/data/creatures.json';
 import items from '../../../src/data/items.json';
 import shops from '../../../src/data/shops.json';
 import start from '../../../src/data/start.json';
+import time from '../../../src/data/time.json';
 import { attemptCatch, baitCount, parseCatchRules } from '../../../src/logic/catching';
 import { createFakeClock } from '../../../src/logic/clock';
 import { parseConfig } from '../../../src/logic/config';
@@ -11,7 +12,7 @@ import { Game } from '../../../src/logic/game';
 import { MemoryStorage } from '../../../src/logic/memoryStorage';
 
 const T = 1_700_000_000_000;
-const config = parseConfig({ species: creatures, shops, items, start });
+const config = parseConfig({ species: creatures, shops, items, start, time });
 const speciesIds = creatures.map((c) => c.id);
 const rules = parseCatchRules(catchingJson, speciesIds);
 const always = () => 0;

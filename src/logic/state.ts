@@ -22,6 +22,7 @@ export function newGame(config: Config, clock: Clock): GameState {
     inventory: { ...config.start.inventory },
     creatures,
     shifts: [],
+    worldStartAt: now,
   };
 }
 
@@ -85,6 +86,7 @@ export function deserialize(data: string | null): GameState | null {
   if (raw.appearance !== undefined && !isObj(raw.appearance)) return null;
   if (raw.cosmetics !== undefined && !(Array.isArray(raw.cosmetics) && raw.cosmetics.every((c) => typeof c === 'string'))) return null;
   if (raw.caught !== undefined && !(Array.isArray(raw.caught) && raw.caught.every((c) => typeof c === 'string'))) return null;
+  if (raw.worldStartAt !== undefined && !isNum(raw.worldStartAt)) return null;
   return raw as unknown as GameState;
 }
 

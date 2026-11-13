@@ -1,3 +1,4 @@
+import { gameHoursToMs, parseTimeConfig } from './gameTime';
 import type { Config, Item, Shop, Species, StartConfig } from './types';
 
 type Obj = Record<string, unknown>;
@@ -54,7 +55,8 @@ function uniqueIds(list: { id: string }[], path: string): void {
  * developer error, unlike a bad save.
  * @example const config = parseConfig({ species, shops, items, start });
  */
-export function parseConfig(raw: { species: unknown; shops: unknown; items: unknown; start: unknown }): Config {
+export function parseConfig(raw: { species: unknown; shops: unknown; items: unknown; start: unknown; time: unknown }): Config {
+  const time = parseTimeConfig(raw.time);
   const species: Species[] = arr(raw.species, 'species').map((e, i) => {
     const p = `species[${i}]`;
     const o = obj(e, p);
@@ -69,12 +71,16 @@ export function parseConfig(raw: { species: unknown; shops: unknown; items: unkn
   const shops: Shop[] = arr(raw.shops, 'shops').map((e, i) => {
     const p = `shops[${i}]`;
     const o = obj(e, p);
+    const shiftHours = num(o, 'shiftHours', p, { min: 0 });
+    if (shiftHours <= 0) fail(`${p}.shiftHours`, 'must be > 0');
     return {
       id: str(o, 'id', p),
       name: str(o, 'name', p),
       slots: num(o, 'slots', p, { min: 1, int: true }),
-      shiftMs: num(o, 'shiftMs', p, { min: 1 }),
+      shiftHours,
+      shiftMs: gameHoursToMs(shiftHours, time),
       productItemId: str(o, 'productItemId', p),
+      rate: num(o, 'rate', p, { min: 0 }),
     };
   });
   const items: Item[] = arr(raw.items, 'items').map((e, i) => {
@@ -105,5 +111,5 @@ export function parseConfig(raw: { species: unknown; shops: unknown; items: unkn
   for (const k of Object.keys(start.inventory)) if (!itemIds.has(k)) fail('start.inventory', `unknown item "${k}"`);
   for (const id of start.creatures) if (!speciesIds.has(id)) fail('start.creatures', `unknown species "${id}"`);
 
-  return { species, shops, items, start };
+  return { species, shops, items, start, time };
 }

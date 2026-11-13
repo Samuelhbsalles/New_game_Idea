@@ -12,6 +12,7 @@ import { attemptCatch, baitCount, parseCatchRules, type CatchRules } from '../lo
 import { buildNavGrid } from '../logic/npcMind';
 import { arrivalPoint, doorAt, parseTown, tileFlip, townLayers, townSolids, type Building, type TownDef } from '../logic/town';
 import { AVATAR_ART, buildAvatar, savedAppearance } from './avatar';
+import { addClock } from './clockHud';
 import { openOverlay } from './overlay';
 import { TownBirds } from './TownBirds';
 import { TownNpc } from './TownNpc';
@@ -20,6 +21,7 @@ import type { Bird } from './TownBirds';
 import { services } from './services';
 import { createCharacterAnims, facingFor, loadCharacter, showMotion, type CharacterArt, type Dir } from './sprites';
 import { Keys } from './ui/input';
+import { HudChip } from './ui/HudChip';
 import { MenuPanel, textStyle, type MenuItem } from './ui/MenuPanel';
 
 /** Every sprite set, plus the player's avatar (built at runtime, not loaded from files). */
@@ -41,7 +43,7 @@ type CatchTarget = { kind: 'bird'; bird: Bird; species: string; sprite: Phaser.G
 /** How the town was entered. */
 export interface TownData {
   /** 'home' = out of the front door; 'travel' = picked a place on the map. */
-  from?: 'home' | 'travel';
+  from?: 'home' | 'travel' | 'interior';
   /** Place to arrive at (a building id or a named spot). */
   place?: string;
   /** True if the pet was following the player and comes along. */
@@ -156,8 +158,9 @@ export class TownScene extends Phaser.Scene {
     this.player.setCollideWorldBounds(true);
     this.physics.add.collider(this.player, solids);
 
-    // The pet comes along only if it was following.
-    if (this.data_.petFollowing) {
+    // The pet comes along only if it was following (and is not away at work).
+    const petAtWork = this.world.state.creatures.find((c) => c.id === homeJson.pet.creatureId)?.status === 'working';
+    if (this.data_.petFollowing && !petAtWork) {
       const id = homeJson.pet.creatureId;
       const species = this.world.state.creatures.find((c) => c.id === id)?.speciesId ?? this.world.state.creatures[0].speciesId;
       const petArt = art[species];
@@ -172,16 +175,21 @@ export class TownScene extends Phaser.Scene {
     this.startAmbient(solids);
 
     const cam = this.cameras.main;
-    cam.setBounds(0, 0, width, height).startFollow(this.player, true, 0.15, 0.15).setRoundPixels(true);
+    cam.setBounds(0, 0, width, height).setRoundPixels(true);
+    cam.centerOn(Math.round(this.player.x), Math.round(this.player.y));
+    // Own follow instead of startFollow: Phaser floors the camera scroll but rounds
+    // the sprite, so the player wobbled 1px on both axes at once on diagonals.
+    // Running after physics on the ROUNDED position keeps them in step.
+    const follow = () => this.followCamera();
+    this.events.on(Phaser.Scenes.Events.POST_UPDATE, follow);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.events.off(Phaser.Scenes.Events.POST_UPDATE, follow));
     cam.setBackgroundColor(ui.ink);
     cam.fadeIn(300, 0, 0, 0);
 
-    this.add
-      .text(6, 6, t('town.hint'), { ...textStyle(false, 9), color: ui.panel, stroke: ui.ink, strokeThickness: 3 })
-      .setScrollFactor(0)
-      .setDepth(60_000);
-    this.baitText = this.add.text(6, 18, '', { ...textStyle(true, 9), color: ui.panel, stroke: ui.ink, strokeThickness: 3 }).setScrollFactor(0).setDepth(60_000);
+    new HudChip(this, this.cameras.main.width / 2, this.cameras.main.height - 4, { anchor: 'bottomCenter', fixed: true, depth: 60_000, size: 10 }).setText(t('town.hint'));
+    this.baitText = new HudChip(this, 4, 4, { anchor: 'topLeft', fixed: true, depth: 60_000 });
     this.refreshBait();
+    addClock(this, this.world, t);
 
     // "Press E" bubble over whatever can be caught.
     const bubble = this.add.rectangle(0, 0, 14, 14, Phaser.Display.Color.HexStringToColor(ui.panel).color).setStrokeStyle(1, Phaser.Display.Color.HexStringToColor(ui.ink).color);
@@ -220,6 +228,15 @@ export class TownScene extends Phaser.Scene {
   }
 
   // ---- movement ------------------------------------------------------------------
+
+  /** Moves the camera toward the player's rounded position and keeps the scroll whole. */
+  private followCamera(): void {
+    const cam = this.cameras.main;
+    const k = this.town.cameraLerp;
+    const tx = Math.round(this.player.x) - cam.width / 2;
+    const ty = Math.round(this.player.y) - cam.height / 2;
+    cam.setScroll(Math.round(cam.scrollX + (tx - cam.scrollX) * k), Math.round(cam.scrollY + (ty - cam.scrollY) * k));
+  }
 
   private movePlayer(): void {
     const { speed, character } = homeJson.player;
@@ -291,7 +308,7 @@ export class TownScene extends Phaser.Scene {
   private birds: TownBirds | null = null;
   private wild: TownWild | null = null;
   private rules!: CatchRules;
-  private baitText!: Phaser.GameObjects.Text;
+  private baitText!: HudChip;
   private catchHint!: Phaser.GameObjects.Container;
 
   private moveNpcs(dt: number): void {
@@ -399,17 +416,17 @@ export class TownScene extends Phaser.Scene {
     if (this.facing !== 'up' || this.player.body.velocity.y >= 0 || this.atDoor === b.id) return;
     this.atDoor = b.id;
     const place = this.map.places.find((p) => p.id === b.id);
-    if (place?.status === 'open' && place.scene) return this.enter(place.scene);
+    if (place?.status === 'open' && place.scene) return this.enter(place.scene, b.id);
     this.toast(b, services(this).i18n.t('map.soonLong', { place: services(this).i18n.t(`places.${b.id}`) }));
   }
 
-  private enter(scene: string): void {
+  private enter(scene: string, place: string): void {
     this.leaving = true;
     this.player.setVelocity(0, 0);
     this.pet?.setVelocity(0, 0);
     this.cameras.main.fadeOut(250, 0, 0, 0);
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () =>
-      this.scene.start(scene, { from: 'town', petFollowing: this.pet !== null }),
+      this.scene.start(scene, { from: 'town', place, petFollowing: this.pet !== null }),
     );
   }
 

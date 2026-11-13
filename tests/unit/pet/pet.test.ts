@@ -3,6 +3,7 @@ import creatures from '../../../src/data/creatures.json';
 import items from '../../../src/data/items.json';
 import shops from '../../../src/data/shops.json';
 import start from '../../../src/data/start.json';
+import time from '../../../src/data/time.json';
 import { createFakeClock } from '../../../src/logic/clock';
 import { parseConfig } from '../../../src/logic/config';
 import { Game } from '../../../src/logic/game';
@@ -41,7 +42,7 @@ function tuning(): PetTuning {
 
 function makeGame() {
   const clock = createFakeClock(1_000);
-  const config = parseConfig({ species: creatures, shops, items, start });
+  const config = parseConfig({ species: creatures, shops, items, start, time });
   return { clock, game: Game.create(config, clock, new MemoryStorage()) };
 }
 

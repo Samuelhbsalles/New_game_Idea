@@ -1,7 +1,9 @@
 import type { Clock } from './clock';
 import { deserialize, isShiftDone, newGame, serialize } from './state';
 import type { Storage } from './storage';
-import type { Config, GameState, Shift } from './types';
+import { gameTimeAt, type GameTime } from './gameTime';
+import type { Config, GameState, Shift, Shop } from './types';
+import { shiftOutput } from './work';
 
 /**
  * Holds state, config, clock and storage, all injected.
@@ -31,7 +33,10 @@ export class Game {
     } catch {
       data = null;
     }
-    return new Game(config, clock, storage, deserialize(data) ?? newGame(config, clock));
+    const state = deserialize(data) ?? newGame(config, clock);
+    // Saves from before the game clock existed start their day 1 now.
+    state.worldStartAt ??= clock.now();
+    return new Game(config, clock, storage, state);
   }
 
   /** Writes the current state through the Storage. */
@@ -40,26 +45,69 @@ export class Game {
   }
 
   /**
-   * Minimal shift start: records startedAt = clock.now() and
-   * endsAt = startedAt + the shop's shiftMs. Slot limits, occupancy, energy and
-   * production are not enforced here (stories 002/004). Throws on an unknown creature or shop.
+   * Puts a creature to work in a shop slot: startedAt = clock.now(),
+   * endsAt = startedAt + the shop's shiftMs. Refuses (without changing anything)
+   * a slot outside the shop's range, a taken slot, or a creature already working.
+   * Throws on an unknown creature or shop (a bug, not a player action).
    */
-  startShift(creatureId: string, shopId: string, slot: number): Shift {
-    const creature = this.state.creatures.find((c) => c.id === creatureId);
-    if (!creature) throw new Error(`Unknown creature "${creatureId}"`);
-    const shop = this.config.shops.find((s) => s.id === shopId);
-    if (!shop) throw new Error(`Unknown shop "${shopId}"`);
+  startShift(creatureId: string, shopId: string, slot: number): { ok: true; shift: Shift } | { ok: false; reason: 'bad_slot' | 'slot_taken' | 'busy' } {
+    const creature = this.creature(creatureId);
+    const shop = this.shop(shopId);
+    if (!Number.isInteger(slot) || slot < 0 || slot >= shop.slots) return { ok: false, reason: 'bad_slot' };
+    if (this.shiftAt(shopId, slot)) return { ok: false, reason: 'slot_taken' };
+    if (creature.status === 'working' || this.state.shifts.some((s) => s.creatureId === creatureId)) return { ok: false, reason: 'busy' };
     const startedAt = this.clock.now();
     const shift: Shift = { shopId, slot, creatureId, startedAt, endsAt: startedAt + shop.shiftMs };
     this.state.shifts.push(shift);
     creature.status = 'working';
-    return shift;
+    return { ok: true, shift };
+  }
+
+  /** The shift in this shop slot, or undefined if the slot is free. */
+  shiftAt(shopId: string, slot: number): Shift | undefined {
+    return this.state.shifts.find((s) => s.shopId === shopId && s.slot === slot);
   }
 
   /** True if the shift in this shop slot exists and has ended at the current clock time. */
   isShiftComplete(shopId: string, slot: number): boolean {
-    const shift = this.state.shifts.find((s) => s.shopId === shopId && s.slot === slot);
+    const shift = this.shiftAt(shopId, slot);
     return shift !== undefined && isShiftDone(shift, this.clock.now());
+  }
+
+  /** Real ms until the shift in this slot ends; 0 when done or the slot is free. */
+  shiftTimeLeft(shopId: string, slot: number): number {
+    const shift = this.shiftAt(shopId, slot);
+    return shift ? Math.max(0, shift.endsAt - this.clock.now()) : 0;
+  }
+
+  /**
+   * Collects a finished shift: its output goes to the inventory, the slot frees
+   * and the creature goes home tired ('resting'). Before the end it gives nothing
+   * and leaves the shift running.
+   */
+  collectShift(shopId: string, slot: number): { ok: true; itemId: string; count: number; creatureId: string } | { ok: false; reason: 'empty' | 'not_done' } {
+    const shift = this.shiftAt(shopId, slot);
+    if (!shift) return { ok: false, reason: 'empty' };
+    if (!isShiftDone(shift, this.clock.now())) return { ok: false, reason: 'not_done' };
+    const shop = this.shop(shopId);
+    const creature = this.creature(shift.creatureId);
+    const count = shiftOutput(this.speciesOf(creature), shop);
+    this.state.inventory[shop.productItemId] = (this.state.inventory[shop.productItemId] ?? 0) + count;
+    this.state.shifts = this.state.shifts.filter((s) => s !== shift);
+    creature.status = 'resting';
+    return { ok: true, itemId: shop.productItemId, count, creatureId: creature.id };
+  }
+
+  /** In-game day and time now. */
+  gameTime(): GameTime {
+    return gameTimeAt(this.clock.now(), this.state.worldStartAt ?? this.clock.now(), this.config.time);
+  }
+
+  /** The shop with this id; throws if unknown. */
+  shop(shopId: string): Shop {
+    const s = this.config.shops.find((x) => x.id === shopId);
+    if (!s) throw new Error(`Unknown shop "${shopId}"`);
+    return s;
   }
 
   /**

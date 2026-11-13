@@ -1,5 +1,6 @@
 {
  "tileSize": 32,
+ "cameraLerp": 1,
  "cols": 50,
  "rows": 28,
  "terrain": {

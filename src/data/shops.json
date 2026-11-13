@@ -1,3 +1,5 @@
 [
-  { "id": "bakery", "name": "Bakery", "slots": 6, "shiftMs": 14400000, "productItemId": "bread" }
+  { "id": "bakery", "name": "Bakery", "slots": 3, "shiftHours": 4, "productItemId": "bread", "rate": 0.1 },
+  { "id": "factory", "name": "Factory", "slots": 3, "shiftHours": 4, "productItemId": "planks", "rate": 0.1 },
+  { "id": "construction", "name": "Construction", "slots": 3, "shiftHours": 4, "productItemId": "stone", "rate": 0.1 }
 ]

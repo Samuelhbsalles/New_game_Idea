@@ -205,8 +205,8 @@ export function parseRoom(raw: unknown, catalog: FurnitureItem[]): RoomDef {
   };
 }
 
-/** Parses `{x, y, w, h}` and checks it lies inside the room picture. */
-function rect(v: unknown, path: string, width: number, height: number): Rect {
+/** Parses `{x, y, w, h}` and checks it lies inside the room picture. Throws naming the field. */
+export function rect(v: unknown, path: string, width: number, height: number): Rect {
   const o = obj(v, path);
   const r = { x: num(o, 'x', path, 0), y: num(o, 'y', path, 0), w: num(o, 'w', path, 1), h: num(o, 'h', path, 1) };
   if (r.x + r.w > width || r.y + r.h > height) fail(path, 'must lie inside the room picture');
@@ -270,8 +270,11 @@ function overlaps(a: Rect, b: Rect): boolean {
   return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 }
 
+/** The part of a room the floor helpers need, so interiors can share them with the home. */
+export type FloorPlan = Pick<RoomDef, 'width' | 'height' | 'gridSize' | 'walkable' | 'exits'>;
+
 /** Grid of `gridSize` cells: true where the whole cell lies inside a walkable rect. */
-function walkGrid(room: RoomDef): boolean[][] {
+function walkGrid(room: FloorPlan): boolean[][] {
   const g = room.gridSize;
   const out: boolean[][] = [];
   for (let y = 0; y < room.height / g; y++) {
@@ -289,7 +292,7 @@ function walkGrid(room: RoomDef): boolean[][] {
  * Where the pet may wander: walkable cells (gridSize each) that are not part
  * of an exit, so the pet never strolls out of the door on its own.
  */
-export function buildFloorGrid(room: RoomDef): boolean[][] {
+export function buildFloorGrid(room: FloorPlan): boolean[][] {
   const g = room.gridSize;
   return walkGrid(room).map((row, y) => row.map((ok, x) => ok && !room.exits.some((e) => overlaps(e.rect, { x: x * g, y: y * g, w: g, h: g }))));
 }
@@ -298,7 +301,7 @@ export function buildFloorGrid(room: RoomDef): boolean[][] {
  * The walls as few rectangles: each run of non-walkable cells in a grid row
  * becomes one rect. The scene turns them into static physics bodies.
  */
-export function wallRects(room: RoomDef): Rect[] {
+export function wallRects(room: FloorPlan): Rect[] {
   const g = room.gridSize;
   const out: Rect[] = [];
   walkGrid(room).forEach((row, y) => {
@@ -316,6 +319,6 @@ export function wallRects(room: RoomDef): Rect[] {
 }
 
 /** The exit whose doorway contains the point, or null. */
-export function exitAt(room: RoomDef, p: { x: number; y: number }): ExitDef | null {
+export function exitAt(room: FloorPlan, p: { x: number; y: number }): ExitDef | null {
   return room.exits.find((e) => p.x >= e.rect.x && p.x < e.rect.x + e.rect.w && p.y >= e.rect.y && p.y < e.rect.y + e.rect.h) ?? null;
 }
