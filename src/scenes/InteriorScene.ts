@@ -9,7 +9,9 @@ import { followTarget } from '../logic/petBrain';
 import { exitAt, wallRects } from '../logic/room';
 import { shiftOutput } from '../logic/work';
 import { AVATAR_ART, buildAvatar, savedAppearance } from './avatar';
+import { SESSION_KEY, type WorldSession } from '../net/world';
 import { openOverlay } from './overlay';
+import { RemotePlayers } from './RemotePlayers';
 import { services } from './services';
 import { BIRD_TEX } from './TownBirds';
 import { createCharacterAnims, extraAnimKey, facingFor, loadCharacter, showMotion, type CharacterArt, type Dir } from './sprites';
@@ -56,6 +58,8 @@ export class InteriorScene extends Phaser.Scene {
   private def!: InteriorDef;
   /** Game state (named `world` because Phaser.Scene already owns `game`). */
   private world!: Game;
+  /** Other players in this place; null when playing offline. */
+  private others: RemotePlayers | null = null;
   private keys!: Keys;
   private player!: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
   private facing: Dir = 'up';
@@ -132,6 +136,9 @@ export class InteriorScene extends Phaser.Scene {
     this.player.body.setSize(16, 10).setOffset(16, 34);
     this.player.setCollideWorldBounds(true);
     this.physics.add.collider(this.player, walls);
+    // Other players here (online): drawn from the world room's synced state.
+    const session = this.registry.get(SESSION_KEY) as WorldSession | undefined;
+    this.others = session ? new RemotePlayers(this, session.room, `interior:${def.id}`, JSON.stringify(savedAppearance(this.world)), pDef.walkFps) : null;
 
     // A following pet comes in too (unless it is the one at work here).
     const petId = homeJson.pet.creatureId;
@@ -188,6 +195,7 @@ export class InteriorScene extends Phaser.Scene {
 
   update(): void {
     if (this.leaving) return;
+    this.others?.update({ x: this.player.x, y: this.player.y, facing: this.facing, moving: this.player.body.velocity.lengthSq() > 0 }, this.time.now);
     this.refreshWorkers();
     const input = this.keys.read();
     // The controls line would sit under a tall menu; hide it while one is open.

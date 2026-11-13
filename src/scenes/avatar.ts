@@ -23,7 +23,7 @@ const fileName = (layer: string, f: Frame) => `${layer}_${f.action}_${f.dir}_${p
 const layerKey = (layer: string, f: Frame) => `cr_${fileName(layer, f)}`;
 
 /** Avatar texture key for a frame, matching the loader convention (idle frames have no index). */
-const avatarKey = (f: Frame) => (f.action === 'idle' ? `${AVATAR_ART.name}_idle_${f.dir}` : `${AVATAR_ART.name}_walk_${f.dir}_${pad2(f.n)}`);
+const avatarKey = (name: string, f: Frame) => (f.action === 'idle' ? `${name}_idle_${f.dir}` : `${name}_walk_${f.dir}_${pad2(f.n)}`);
 
 /** Queues every creator layer frame (assets/creator/<layer>/...). Call from a preload. */
 export function preloadCreatorLayers(scene: Phaser.Scene): void {
@@ -45,9 +45,11 @@ function pixels(scene: Phaser.Scene, key: string, size: number): Uint8ClampedArr
 /**
  * (Re)builds the avatar textures and walk animations for an appearance:
  * body with recoloured skin, then bottom, top and hair tinted to their
- * colours. Safe to call again whenever the appearance changes.
+ * colours. Safe to call again whenever the appearance changes. `name` is the
+ * sprite-set name: the player's own is AVATAR_ART.name; other players' looks
+ * get their own names (see RemotePlayers).
  */
-export function buildAvatar(scene: Phaser.Scene, a: Appearance): void {
+export function buildAvatar(scene: Phaser.Scene, a: Appearance, name: string = AVATAR_ART.name): void {
   const cat = COSMETICS;
   const size = cat.frameSize;
   const item = (id: string) => cat.items.find((it) => it.id === id);
@@ -73,7 +75,7 @@ export function buildAvatar(scene: Phaser.Scene, a: Appearance): void {
     // Redraw an existing canvas texture in place: sprites and animations showing it
     // keep a reference to the same texture object, so removing it would leave them
     // pointing at nothing (and stop the renderer).
-    const key = avatarKey(f);
+    const key = avatarKey(name, f);
     const existing = scene.textures.exists(key) ? scene.textures.get(key) : null;
     let tex = existing instanceof Phaser.Textures.CanvasTexture ? existing : null;
     if (!tex) {
@@ -88,7 +90,7 @@ export function buildAvatar(scene: Phaser.Scene, a: Appearance): void {
   // Only freshly created textures invalidate existing walk animations.
   if (created) {
     for (const dir of ['down', 'up', 'right']) {
-      const key = `${AVATAR_ART.name}_walk_${dir}`;
+      const key = `${name}_walk_${dir}`;
       if (scene.anims.exists(key)) scene.anims.remove(key);
     }
   }
@@ -98,4 +100,18 @@ export function buildAvatar(scene: Phaser.Scene, a: Appearance): void {
 export function savedAppearance(world: Game): Appearance {
   const a = world.state.appearance;
   return isValidAppearance(a, COSMETICS, world.state.cosmetics ?? []) ? a : defaultAppearance(COSMETICS);
+}
+
+/**
+ * Another player's look, vetted against the catalog. Their purchases are
+ * unknown here, so any catalog item counts as owned; anything unknown or
+ * malformed falls back to the default look.
+ */
+export function lookFromJson(json: string): Appearance {
+  try {
+    const a = JSON.parse(json) as unknown;
+    return isValidAppearance(a, COSMETICS, COSMETICS.items.map((it) => it.id)) ? (a as Appearance) : defaultAppearance(COSMETICS);
+  } catch {
+    return defaultAppearance(COSMETICS);
+  }
 }

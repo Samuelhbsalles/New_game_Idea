@@ -1,440 +1,209 @@
-<p align="center">
-  <h1 align="center">Claude Code Game Studios</h1>
-  <p align="center">
-    Turn a single Claude Code session into a full game development studio.
-    <br />
-    49 agents. 74 skills. One coordinated AI team.
-  </p>
-</p>
+# Little Willowbrook
 
-<p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
-  <a href=".claude/agents"><img src="https://img.shields.io/badge/agents-49-blueviolet" alt="49 Agents"></a>
-  <a href=".claude/skills"><img src="https://img.shields.io/badge/skills-74-green" alt="74 Skills"></a>
-  <a href=".claude/hooks"><img src="https://img.shields.io/badge/hooks-15-orange" alt="15 Hooks"></a>
-  <a href=".claude/rules"><img src="https://img.shields.io/badge/rules-14-red" alt="14 Rules"></a>
-  <a href="https://code.claude.com/docs"><img src="https://img.shields.io/badge/built%20for-Claude%20Code-f5f5f5?logo=anthropic" alt="Built for Claude Code"></a>
-  <a href="https://www.buymeacoffee.com/donchitos3"><img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Support%20this%20project-FFDD00?logo=buymeacoffee&logoColor=black" alt="Buy Me a Coffee"></a>
-  <a href="https://github.com/sponsors/Donchitos"><img src="https://img.shields.io/badge/GitHub%20Sponsors-Support%20this%20project-ea4aaa?logo=githubsponsors&logoColor=white" alt="GitHub Sponsors"></a>
-</p>
+A cozy, social pixel-art game about catching creatures and putting them to
+work in a little town. Think **Pokémon meets Habbo**: wander the streets, lure
+rabbits and pigeons with the right bait, send them off to bake bread or sew
+fabric on real-time shifts, sell what they make, and see other players
+doing the same in a shared online town.
+
+> **Status: early prototype, actively in development.** Plenty works and is
+> playable locally; plenty is still placeholder or on the roadmap. This README
+> only lists what is actually in the game today.
 
 ---
 
-## Why This Exists
+## What you can do today
 
-Building a game solo with AI is powerful — but a single chat session has no structure. No one stops you from hardcoding magic numbers, skipping design docs, or writing spaghetti code. There's no QA pass, no design review, no one asking "does this actually fit the game's vision?"
+### Your character and home
+- **Character creator** — pick a body, hairstyle, top and bottom, plus skin,
+  hair and clothing colours. Your look is built from layered sprites at runtime.
+- **A cottage to call home**, with a pet that lives its own life: it wanders,
+  naps in its bed, lounges on the armchair, eats from its bowl, asks to be
+  petted, and can follow you outside.
 
-**Claude Code Game Studios** solves this by giving your AI session the structure of a real studio. Instead of one general-purpose assistant, you get 49 specialized agents organized into a studio hierarchy — directors who guard the vision, department leads who own their domains, and specialists who do the hands-on work. Each agent has defined responsibilities, escalation paths, and quality gates.
+### The town
+- **A walkable town** with ten buildings (bakery, café, market, factory,
+  hotel, construction yard, clothes shop, pet pharmacy, care home and your
+  home), a park and a harbour.
+- **Ambient life:** townsfolk with their own routines (they visit shops, stop
+  to chat, and get grumpy if you keep bumping into them), pigeon flocks that
+  land in the plaza and scatter when you run at them, a splashing fountain,
+  glowing street lamps and chimney smoke.
+- **Fast-travel map** (press `M`) to jump between places.
+- **In-game clock:** one in-game day lasts 24 real minutes, with day and night.
 
-The result: you still make every decision, but now you have a team that asks the right questions, catches mistakes early, and keeps your project organized from first brainstorm to launch.
+### Catching creatures
+- Wild creatures appear by **neighbourhood, time of day and rarity**.
+  Rabbits roam the park and pigeons come to the plaza.
+- **Each species has its own bait.** Commons also take the generic bait;
+  rarer creatures need theirs, and rare and epic ones can still slip away.
+- The first catch of every species is recorded for the album.
+- **28 species are defined** (rarity, habitats, time and weather needs,
+  favourite bait, and the jobs each one is good and bad at). So far only the
+  **rabbit** and the **pigeon** have art and appear in the world. The rest are
+  waiting for their sprites and for new areas (lake, shore, countryside…).
 
----
+### Working and the economy
+- **Nine buildings have interiors** you can walk into, each with three work
+  stations.
+- **Put a creature to work** at a station: it stands at the oven, workbench
+  or sewing table, plays its work animation, and a countdown shows the time
+  left. A shift lasts 4 in-game hours, runs on timestamps, and **keeps going
+  while the game is closed**.
+- **Every species has strengths and weaknesses.** A bee bakes three times
+  faster; a beaver builds four times better but is terrible with fabric. The
+  rabbit is the steady generalist.
+- Shifts produce **bread, planks, stone, coffee beans, fabric or herbs**, or
+  pay **coins** at the hotel, care home and market.
+- **Market counter:** buy bait and pet food, and sell what your creatures made.
 
-## Table of Contents
+### Online (in progress)
+- A **game server** runs alongside the game in development. You log in with
+  a name, and your save is stored in a database on the server instead of in
+  the browser.
+- On your first login, an existing browser save moves into your new account
+  automatically.
+- **You can see other players.** Everyone in the same place (the town or a
+  building) appears with their own look and a name tag, walking around in
+  real time.
 
-- [What's Included](#whats-included)
-- [Studio Hierarchy](#studio-hierarchy)
-- [Slash Commands](#slash-commands)
-- [Does it produce games, or documents?](#does-it-produce-games-or-documents)
-- [Getting Started](#getting-started)
-- [Configuration](#configuration)
-- [Upgrading](#upgrading)
-- [Project Structure](#project-structure)
-- [How It Works](#how-it-works)
-- [Design Philosophy](#design-philosophy)
-- [Customization](#customization)
-- [Platform Support](#platform-support)
-- [Community](#community)
-- [Supporting This Project](#supporting-this-project)
-- [License](#license)
+### Also included
+- English and Brazilian Portuguese (switch in Options).
+- Crisp pixel-perfect text and integer pixel scaling, so the art stays sharp
+  at any window size.
 
----
+## Controls
 
-## What's Included
+| Key | Action |
+|---|---|
+| Arrow keys | Walk |
+| `E` / `Enter` | Interact, confirm |
+| `Esc` | Pause menu, back |
+| `M` | Town map (in town) |
 
-| Category | Count | Description |
-|----------|-------|-------------|
-| **Agents** | 49 | Specialized subagents across design, programming, art, audio, narrative, QA, and production |
-| **Skills** | 74 | Slash commands for every workflow phase (`/start`, `/design-system`, `/create-epics`, `/create-stories`, `/dev-story`, `/story-done`, etc.) |
-| **Hooks** | 15 | Automated validation on commits, pushes, asset changes, design-doc reads, writes and registries, session lifecycle, agent audit trail, and gap detection |
-| **Rules** | 14 | Path-scoped coding standards enforced when editing gameplay, engine, AI, UI, network code, scene and asset files, and more |
-| **Templates** | 62 | Document templates for GDDs, UX specs, ADRs, sprint plans, HUD design, accessibility, and more |
+## Technology
 
-## Studio Hierarchy
+| Part | Tech |
+|---|---|
+| Game client | [Phaser 3.90](https://phaser.io/) + TypeScript 5.9 |
+| Build & dev server | [Vite 8](https://vite.dev/) |
+| Game server | [Colyseus 0.18](https://colyseus.io/) (open source, runs inside Vite's dev server) |
+| Database | SQLite through Node's built-in `node:sqlite` |
+| Tests | [Vitest 5](https://vitest.dev/) and `@colyseus/testing` |
+| Art | Generated with [PixelLab](https://pixellab.ai/), then processed by small Python scripts in `tools/asset-pipeline/` |
+| Font | [Pixel Operator](https://fontlibrary.org/en/font/pixel-operator) by Jayvee Enaguas (CC0) |
 
-Agents are organized into three tiers, matching how real studios operate:
+The game rules (shifts, catching, economy, clock) live in `src/logic/`,
+free of Phaser and the browser, so the same code can run on the server.
+The online architecture is recorded in
+[`docs/architecture/adr-0001-online-architecture.md`](docs/architecture/adr-0001-online-architecture.md).
 
-```
-Tier 1 — Directors
-  creative-director    technical-director    producer
-
-Tier 2 — Department Leads
-  game-designer        lead-programmer       art-director
-  audio-director       narrative-director    qa-lead
-  release-manager      localization-lead
-
-Tier 3 — Specialists
-  gameplay-programmer  engine-programmer     ai-programmer
-  network-programmer   tools-programmer      ui-programmer
-  systems-designer     level-designer        economy-designer
-  technical-artist     sound-designer        writer
-  world-builder        ux-designer           prototyper
-  performance-analyst  devops-engineer       analytics-engineer
-  security-engineer    qa-tester             accessibility-specialist
-  live-ops-designer    community-manager
-```
-
-Each agent declares a model in its frontmatter: the three directors ask for
-Opus, `lead-programmer` and fifteen specialists name Sonnet, and the remaining thirty
-**inherit your session's model**. Treat the tiers as seniority of role, not as
-a billing plan — most of the studio runs on whatever model you are already using.
-
-### Engine Specialists
-
-The template includes agent sets for all three major engines. Use the set that matches your project:
-
-| Engine | Lead Agent | Sub-Specialists |
-|--------|-----------|-----------------|
-| **Godot 4** | `godot-specialist` | GDScript, Shaders, GDExtension |
-| **Unity** | `unity-specialist` | DOTS/ECS, Shaders/VFX, Addressables, UI Toolkit |
-| **Unreal Engine 5** | `unreal-specialist` | GAS, Blueprints, Replication, UMG/CommonUI |
-
-## Slash Commands
-
-Type `/` in Claude Code to access all 74 skills:
-
-**Onboarding & Navigation**
-`/start` `/help` `/project-stage-detect` `/setup-engine` `/adopt` `/settings`
-
-**Game Design**
-`/brainstorm` `/map-systems` `/design-system` `/quick-design` `/review-all-gdds` `/propagate-design-change`
-
-**Art & Assets**
-`/art-bible` `/asset-spec` `/asset-audit`
-
-**UX & Interface Design**
-`/ux-design` `/ux-review`
-
-**Architecture**
-`/create-architecture` `/architecture-decision` `/architecture-review` `/create-control-manifest`
-
-**Stories & Sprints**
-`/create-epics` `/create-stories` `/dev-story` `/sprint-plan` `/sprint-status` `/story-readiness` `/story-done` `/estimate`
-
-**Reviews & Analysis**
-`/design-review` `/code-review` `/balance-check` `/content-audit` `/scope-check` `/perf-profile` `/tech-debt` `/gate-check` `/consistency-check` `/security-audit`
-
-**QA & Testing**
-`/qa-plan` `/smoke-check` `/soak-test` `/regression-suite` `/test-setup` `/test-helpers` `/test-evidence-review` `/test-flakiness` `/skill-test` `/skill-improve`
-
-**Production**
-`/milestone-review` `/retrospective` `/bug-report` `/bug-triage` `/reverse-document` `/playtest-report`
-
-**Release**
-`/release-checklist` `/launch-checklist` `/changelog` `/patch-notes` `/hotfix` `/day-one-patch`
-
-**Creative & Content**
-`/prototype` `/vertical-slice` `/onboard` `/localize`
-
-**Team Orchestration** (coordinate multiple agents on a single feature)
-`/team-combat` `/team-narrative` `/team-ui` `/team-release` `/team-polish` `/team-audio` `/team-level` `/team-live-ops` `/team-qa`
-
-## Does it produce games, or documents?
-
-A fair question, and the answer is a measurement rather than a sample project.
-Four games were built from one brief at different `modes.rigor` levels and the
-documents each wrote **before its first line of game code** were counted:
-
-| `modes.rigor` | Docs before first line of game code | Time |
-|---|---:|---:|
-| `minimal` | **1** (the one-page brief) | 0 min |
-| `standard` | 30 | 58 min |
-
-All of them produced a running, tested game. Two blind reviewers and a human
-playtest then ranked the `standard` build **last** — the extra 29 documents
-bought traceability, not a better game.
-
-### It runs the game and looks at it
-
-The measurement above is about cost. The other half is whether the thing works,
-and for a game that means someone has to *look* at it — a passing test says
-nothing about a menu drawn off-screen. So a story that changes anything the
-player sees is not closed until the game has been launched, observed, and a
-screenshot retained in `production/qa/evidence/`. A parse check is not a run.
-This holds at every rigor level, including `minimal`, where automated tests are
-waived but the look is not.
-
-The games themselves are deliberately **not** shipped here: this is a template
-you clone to start your own project, and somebody else's game in your repo is
-clutter, not evidence.
-
-## Getting Started
+## Getting started
 
 ### Prerequisites
-
+- [Node.js](https://nodejs.org/) with npm. Development currently happens on
+  Node 26; an LTS release is recommended.
 - [Git](https://git-scm.com/)
-- [Claude Code](https://code.claude.com/docs/en/setup) — the native installer is recommended (`npm install -g @anthropic-ai/claude-code` also works, on Node.js 22+)
-- [Python 3](https://www.python.org/) — reads `project.yaml` for every skill and hook; without it every setting silently falls back to its default
-- Bash — runs every hook; built into macOS and Linux, and on Windows it comes with [Git for Windows](https://git-scm.com/downloads/win)
-- **Recommended**: [jq](https://jqlang.github.io/jq/) (for hook validation)
+- *Optional:* [Python 3](https://www.python.org/), only for the asset
+  pipeline scripts in `tools/`.
 
-Hooks fail gracefully if optional tools are missing — you just lose validation — with one deliberate exception: a commit that stages data JSON is blocked when there is no Python to validate it.
+### Install
 
-### Setup
-
-1. **Clone or use as template**:
-   ```bash
-   git clone https://github.com/Donchitos/Claude-Code-Game-Studios.git my-game
-   cd my-game
-   ```
-
-2. **Open Claude Code in the project's root folder** (the one holding
-   `CLAUDE.md` and `project.yaml`) and start a session:
-   ```bash
-   claude
-   ```
-   Starting it in a subfolder such as `src/` skips the project's hooks, deny
-   rules and ask-first permission mode.
-
-3. **Run `/start`** — the system asks where you are (no idea, vague concept,
-   clear design, existing work) and guides you to the right workflow. No assumptions.
-
-   Or jump directly to a specific skill if you already know what you need:
-   - `/brainstorm` — explore game ideas from scratch
-   - `/setup-engine godot 4.7` — configure your engine if you already know
-   - `/project-stage-detect` — analyze an existing project
-
-## Configuration
-
-`project.yaml` at the repo root is the single source of truth for how the
-studio behaves on your project — engine, naming conventions, and a `modes`
-block that controls how much process every skill enforces. `/start` writes it
-for you; you rarely need to hand-edit it.
-
-The one question that matters most is **`modes.rigor`** — `minimal`, `standard`,
-or `full`. It's a single front door over six separate knobs (`workflow` —
-which GDD sections are required, `docs.density`, `qa.level`,
-`story_granularity`, `review_mode` — how many director agents review your work,
-and `team.size`), so `/start` asks it once instead of six times:
-
-- **`minimal`** (default) — jam-game speed. No GDDs required, terse docs, minimal QA evidence, solo review. `/start` → `/setup-engine` → `/brainstorm` (a one-page brief) → `/create-stories` → `/dev-story` ↔ `/story-done`.
-- **`standard`** — 5 required GDD sections, balanced doc depth, standard QA evidence, lean review.
-- **`full`** — all 8 GDD sections, thorough docs, full QA evidence on every story type, full director review.
-
-`minimal` is the default because the heavier tier costs more to reach working
-code without producing a better result, and gives nothing back when someone new
-picks the project up. Raise it in one `/settings` call when your project grows
-— `/help` and `/gate-check` will suggest it when they see the signs.
-
-Two escape hatches keep one setting from being a blunt instrument.
-**`system_overrides`** holds a single system to a higher standard than the rest
-of the project — your combat system gets the full treatment while everything
-else stays light. **`testing.strict`** sets, per test type (logic, integration,
-visual, UI, config), whether missing evidence blocks a story or merely warns.
-
-Any of the six underlying knobs can still be set individually if you want a mix
-(e.g. `workflow: full` with `docs.density: terse` — comprehensive but compact).
-Two of them — `review_mode` (`full` / `lean` / `solo`) and `team.size` — are
-also **personal**: rigor sets the team-wide default, but you can override them
-per-developer in a gitignored `project.local.yaml` without touching the shared
-config. `modes.automation` (how often the AI pauses to ask before it acts) sits
-outside rigor and is likewise personally overridable.
-
-View or change any setting with the `/settings` skill:
-
-```
-/settings                              # view effective config
-/settings modes.review_mode            # view one setting
-/settings modes.rigor=full             # write to project.yaml (team-wide)
-/settings --local modes.review_mode=solo   # write to project.local.yaml (just you)
+```bash
+git clone <this repository> new-game-idea
+cd new-game-idea
+npm install
 ```
 
-Full schema and per-setting behavior: `.claude/docs/effects-map.md`.
+### Run it locally
 
-## Upgrading
-
-Already using an older version of this template? See [UPGRADING.md](UPGRADING.md)
-for step-by-step migration instructions, a breakdown of what changed between
-versions, and which files are safe to overwrite vs. which need a manual merge.
-
-## Project Structure
-
-```
-CLAUDE.md                           # Master configuration
-.claude/
-  settings.json                     # Hooks, permissions, safety rules
-  agents/                           # 49 agent definitions (markdown + YAML frontmatter)
-  skills/                           # 74 slash commands (subdirectory per skill)
-  hooks/                            # 18 scripts (bash) — 15 event hooks, two helpers they
-                                    #   source (yaml-helper.sh, update-check.sh), and one
-                                    #   opt-in diagnostic you wire yourself
-  rules/                            # 14 path-scoped coding standards
-  statusline.sh                     # Status line script (context%, model, stage, epic breadcrumb)
-  docs/
-    workflow-catalog.yaml           # 7-phase pipeline definition (read by /help)
-    templates/                      # 62 document templates (+ per-section guidance)
-src/                                # Game source code (Godot). The code root is
-                                    #   ENGINE-SPECIFIC: Unity compiles only
-                                    #   Assets/, Unreal builds from Source/<Module>/
-assets/                             # Art, audio, VFX, shaders, data files
-design/                             # GDDs, narrative docs, level designs
-docs/                               # Technical documentation and ADRs
-tests/                              # Test suites (unit, integration, performance, playtest)
-tools/                              # Build and pipeline tools
-prototypes/                         # Throwaway prototypes (isolated from src/)
-production/                         # Sprint plans, milestones, release tracking
-studio-tests/                       # QA for the skills and agents themselves — see below
+```bash
+npm run dev
 ```
 
-### Testing your customizations
+This starts the game and the game server together and opens
+`http://localhost:5173`. Type a name on the title screen to log in. The
+server creates a local database at `server/data/world.sqlite` on first run;
+it is not committed.
 
-CCGS is a template you are meant to edit. `studio-tests/` is how
-you check that an edited or newly written skill still holds up — a catalog of all
-74 skills and 49 agents, per-category quality rubrics, behavioral specs, and
-templates for writing specs of your own.
+**Handy development URL options:**
+
+| Option | What it does |
+|---|---|
+| `?offline=1` | Play without the server; the save stays in the browser |
+| `?scene=town` (`home`, `creator`) | Skip the title screen and jump straight in |
+| `?name=Ana` | Name to log in with when using `?scene=` |
+| `?save=test` | Use a separate browser save slot, so testing never touches your real save |
+
+### Other commands
+
+```bash
+npm test            # run the test suite (game rules + server)
+npm run typecheck   # TypeScript check
+npm run build       # production build of the client into dist/
+```
+
+**Want company while testing?** With `npm run dev` running,
+`node tools/dev/bot.mjs Bo` adds a pretend player named Bo who paces the
+street near the town spawn.
+
+A production setup for the game server (hosting, real platform login) is
+not in place yet.
+
+## Project structure
 
 ```
-/skill-test static [name]     # structural linter — 7 compliance checks
-/skill-test category [name]   # category-specific quality rubric
-/skill-test spec [name]       # behavioral spec assertions
-/skill-test audit             # coverage report across skills and agents
-/skill-improve [name]         # test-fix-retest loop; keeps or reverts on score change
+src/
+  logic/        game rules, no Phaser and no DOM (shared with the server)
+  scenes/       Phaser scenes: title, creator, home, town, interiors, map, menus
+  net/          connection to the game server
+  data/         all gameplay data as JSON (creatures, shops, items, town, text)
+server/src/     Colyseus server: rooms, identity, accounts database
+public/assets/  sprites, rooms, tilesets, UI and fonts
+tests/          unit, integration and server tests
+design/         game bible, game brief, creature list, art bible
+docs/           architecture decisions and engine reference
+tools/          asset pipeline and design report scripts
+production/     stories, QA evidence screenshots
 ```
 
-It tests the *framework*, never your game — game tests live in `tests/`.
+## Development status and roadmap
 
-## How It Works
+**Done:** town, home and pet, character creator, building interiors with
+work shifts, creature data and bait-based catching, market, game clock,
+crisp pixel UI, and the first two online steps (server, login, saves in a
+database, and seeing other players walk around).
 
-### Agent Coordination
+**Up next (planned, not built yet):**
+- The server applying the game rules itself (fair play), and work stations
+  shared by all players
+- Apartment building: every player starts in their own small apartment, with
+  upgrades and visits
+- Dialogue with townsfolk, friendship and visiting their homes
+- Creature energy and resting, and the album screen
+- Sprites for more species, plus new areas (lake, shore, countryside)
+- Weather, more towns, and a player market
 
-Agents follow a structured delegation model:
+## Built with Claude Code
 
-1. **Vertical delegation** — directors delegate to leads, leads delegate to specialists
-2. **Horizontal consultation** — same-tier agents can consult each other but can't make binding cross-domain decisions
-3. **Conflict resolution** — disagreements escalate up to the shared parent (`creative-director` for design, `technical-director` for technical)
-4. **Change propagation** — cross-department changes are coordinated by `producer`
-5. **Domain boundaries** — agents don't modify files outside their domain without explicit delegation
+Development is assisted by [Claude Code](https://code.claude.com/docs), using
+the [Claude Code Game Studios](https://github.com/Donchitos/Claude-Code-Game-Studios)
+setup: specialised agents, skills and hooks that live in `.claude/`. Design
+documents in `design/` and the session notes guide the work.
 
-### Collaborative, Not Autonomous
+If you also use Claude Code here:
+- Open it in the **project root** (the folder with `CLAUDE.md` and
+  `project.yaml`). Starting in a subfolder skips the project's hooks and rules.
+- The hooks need **Bash** (on Windows it comes with Git for Windows) and
+  **Python 3**. [`jq`](https://jqlang.github.io/jq/) is recommended.
 
-This is **not** an auto-pilot system. Every agent follows a strict collaboration protocol:
+## Credits and license
 
-1. **Ask** — agents ask questions before proposing solutions
-2. **Present options** — agents show 2-4 options with pros/cons
-3. **You decide** — the user always makes the call
-4. **Draft** — agents show work before finalizing
-5. **Approve** — nothing gets written without your sign-off
+- Art: generated with PixelLab.
+- Font: Pixel Operator by Jayvee Enaguas, CC0 1.0
+  (`public/assets/fonts/PixelOperator-LICENSE.txt`).
+- Development framework: Claude Code Game Studios by Donchitos (MIT).
 
-You stay in control. The agents provide structure and expertise, not autonomy.
-
-That is how a terminal session started at the project root behaves out of the
-box. The `guided` and `autonomous` automation settings, and Claude Code's own
-auto mode, trade some of these prompts for speed; see
-[setup-requirements.md](.claude/docs/setup-requirements.md) for the routes into
-auto mode.
-
-### Automated Safety
-
-**Hooks** run automatically on every session:
-
-| Hook | Trigger | What It Does |
-|------|---------|--------------|
-| `validate-commit.sh` | PreToolUse (Bash, PowerShell) | Checks for hardcoded values, TODO format, JSON validity, design doc sections — exits early if the command is not `git commit` |
-| `validate-push.sh` | PreToolUse (Bash, PowerShell) | Warns on pushes to protected branches, and on `git tag`, `git merge`, `gh release`, `butler push` and `steamcmd +run_app_build` — exits early for any other command |
-| `validate-read.sh` | PreToolUse (Read) | Refuses a whole-file read of a design doc over 40 KB and answers with its headings, so the retry reads one section (`features.read_guard`) |
-| `validate-write.sh` | PreToolUse (Write/Edit) | Warns, never blocks, when a write would break a rule the skills state: a file they never overwrite, the config guard, the prototype boundary, a localization freeze |
-| `validate-registry.sh` | PreToolUse (Write/Edit) | Warns when a write to the entity or TR-ID registry would delete or renumber an entry, or set a status its header does not list |
-| `validate-assets.sh` | PostToolUse (Write/Edit) | Checks data-file JSON under `assets/`, `Assets/` or `Content/`, and asset naming in Godot's `assets/` only — exits early if the file is under none of them |
-| `session-start.sh` | Session open | Shows current branch and recent commits for orientation |
-| `detect-gaps.sh` | Session open | Detects fresh projects (suggests `/start`) and missing design docs when code or prototypes exist |
-| `pre-compact.sh` | Before compaction | Logs the compaction (its output does not reach Claude — `session-start.sh` restores context afterwards) |
-| `notify.sh` | Permission prompt, or idle about a minute | Shows Windows toast notification via PowerShell |
-| `session-stop.sh` | Every response end, in the background | Archives `active.md` to session log and records git activity |
-| `log-agent.sh` | Agent spawned | Audit trail start — logs subagent invocation |
-| `log-agent-stop.sh` | Agent stops | Audit trail stop — completes subagent record |
-| `validate-agent-artifact.sh` | Agent stops | Warns when a subagent stops without writing the file its brief named |
-| `validate-skill-change.sh` | PostToolUse (Write/Edit) | Advises running `/skill-test` after any `.claude/skills/` change |
-
-> **Note**: `validate-commit.sh`, `validate-push.sh`, `validate-read.sh`, `validate-write.sh`, `validate-registry.sh`, `validate-assets.sh` and `validate-skill-change.sh` fire on every Bash, PowerShell, Read, Write or Edit tool call and exit immediately (exit 0) when the command or file path is not relevant. This is normal hook behavior — not a performance concern.
-
-**Permission rules** in `settings.json` auto-allow test runs and block dangerous operations (force push, `rm -rf`, reading `.env` files) in both the Bash and PowerShell tools. Read-only commands such as `git status`, `git log` and `ls` need no rule: Claude Code runs them without asking. The `git` rules match anywhere after `git`, so a git command whose text only mentions `push` followed later by ` +` or ` -f`, `clean` followed by ` -f`, or `reset` followed by `--hard` — a commit message such as `git commit -m "push + pull"` included — is denied too: reword the message.
-
-### Path-Scoped Rules
-
-Coding standards are automatically enforced based on file location. The paths
-below are Godot's. Each rule also matches the Unity and Unreal layouts: the code
-rules match C# under `Assets/**/Gameplay/` and C++ under `Source/**/Gameplay/` (and `Core`,
-`AI`, `Networking`, `UI`), data matches JSON under `Assets/**/Data/` and
-`Content/**/Data/`, shaders match by file type, and tests match
-C# under `Assets/Tests/` and C++ under `Source/**/Tests/`.
-
-| Path | Enforces |
-|------|----------|
-| `src/gameplay/**` | Data-driven values, delta time usage, no UI references |
-| `src/core/**` | Zero allocations in hot paths, thread safety, API stability |
-| `src/ai/**` | Performance budgets, debuggability, data-driven parameters |
-| `src/networking/**` | Server-authoritative, versioned messages, security |
-| `src/ui/**` | No game state ownership, localization-ready, accessibility |
-| `design/gdd/**` | Required sections per `modes.workflow`, formula format, edge cases |
-| `design/narrative/**` | Lore consistency, character voice, canon levels |
-| `assets/data/**/*.json` | JSON validity, naming conventions, schema rules |
-| `assets/shaders/**` | Naming conventions, performance targets, cross-platform rules |
-| `**/*.tscn`, `**/*.tres` | Scene and resource files changed in the editor where possible; safe hand-edit rules |
-| `tests/**` | Test naming, coverage requirements, fixture patterns |
-| `prototypes/**` | Relaxed standards, README required, hypothesis documented |
-
-## Design Philosophy
-
-This template is grounded in professional game development practices:
-
-- **MDA Framework** — Mechanics, Dynamics, Aesthetics analysis for game design
-- **Self-Determination Theory** — Autonomy, Competence, Relatedness for player motivation
-- **Flow State Design** — Challenge-skill balance for player engagement
-- **Bartle Player Types** — Audience targeting and validation
-- **Verification-Driven Development** — Tests first, then implementation
-
-## Customization
-
-This is a **template**, not a locked framework. Everything is meant to be customized:
-
-- **Add/remove agents** — delete agent files you don't need, add new ones for your domains
-- **Edit agent prompts** — tune agent behavior, add project-specific knowledge
-- **Modify skills** — adjust workflows to match your team's process
-- **Add rules** — create new path-scoped rules for your project's directory structure
-- **Tune hooks** — adjust validation strictness, add new checks
-- **Pick your engine** — use the Godot, Unity, or Unreal agent set (or none)
-- **Tune process weight** — `modes.rigor` and its underlying knobs in `project.yaml` (see [Configuration](#configuration)). Override per-run with `--review solo` on any skill.
-
-## Platform Support
-
-Primary development on **Windows 10** with Git Bash. The hooks and scripts are also tested on **macOS** — its stock bash 3.2 and BSD tools, with and without `jq` — and on **Linux**. All hooks use POSIX-compatible patterns (`grep -E`, not `grep -P`) and include fallbacks for missing tools. The `notify.sh` hook uses PowerShell for Windows toast notifications and is a no-op elsewhere — desktop notifications on macOS/Linux are not yet wired. Please file issues for any platform-specific breakage.
-
-## Community
-
-- **Discussions** — [GitHub Discussions](https://github.com/Donchitos/Claude-Code-Game-Studios/discussions) for questions, ideas, and showcasing what you've built
-- **Issues** — [Bug reports and feature requests](https://github.com/Donchitos/Claude-Code-Game-Studios/issues)
-
----
-
-## Supporting This Project
-
-Claude Code Game Studios is free and open source. If it saves you time or helps you ship your game, consider supporting continued development:
-
-<p>
-  <a href="https://www.buymeacoffee.com/donchitos3"><img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black" alt="Buy Me a Coffee"></a>
-  &nbsp;
-  <a href="https://github.com/sponsors/Donchitos"><img src="https://img.shields.io/badge/GitHub%20Sponsors-ea4aaa?style=for-the-badge&logo=githubsponsors&logoColor=white" alt="GitHub Sponsors"></a>
-</p>
-
-- **[Buy Me a Coffee](https://www.buymeacoffee.com/donchitos3)** — one-time support
-- **[GitHub Sponsors](https://github.com/sponsors/Donchitos)** — recurring support through GitHub
-
-Sponsorships help fund time spent maintaining skills, adding new agents, keeping up with Claude Code and engine API changes, and responding to community issues.
-
----
-
-*Built for Claude Code. Maintained and extended — contributions welcome via [GitHub Discussions](https://github.com/Donchitos/Claude-Code-Game-Studios/discussions).*
-
-## License
-
-MIT License. See [LICENSE](LICENSE) for details.
+The game's own license has not been decided yet. The `LICENSE` file in this
+repository is the MIT license inherited from the Claude Code Game Studios
+template.

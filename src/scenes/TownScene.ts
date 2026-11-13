@@ -14,7 +14,9 @@ import { buildNavGrid } from '../logic/npcMind';
 import { arrivalPoint, doorAt, parseTown, tileFlip, townLayers, townSolids, type Building, type TownDef } from '../logic/town';
 import { AVATAR_ART, buildAvatar, savedAppearance } from './avatar';
 import { addClock } from './clockHud';
+import { SESSION_KEY, type WorldSession } from '../net/world';
 import { openOverlay } from './overlay';
+import { RemotePlayers } from './RemotePlayers';
 import { TownBirds } from './TownBirds';
 import { TownNpc } from './TownNpc';
 import { TownWild, type Critter } from './TownWild';
@@ -66,6 +68,8 @@ export class TownScene extends Phaser.Scene {
   private map!: TownMap;
   /** Game state (named `world` because Phaser.Scene already owns `game`). */
   private world!: Game;
+  /** Other players in this place; null when playing offline. */
+  private others: RemotePlayers | null = null;
   private keys!: Keys;
   private mapKey!: Phaser.Input.Keyboard.Key;
   private player!: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
@@ -161,6 +165,9 @@ export class TownScene extends Phaser.Scene {
     this.player.body.setSize(16, 10).setOffset(16, 34);
     this.player.setCollideWorldBounds(true);
     this.physics.add.collider(this.player, solids);
+    // Other players here (online): drawn from the world room's synced state.
+    const session = this.registry.get(SESSION_KEY) as WorldSession | undefined;
+    this.others = session ? new RemotePlayers(this, session.room, 'town', JSON.stringify(savedAppearance(this.world)), pDef.walkFps) : null;
 
     // The pet comes along only if it was following (and is not away at work).
     const petAtWork = this.world.state.creatures.find((c) => c.id === homeJson.pet.creatureId)?.status === 'working';
@@ -212,6 +219,7 @@ export class TownScene extends Phaser.Scene {
 
   update(_t: number, dt: number): void {
     if (this.leaving) return;
+    this.others?.update({ x: this.player.x, y: this.player.y, facing: this.facing, moving: this.player.body.velocity.lengthSq() > 0 }, this.time.now);
     this.moveNpcs(dt);
     const input = this.keys.read();
     if (this.panel) {

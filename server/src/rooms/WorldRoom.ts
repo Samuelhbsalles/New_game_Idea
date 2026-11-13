@@ -1,4 +1,5 @@
 import { Room, type Client } from 'colyseus';
+import { PlayerState, sanitizeLook, sanitizeMove, WorldState } from './presence';
 import { deserialize } from '../../../src/logic/state';
 import type { Account } from '../db/accounts';
 import { resolveIdentity } from '../identity/identity';
@@ -23,14 +24,17 @@ interface AuthData {
 }
 
 /**
- * The shared world. Phase 1: players join with a platform token; the server
+ * The shared world. Phase 2: everyone's place, position and look are in the
+ * synced state (players), so each client can draw the others. Phase 1: players join with a platform token; the server
  * finds or creates their account. The client asks for its save ('load') and
  * sends it back after changes ('save'); the first login may adopt the save
  * that lived in the browser ('import', only into an empty account). The game
  * rules still run in the client; phase 3 moves them here
  * (docs/architecture/adr-0001-online-architecture.md).
  */
-export class WorldRoom extends Room {
+export class WorldRoom extends Room<{ state: WorldState }> {
+  state = new WorldState();
+
   /** Verifies the platform token and loads (or creates) the account. Falsy = rejected. */
   static async onAuth(token: string): Promise<AuthData | false> {
     const { accounts, providers } = world();
@@ -46,7 +50,31 @@ export class WorldRoom extends Room {
       return { displayName: auth.account.displayName, save: world().accounts.loadSave(auth.account.id) };
     });
     this.onMessage('save', (client, data: unknown) => this.store(client, data, false));
+    // Phase 2, presence: where each player is and how they look, shared with everyone.
+    this.onMessage('move', (client, raw: unknown) => {
+      const p = this.state.players.get(client.sessionId);
+      const m = sanitizeMove(raw);
+      if (!p || !m) return;
+      p.place = m.place;
+      p.x = m.x;
+      p.y = m.y;
+      p.face = m.face;
+      p.moving = m.moving;
+    });
+    this.onMessage('look', (client, raw: unknown) => {
+      const p = this.state.players.get(client.sessionId);
+      const look = sanitizeLook(raw);
+      if (p && look !== null) p.look = look;
+    });
     this.onMessage('import', (client, data: unknown) => this.store(client, data, true));
+  }
+
+  onJoin(client: Client, _options: unknown, auth: AuthData): void {
+    this.state.players.set(client.sessionId, new PlayerState({ name: auth.account.displayName, place: '', x: 0, y: 0, face: 'down', moving: false, look: '' }));
+  }
+
+  onLeave(client: Client): void {
+    this.state.players.delete(client.sessionId);
   }
 
   /**
