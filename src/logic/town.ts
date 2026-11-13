@@ -35,6 +35,12 @@ export interface Building {
   solid: Footprint;
   /** Door x offset from the building's x; the door sits on the foot line. */
   doorDx: number;
+  /**
+   * Where the door's opening is drawn when someone goes in (px): its size and
+   * how far its bottom sits above the foot line. Null = no opening drawn, the
+   * walker just slips behind the facade.
+   */
+  door: { w: number; h: number; dy: number } | null;
 }
 
 /** A looping animation shown instead of a prop's still sprite: frames `<key>_01`..`<key>_NN`. */
@@ -215,7 +221,12 @@ export function parseTown(raw: unknown): TownDef {
     const id = str(bo, 'id', p);
     if (seen.has(id)) fail(p, `duplicate id "${id}"`);
     seen.add(id);
-    const bld = { id, sprite: str(bo, 'sprite', p), x: num(bo, 'x', p), y: num(bo, 'y', p), solid: footprint(bo.solid, `${p}.solid`), doorDx: num(bo, 'doorDx', p) };
+    let door: Building['door'] = null;
+    if (bo.door !== undefined) {
+      const d = obj(bo.door, `${p}.door`);
+      door = { w: num(d, 'w', `${p}.door`, 1), h: num(d, 'h', `${p}.door`, 1), dy: num(d, 'dy', `${p}.door`, 0) };
+    }
+    const bld = { id, sprite: str(bo, 'sprite', p), x: num(bo, 'x', p), y: num(bo, 'y', p), solid: footprint(bo.solid, `${p}.solid`), doorDx: num(bo, 'doorDx', p), door };
     inside(bld.x, bld.y, p);
     return bld;
   });

@@ -18,10 +18,20 @@ import zlib
 API = "https://api.pixellab.ai/mcp"
 
 
-def fetch(url):
-    req = urllib.request.Request(url, headers={"User-Agent": "asset-pipeline"})
-    with urllib.request.urlopen(req, timeout=60) as r:
-        return r.read()
+def fetch(url, tries=8):
+    """GET with retries on 423 Locked (the asset is still being saved), honouring Retry-After."""
+    import time
+    import urllib.error
+
+    for attempt in range(tries):
+        req = urllib.request.Request(url, headers={"User-Agent": "asset-pipeline"})
+        try:
+            with urllib.request.urlopen(req, timeout=60) as r:
+                return r.read()
+        except urllib.error.HTTPError as e:
+            if e.code != 423 or attempt == tries - 1:
+                raise
+            time.sleep(min(30, int(e.headers.get("Retry-After") or 5)))
 
 
 def decode_png(b):
@@ -89,8 +99,39 @@ def tileset(tid, out):
     print(json.dumps({"wangToFrame": table}))
 
 
+def key_out_background(w, h, rows, tol=26):
+    """For objects returned on a flat colour (canvases over 200x200): clear the
+    background by flood-filling from the border with the most common border
+    colour (the flat fill can come in two close shades, so `tol` covers both).
+    Only pixels connected to the edge are cleared, so greys inside the
+    building (glass, stone) stay. Returns how many pixels were cleared."""
+    from collections import Counter
+
+    border = [tuple(rows[0][x * 4:x * 4 + 3]) for x in range(w)] + [tuple(rows[h - 1][x * 4:x * 4 + 3]) for x in range(w)]
+    border += [tuple(rows[y][0:3]) for y in range(h)] + [tuple(rows[y][(w - 1) * 4:(w - 1) * 4 + 3]) for y in range(h)]
+    bg = Counter(border).most_common(1)[0][0]
+    close = lambda p: abs(p[0] - bg[0]) + abs(p[1] - bg[1]) + abs(p[2] - bg[2]) <= tol
+    seen = [[False] * w for _ in range(h)]
+    stack = [(x, y) for x in range(w) for y in (0, h - 1)] + [(x, y) for y in range(h) for x in (0, w - 1)]
+    cleared = 0
+    while stack:
+        x, y = stack.pop()
+        if not (0 <= x < w and 0 <= y < h) or seen[y][x]:
+            continue
+        seen[y][x] = True
+        p = rows[y][x * 4:x * 4 + 4]
+        if not p[3] or not close(p):
+            continue
+        rows[y][x * 4 + 3] = 0
+        cleared += 1
+        stack += [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]
+    return cleared
+
+
 def obj(oid, out):
     w, h, rows = decode_png(fetch(f"{API}/map-objects/{oid}/download"))
+    if all(r[x * 4 + 3] == 255 for r in rows for x in range(0, w, 7)):
+        print(json.dumps({"keyed_background_px": key_out_background(w, h, rows)}))
     xs = [x for r in rows for x in range(w) if r[x * 4 + 3]]
     ys = [y for y, r in enumerate(rows) if any(r[x * 4 + 3] for x in range(w))]
     x0, x1, y0, y1 = min(xs), max(xs) + 1, min(ys), max(ys) + 1
@@ -121,12 +162,18 @@ def character(cid, dest):
                 open(f"{dest}_idle_{d}_01.png", "wb").write(z.read(n))
         if "animations" in parts and n.endswith(".png"):
             i = parts.index("animations")
+            # The animation's folder is its display name; "walk"/"walking..." is the walk
+            # cycle, "eat" and "sleep" are down-only extras (see src/data/sprites.json).
+            name = parts[i + 1].lower()
+            action = "walk" if name.startswith("walk") else name if name in ("eat", "sleep") else None
             d = DIRS.get(parts[i + 2])
-            if d and d != "left":
-                k = int(parts[-1][6:9]) + 1
-                open(f"{dest}_walk_{d}_{k:02d}.png", "wb").write(z.read(n))
-                counts[d] = max(counts.get(d, 0), k)
-    print(json.dumps({"walkFrames": counts}))
+            if not action or not d or d == "left" or (action != "walk" and d != "down"):
+                continue
+            k = int(parts[-1][6:9]) + 1
+            open(f"{dest}_{action}_{d}_{k:02d}.png", "wb").write(z.read(n))
+            key = f"{action}_{d}"
+            counts[key] = max(counts.get(key, 0), k)
+    print(json.dumps({"frames": counts}))
 
 
 def object_anim(oid, dest):

@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { nextDelay } from '../logic/ambient';
 import type { SpawnRule } from '../logic/catching';
+import { findPath, type NavGrid, type Pt } from '../logic/npcMind';
 import { facingFor, showMotion, type Dir } from './sprites';
 
 /** Wander speed (px/s) and pauses between little trips (ms). */
@@ -14,7 +15,8 @@ export interface Critter {
   species: string;
   sprite: Phaser.GameObjects.Sprite;
   rule: SpawnRule;
-  target: { x: number; y: number } | null;
+  /** Remaining waypoints of the current little trip (empty while resting). */
+  path: Pt[];
   waitMs: number;
   facing: Dir;
 }
@@ -32,7 +34,11 @@ export class TownWild {
     rules: SpawnRule[],
     /** Sprite name for a species, or null when it has no art yet. */
     private readonly artFor: (species: string) => string | null,
+    /** Walkable grid: critters only stand on, and walk between, free cells. */
+    private readonly nav: NavGrid,
     private readonly rng: () => number,
+    /** Display scale per species (small animals read smaller than people). */
+    private readonly scaleFor: (species: string) => number = () => 1,
   ) {
     for (const rule of rules) {
       if (!artFor(rule.species)) continue;
@@ -50,13 +56,23 @@ export class TownWild {
     const name = this.artFor(rule.species);
     if (!name) return;
     const p = this.randomIn(rule);
-    const sprite = this.scene.add.sprite(p.x, p.y, `${name}_idle_down`).setOrigin(0.5, 0.9).setAlpha(0);
+    if (!p) return;
+    const sprite = this.scene.add.sprite(p.x, p.y, `${name}_idle_down`).setOrigin(0.5, 0.9).setScale(this.scaleFor(rule.species)).setAlpha(0);
     this.scene.tweens.add({ targets: sprite, alpha: 1, duration: APPEAR_MS });
-    this.critters.push({ species: rule.species, sprite, rule, target: null, waitMs: nextDelay(PAUSE_MS, this.rng), facing: 'down' });
+    this.critters.push({ species: rule.species, sprite, rule, path: [], waitMs: nextDelay(PAUSE_MS, this.rng), facing: 'down' });
   }
 
-  private randomIn(rule: SpawnRule): { x: number; y: number } {
-    return { x: rule.area.x + this.rng() * rule.area.w, y: rule.area.y + this.rng() * rule.area.h };
+  /** A random free spot in the rule's area (never inside a tree trunk, bench or building), or null. */
+  private randomIn(rule: SpawnRule): Pt | null {
+    const g = this.nav;
+    for (let i = 0; i < 20; i++) {
+      const x = rule.area.x + this.rng() * rule.area.w;
+      const y = rule.area.y + this.rng() * rule.area.h;
+      const cx = Math.floor(x / g.cell);
+      const cy = Math.floor(y / g.cell);
+      if (g.free[cy]?.[cx]) return { x, y };
+    }
+    return null;
   }
 
   /** Per frame: pause, then hop over to a new spot in the area. */
@@ -65,20 +81,24 @@ export class TownWild {
       const name = this.artFor(c.species);
       if (!name) continue;
       c.sprite.setDepth(c.sprite.y);
-      if (!c.target) {
+      const wp = c.path[0];
+      if (!wp) {
         c.waitMs -= dtMs;
-        if (c.waitMs <= 0) c.target = this.randomIn(c.rule);
+        if (c.waitMs <= 0) {
+          const goal = this.randomIn(c.rule);
+          c.path = goal ? findPath(this.nav, c.sprite, goal) : [];
+          c.waitMs = nextDelay(PAUSE_MS, this.rng);
+        }
         continue;
       }
-      const dx = c.target.x - c.sprite.x;
-      const dy = c.target.y - c.sprite.y;
+      const dx = wp.x - c.sprite.x;
+      const dy = wp.y - c.sprite.y;
       const d = Math.hypot(dx, dy);
       const step = (WANDER_SPEED * dtMs) / 1000;
       if (d <= step) {
-        c.sprite.setPosition(c.target.x, c.target.y);
-        c.target = null;
-        c.waitMs = nextDelay(PAUSE_MS, this.rng);
-        showMotion(c.sprite, name, c.facing, false);
+        c.sprite.setPosition(wp.x, wp.y);
+        c.path.shift();
+        if (c.path.length === 0) showMotion(c.sprite, name, c.facing, false);
         continue;
       }
       c.sprite.setPosition(c.sprite.x + (dx / d) * step, c.sprite.y + (dy / d) * step);

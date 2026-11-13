@@ -7,10 +7,10 @@
   "rabbit": {
     "name": "rabbit",
     "folder": "creatures/rabbit",
-    "walkFrames": 4,
+    "walkFrames": 8,
     "extras": [
-      { "action": "eat", "frames": 7, "fps": 8, "repeat": -1 },
-      { "action": "sleep", "frames": 10, "fps": 5, "repeat": -1 }
+      { "action": "eat", "frames": 8, "fps": 8, "repeat": -1 },
+      { "action": "sleep", "frames": 3, "fps": 2, "repeat": -1 }
     ]
   }
 }

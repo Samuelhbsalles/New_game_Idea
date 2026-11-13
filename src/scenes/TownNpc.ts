@@ -7,8 +7,12 @@ import { textStyle } from './ui/MenuPanel';
 
 /** Arrival tolerance (px) for a waypoint. */
 const ARRIVE_PX = 3;
-/** Fade (ms) when going in or out of a door. */
+/** Fade (ms) when a door is missing and the NPC just fades. */
 const DOOR_FADE_MS = 300;
+/** Door opening / closing time (ms). */
+const DOOR_OPEN_MS = 180;
+/** Time (ms) for each step through the doorway. */
+const DOOR_STEP_MS = 650;
 /** How long (ms) an angry NPC glares before storming off. */
 const ANGRY_MS = 1800;
 /** Minimum time (ms) between two counted bumps from the player. */
@@ -186,35 +190,96 @@ export class TownNpc {
 
   // ---- doors -------------------------------------------------------------------------
 
+  /**
+   * Walks in through the door: the door opens (a dark opening), the NPC steps
+   * up into it and slips behind the facade (drawn under the building, so the
+   * wall covers it), then the door closes.
+   */
   private goInside(building: string): void {
+    const b = this.town.buildings.find((x) => x.id === building);
     this.activity = 'inside';
     this.lastBuilding = building;
     this.timerMs = this.def.insideMs[0] + (this.def.insideMs[1] - this.def.insideMs[0]) * this.rng();
-    this.facing = 'up';
-    showMotion(this.sprite, this.animName, 'up', false);
+    this.sprite.setVelocity(0, 0);
     this.sprite.body.enable = false;
-    this.scene.tweens.add({ targets: this.sprite, alpha: 0, y: this.sprite.y - 6, duration: DOOR_FADE_MS });
-  }
-
-  private comeOut(): void {
-    const door = arrivalPoint(this.town, this.lastBuilding ?? this.def.home) ?? this.town.spawn;
-    this.sprite.setPosition(door.x, door.y - 6).setAlpha(0);
-    this.facing = 'down';
-    showMotion(this.sprite, this.animName, 'down', false);
+    this.facing = 'up';
+    showMotion(this.sprite, this.animName, 'up', true);
+    if (!b) {
+      this.scene.tweens.add({ targets: this.sprite, alpha: 0, duration: DOOR_FADE_MS });
+      return;
+    }
+    const doorX = b.x + b.doorDx;
+    const opening = b.door ? this.openDoor(b.x + b.doorDx, b.y - b.door.dy, b.door, b.y) : null;
+    // Step to the threshold in front of the open door, then through it behind the wall.
     this.scene.tweens.add({
       targets: this.sprite,
-      alpha: 1,
-      y: door.y,
-      duration: DOOR_FADE_MS,
+      x: doorX,
+      y: b.y + 8,
+      duration: DOOR_STEP_MS,
+      onUpdate: () => this.sprite.setDepth(b.y + 2),
       onComplete: () => {
-        this.sprite.body.enable = true;
-        this.sprite.body.reset(door.x, door.y);
-        if (this.rng() < 0.4) this.say(this.pick(this.texts.happy), ui.ink);
-        this.startIdle(600);
+        this.sprite.setDepth(b.y - 1);
+        this.scene.tweens.add({
+          targets: this.sprite,
+          y: b.y - 10,
+          duration: DOOR_STEP_MS,
+          onComplete: () => {
+            this.sprite.setAlpha(0);
+            showMotion(this.sprite, this.animName, 'up', false);
+            if (opening) this.closeDoor(opening);
+          },
+        });
       },
     });
+  }
+
+  /** Comes back out: the door opens, the NPC steps down out of it and the door closes. */
+  private comeOut(): void {
+    const b = this.town.buildings.find((x) => x.id === (this.lastBuilding ?? this.def.home));
+    const out = arrivalPoint(this.town, this.lastBuilding ?? this.def.home) ?? this.town.spawn;
+    this.facing = 'down';
     this.activity = 'idle';
-    this.timerMs = DOOR_FADE_MS + 600;
+    this.timerMs = DOOR_STEP_MS * 2 + 800;
+    const finish = () => {
+      this.sprite.body.enable = true;
+      this.sprite.body.reset(out.x, out.y);
+      showMotion(this.sprite, this.animName, 'down', false);
+      if (this.rng() < 0.4) this.say(this.pick(this.texts.happy), ui.ink);
+    };
+    if (!b) {
+      this.sprite.setPosition(out.x, out.y).setAlpha(0);
+      this.scene.tweens.add({ targets: this.sprite, alpha: 1, duration: DOOR_FADE_MS, onComplete: finish });
+      return;
+    }
+    const opening = b.door ? this.openDoor(b.x + b.doorDx, b.y - b.door.dy, b.door, b.y) : null;
+    this.sprite.setPosition(b.x + b.doorDx, b.y - 10).setAlpha(1).setDepth(b.y - 1);
+    showMotion(this.sprite, this.animName, 'down', true);
+    this.scene.time.delayedCall(DOOR_OPEN_MS, () => {
+      this.scene.tweens.add({
+        targets: this.sprite,
+        y: out.y,
+        duration: DOOR_STEP_MS * 2,
+        onUpdate: () => {
+          // In front of the building once the feet are past the door step.
+          if (this.sprite.y > b.y) this.sprite.setDepth(this.sprite.y);
+        },
+        onComplete: () => {
+          if (opening) this.closeDoor(opening);
+          finish();
+        },
+      });
+    });
+  }
+
+  /** A dark door opening that fades in over the door (above the wall, below the walker). */
+  private openDoor(x: number, bottomY: number, size: { w: number; h: number }, depth: number): Phaser.GameObjects.Rectangle {
+    const r = this.scene.add.rectangle(x, bottomY - size.h / 2, size.w, size.h, 0x1e1410, 0).setDepth(depth + 1);
+    this.scene.tweens.add({ targets: r, fillAlpha: 0.9, duration: DOOR_OPEN_MS });
+    return r;
+  }
+
+  private closeDoor(r: Phaser.GameObjects.Rectangle): void {
+    this.scene.tweens.add({ targets: r, fillAlpha: 0, delay: 150, duration: DOOR_OPEN_MS, onComplete: () => r.destroy() });
   }
 
   // ---- social ------------------------------------------------------------------------

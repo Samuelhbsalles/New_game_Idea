@@ -279,7 +279,7 @@ export class TownScene extends Phaser.Scene {
       const a = art[r.species];
       if (a) createCharacterAnims(this, a, 6);
     }
-    this.wild = new TownWild(this, this.rules.spawns, (species) => art[species]?.name ?? null, Math.random);
+    this.wild = new TownWild(this, this.rules.spawns, (species) => art[species]?.name ?? null, nav, Math.random, (species) => (spritesJson as Record<string, { scale?: number }>)[species]?.scale ?? 1);
 
     for (const c of this.town.smoke) {
       this.time.addEvent({ delay: SMOKE_EVERY_MS, loop: true, callback: () => this.puff(c.x, c.y) });
