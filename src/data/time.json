@@ -1,4 +1,6 @@
 {
   "dayMs": 1440000,
-  "startHour": 6
+  "startHour": 6,
+  "nightStartHour": 18,
+  "dayStartHour": 6
 }

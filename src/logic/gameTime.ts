@@ -4,6 +4,9 @@ export interface TimeConfig {
   dayMs: number;
   /** Hour of day (0-23) at the moment a new world starts. */
   startHour: number;
+  /** Night runs from nightStartHour to dayStartHour (wrapping past midnight). */
+  nightStartHour: number;
+  dayStartHour: number;
 }
 
 /** A moment in game time. */
@@ -29,7 +32,19 @@ export function parseTimeConfig(raw: unknown): TimeConfig {
   if (typeof startHour !== 'number' || !Number.isInteger(startHour) || startHour < 0 || startHour > 23) {
     throw new Error('Invalid config at time.startHour: expected integer 0-23');
   }
-  return { dayMs, startHour };
+  const hour = (k: 'nightStartHour' | 'dayStartHour') => {
+    const v = o[k];
+    if (typeof v !== 'number' || !Number.isInteger(v) || v < 0 || v > 23) throw new Error(`Invalid config at time.${k}: expected integer 0-23`);
+    return v;
+  };
+  return { dayMs, startHour, nightStartHour: hour('nightStartHour'), dayStartHour: hour('dayStartHour') };
+}
+
+/** True at night: from nightStartHour until dayStartHour. */
+export function isNight(t: GameTime, cfg: TimeConfig): boolean {
+  return cfg.nightStartHour > cfg.dayStartHour
+    ? t.hour >= cfg.nightStartHour || t.hour < cfg.dayStartHour
+    : t.hour >= cfg.nightStartHour && t.hour < cfg.dayStartHour;
 }
 
 /** Real milliseconds in `hours` in-game hours. */

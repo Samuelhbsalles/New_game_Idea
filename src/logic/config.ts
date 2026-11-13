@@ -1,6 +1,6 @@
 import { gameHoursToMs, parseTimeConfig } from './gameTime';
 import { COINS_PRODUCT } from './work';
-import type { Config, Item, Shop, Species, StartConfig } from './types';
+import { RARITIES, TIMES_OF_DAY, WEATHER_NEEDS, type Config, type Item, type Shop, type Species, type StartConfig } from './types';
 
 type Obj = Record<string, unknown>;
 
@@ -32,6 +32,12 @@ function num(o: Obj, k: string, path: string, opts: { min?: number; int?: boolea
   return v;
 }
 
+function oneOf<T extends string>(o: Obj, k: string, path: string, allowed: readonly T[]): T {
+  const v = o[k];
+  if (typeof v !== 'string' || !(allowed as readonly string[]).includes(v)) fail(`${path}.${k}`, `expected one of ${allowed.join(', ')}`);
+  return v as T;
+}
+
 function numberMap(v: unknown, path: string): Record<string, number> {
   const o = obj(v, path);
   const out: Record<string, number> = {};
@@ -61,12 +67,28 @@ export function parseConfig(raw: { species: unknown; shops: unknown; items: unkn
   const species: Species[] = arr(raw.species, 'species').map((e, i) => {
     const p = `species[${i}]`;
     const o = obj(e, p);
+    const areas = arr(o.areas, `${p}.areas`).map((a, j) => {
+      if (typeof a !== 'string' || a === '') fail(`${p}.areas[${j}]`, 'expected area id');
+      return a;
+    });
+    if (areas.length === 0) fail(`${p}.areas`, 'needs at least one area');
+    if (o.food !== null && typeof o.food !== 'string') fail(`${p}.food`, 'expected item id or null');
+    if (o.generalist !== undefined && typeof o.generalist !== 'boolean') fail(`${p}.generalist`, 'expected boolean');
     return {
       id: str(o, 'id', p),
       name: str(o, 'name', p),
+      rarity: oneOf(o, 'rarity', p, RARITIES),
+      areas,
+      time: oneOf(o, 'time', p, TIMES_OF_DAY),
+      weather: oneOf(o, 'weather', p, WEATHER_NEEDS),
       baseProduction: num(o, 'baseProduction', p, { min: 0 }),
       maxEnergy: num(o, 'maxEnergy', p, { min: 1 }),
+      energyCost: num(o, 'energyCost', p, { min: 0 }),
+      food: (o.food as string | null) ?? null,
+      baitId: str(o, 'baitId', p),
       affinities: numberMap(o.affinities, `${p}.affinities`),
+      generalist: o.generalist === true,
+      reason: str(o, 'reason', p),
     };
   });
   const shops: Shop[] = arr(raw.shops, 'shops').map((e, i) => {
@@ -87,7 +109,8 @@ export function parseConfig(raw: { species: unknown; shops: unknown; items: unkn
   const items: Item[] = arr(raw.items, 'items').map((e, i) => {
     const p = `items[${i}]`;
     const o = obj(e, p);
-    const item: Item = { id: str(o, 'id', p), name: str(o, 'name', p), price: num(o, 'price', p, { min: 0 }) };
+    for (const k of ['buyable', 'sellable']) if (o[k] !== undefined && typeof o[k] !== 'boolean') fail(`${p}.${k}`, 'expected boolean');
+    const item: Item = { id: str(o, 'id', p), name: str(o, 'name', p), price: num(o, 'price', p, { min: 0 }), buyable: o.buyable === true, sellable: o.sellable === true };
     if (o.energyRestore !== undefined) item.energyRestore = num(o, 'energyRestore', p, { min: 0 });
     return item;
   });
@@ -109,7 +132,15 @@ export function parseConfig(raw: { species: unknown; shops: unknown; items: unkn
   const speciesIds = new Set(species.map((s) => s.id));
   const shopIds = new Set(shops.map((s) => s.id));
   for (const s of shops) if (s.productItemId !== COINS_PRODUCT && !itemIds.has(s.productItemId)) fail(`shops.${s.id}.productItemId`, `unknown item "${s.productItemId}"`);
-  for (const s of species) for (const k of Object.keys(s.affinities)) if (!shopIds.has(k)) fail(`species.${s.id}.affinities`, `unknown shop "${k}"`);
+  for (const s of species) {
+    for (const k of Object.keys(s.affinities)) if (!shopIds.has(k)) fail(`species.${s.id}.affinities`, `unknown shop "${k}"`);
+    if (!itemIds.has(s.baitId)) fail(`species.${s.id}.baitId`, `unknown item "${s.baitId}"`);
+    if (s.food !== null && !itemIds.has(s.food)) fail(`species.${s.id}.food`, `unknown item "${s.food}"`);
+    // design/creatures.md rule 3: every creature has a strength and a weakness (the generalist excepted).
+    const m = Object.values(s.affinities);
+    if (!s.generalist && !m.some((x) => x > 1)) fail(`species.${s.id}.affinities`, 'needs at least one strength (> 1)');
+    if (!s.generalist && !m.some((x) => x < 1)) fail(`species.${s.id}.affinities`, 'needs at least one weakness (< 1)');
+  }
   for (const k of Object.keys(start.inventory)) if (!itemIds.has(k)) fail('start.inventory', `unknown item "${k}"`);
   for (const id of start.creatures) if (!speciesIds.has(id)) fail('start.creatures', `unknown species "${id}"`);
 

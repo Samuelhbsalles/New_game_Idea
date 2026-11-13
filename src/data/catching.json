@@ -1,13 +1,24 @@
 {
-  "baitItemId": "bait",
+  "genericBaitId": "bait",
   "catchRange": 30,
-  "species": {
-    "pigeon": { "chance": 1 },
-    "rabbit": { "chance": 1 },
-    "cat": { "chance": 1 },
-    "monkey": { "chance": 1 }
+  "rarities": {
+    "common": { "weight": 60, "specific": 1, "generic": 1 },
+    "uncommon": { "weight": 25, "specific": 1, "generic": 0 },
+    "rare": { "weight": 10, "specific": 0.6, "generic": 0 },
+    "epic": { "weight": 4, "specific": 0.35, "generic": 0 },
+    "legendary": { "weight": 1, "specific": 0, "generic": 0 }
   },
-  "spawns": [
-    { "species": "rabbit", "area": { "x": 60, "y": 470, "w": 220, "h": 70 }, "max": 2, "everyMs": [20000, 45000] }
-  ]
+  "areas": {
+    "park": { "inTown": { "x": 60, "y": 470, "w": 220, "h": 70 }, "max": 3, "everyMs": [20000, 45000] },
+    "streets": { "inTown": { "x": 230, "y": 340, "w": 1260, "h": 50 }, "max": 2, "everyMs": [30000, 60000] },
+    "plaza": { "inTown": null, "max": 0, "everyMs": [0, 0] },
+    "harbor": { "inTown": { "x": 1300, "y": 560, "w": 240, "h": 70 }, "max": 2, "everyMs": [30000, 60000] },
+    "rooftops": { "inTown": null, "max": 0, "everyMs": [0, 0] },
+    "rural": { "inTown": null, "max": 0, "everyMs": [0, 0] },
+    "lake": { "inTown": null, "max": 0, "everyMs": [0, 0] },
+    "river": { "inTown": null, "max": 0, "everyMs": [0, 0] },
+    "shore": { "inTown": null, "max": 0, "everyMs": [0, 0] },
+    "metro": { "inTown": null, "max": 0, "everyMs": [0, 0] },
+    "sewer": { "inTown": null, "max": 0, "everyMs": [0, 0] }
+  }
 }

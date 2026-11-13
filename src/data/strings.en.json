@@ -103,7 +103,31 @@
     "rabbit": "Rabbit",
     "pigeon": "Pigeon",
     "cat": "Cat",
-    "monkey": "Monkey"
+    "monkey": "Monkey",
+    "dog": "Dog",
+    "bee": "Bee",
+    "chicken": "Chicken",
+    "sheep": "Sheep",
+    "squirrel": "Squirrel",
+    "beaver": "Beaver",
+    "capybara": "Capybara",
+    "pelican": "Pelican",
+    "penguin": "Penguin",
+    "mole": "Mole",
+    "armadillo": "Armadillo",
+    "sloth": "Sloth",
+    "firefly": "Firefly",
+    "otter": "Otter",
+    "octopus": "Octopus",
+    "starfish": "Starfish",
+    "jellyfish": "Jellyfish",
+    "clownfish": "Clownfish",
+    "chameleon": "Chameleon",
+    "silkworm": "Silkworm",
+    "axolotl": "Axolotl",
+    "eel": "Electric eel",
+    "pangolin": "Pangolin",
+    "seaTurtle": "Sea turtle"
   },
   "languages": {
     "pt-BR": "Português",
@@ -159,7 +183,8 @@
     "caught": "You caught: {name}!",
     "newAlbum": "New in the album!",
     "noBait": "No bait!",
-    "escaped": "It got away!"
+    "escaped": "It got away!",
+    "needsBait": "Needs {bait}!"
   },
   "items": {
     "bread": "Bread",
@@ -170,7 +195,18 @@
     "coffee": "Coffee beans",
     "fabric": "Fabric",
     "herbs": "Herbs",
-    "coins": "Coins"
+    "coins": "Coins",
+    "fish": "Fish",
+    "treat": "Treat",
+    "nectar": "Nectar",
+    "nuts": "Nuts",
+    "hay": "Hay",
+    "worm": "Worms",
+    "insects": "Insects",
+    "shellfish": "Shellfish",
+    "plankton": "Plankton",
+    "algae": "Algae",
+    "mulberry": "Mulberry leaves"
   },
   "clock": {
     "time": "Day {day} · {hh}:{mm}"

@@ -1,14 +1,41 @@
 import type { Appearance } from './appearance';
 import type { TimeConfig } from './gameTime';
 
-/** Static definition of a creature species, loaded from creatures.json. */
+/** Rarity tiers (design/creatures.md): how often a species appears and how it is caught. */
+export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+export const RARITIES: Rarity[] = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
+
+/** When in the day a species is out. */
+export type TimeOfDay = 'any' | 'day' | 'night';
+export const TIMES_OF_DAY: TimeOfDay[] = ['any', 'day', 'night'];
+
+/** Weather a species needs ('any' = whatever the weather). */
+export type WeatherNeed = 'any' | 'cold' | 'rain' | 'storm' | 'lowTide' | 'tideEvent';
+export const WEATHER_NEEDS: WeatherNeed[] = ['any', 'cold', 'rain', 'storm', 'lowTide', 'tideEvent'];
+
+/** Static definition of a creature species, loaded from creatures.json (design/creatures.md). */
 export interface Species {
   id: string;
   name: string;
+  rarity: Rarity;
+  /** Neighbourhoods it appears in (ids from catching.json areas). */
+  areas: string[];
+  time: TimeOfDay;
+  weather: WeatherNeed;
   baseProduction: number;
   maxEnergy: number;
-  /** Production multiplier by shopId. A missing shop means no affinity. */
+  /** Energy a shift costs (story-004; placeholder). */
+  energyCost: number;
+  /** Preferred food item id, or null while undecided. */
+  food: string | null;
+  /** Item that lures it (see catching rules for how rarity uses it). */
+  baitId: string;
+  /** Production multiplier by shopId: above 1 a strength, below 1 a weakness. Missing = 1. */
   affinities: Record<string, number>;
+  /** The reference generalist: allowed to have no strength and no weakness. */
+  generalist: boolean;
+  /** Why the affinities make sense (design note). */
+  reason: string;
 }
 
 /** Static definition of a workplace (a building creatures work in), loaded from shops.json. */
@@ -34,6 +61,10 @@ export interface Item {
   price: number;
   /** Energy restored when used as food; absent for non-food items. */
   energyRestore?: number;
+  /** The market sells it to the player. */
+  buyable: boolean;
+  /** The market buys it from the player. */
+  sellable: boolean;
 }
 
 /** Starting setup for a new game, loaded from start.json. */

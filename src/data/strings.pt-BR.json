@@ -101,9 +101,33 @@
   },
   "species": {
     "rabbit": "Coelho",
-    "pigeon": "Pombo",
+    "pigeon": "Pomba",
     "cat": "Gato",
-    "monkey": "Macaco"
+    "monkey": "Macaco",
+    "dog": "Cachorro",
+    "bee": "Abelha",
+    "chicken": "Galinha",
+    "sheep": "Ovelha",
+    "squirrel": "Esquilo",
+    "beaver": "Castor",
+    "capybara": "Capivara",
+    "pelican": "Pelicano",
+    "penguin": "Pinguim",
+    "mole": "Toupeira",
+    "armadillo": "Tatu",
+    "sloth": "Preguiça",
+    "firefly": "Vaga-lume",
+    "otter": "Lontra",
+    "octopus": "Polvo",
+    "starfish": "Estrela-do-mar",
+    "jellyfish": "Água-viva",
+    "clownfish": "Peixe-palhaço",
+    "chameleon": "Camaleão",
+    "silkworm": "Bicho-da-seda",
+    "axolotl": "Axolote",
+    "eel": "Enguia elétrica",
+    "pangolin": "Pangolim",
+    "seaTurtle": "Tartaruga-marinha"
   },
   "languages": {
     "pt-BR": "Português",
@@ -159,7 +183,8 @@
     "caught": "Você capturou: {name}!",
     "newAlbum": "Novo no álbum!",
     "noBait": "Sem isca!",
-    "escaped": "Fugiu!"
+    "escaped": "Fugiu!",
+    "needsBait": "Precisa de {bait}!"
   },
   "items": {
     "bread": "Pão",
@@ -170,7 +195,18 @@
     "coffee": "Grãos de café",
     "fabric": "Tecido",
     "herbs": "Ervas",
-    "coins": "Moedas"
+    "coins": "Moedas",
+    "fish": "Peixe",
+    "treat": "Petisco",
+    "nectar": "Néctar",
+    "nuts": "Nozes",
+    "hay": "Feno",
+    "worm": "Minhocas",
+    "insects": "Insetos",
+    "shellfish": "Mariscos",
+    "plankton": "Plâncton",
+    "algae": "Algas",
+    "mulberry": "Folhas de amoreira"
   },
   "clock": {
     "time": "Dia {day} · {hh}:{mm}"

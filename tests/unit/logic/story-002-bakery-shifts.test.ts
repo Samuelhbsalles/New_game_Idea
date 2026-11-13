@@ -124,7 +124,7 @@ describe('story-002 shifts (all workplaces)', () => {
 });
 
 describe('game clock', () => {
-  const cfg = parseTimeConfig({ dayMs: 2400, startHour: 6 });
+  const cfg = parseTimeConfig({ dayMs: 2400, startHour: 6, nightStartHour: 18, dayStartHour: 6 });
 
   it('starts day 1 at startHour', () => {
     expect(gameTimeAt(0, 0, cfg)).toEqual({ day: 1, hour: 6, minute: 0 });
@@ -149,7 +149,7 @@ describe('game clock', () => {
   });
 
   it('rejects a bad time config', () => {
-    expect(() => parseTimeConfig({ dayMs: 0, startHour: 6 })).toThrow(/dayMs/);
-    expect(() => parseTimeConfig({ dayMs: 2400, startHour: 24 })).toThrow(/startHour/);
+    expect(() => parseTimeConfig({ dayMs: 0, startHour: 6, nightStartHour: 18, dayStartHour: 6 })).toThrow(/dayMs/);
+    expect(() => parseTimeConfig({ dayMs: 2400, startHour: 24, nightStartHour: 18, dayStartHour: 6 })).toThrow(/startHour/);
   });
 });

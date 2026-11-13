@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { nextDelay } from '../logic/ambient';
-import type { SpawnRule } from '../logic/catching';
+import type { AreaRule } from '../logic/catching';
 import { findPath, type NavGrid, type Pt } from '../logic/npcMind';
 import { facingFor, showMotion, type Dir } from './sprites';
 
@@ -14,7 +14,7 @@ const APPEAR_MS = 500;
 export interface Critter {
   species: string;
   sprite: Phaser.GameObjects.Sprite;
-  rule: SpawnRule;
+  area: AreaRule & { inTown: NonNullable<AreaRule['inTown']> };
   /** Remaining waypoints of the current little trip (empty while resting). */
   path: Pt[];
   waitMs: number;
@@ -22,16 +22,19 @@ export interface Critter {
 }
 
 /**
- * Wild creatures from the catching rules' spawn list (e.g. rabbits in the
- * park): each rule keeps up to `max` out, adding one every `everyMs`, and
- * they wander inside their area. Only species with sprite art are spawned.
+ * Wild creatures in the town's neighbourhoods (catching.json areas with a
+ * town rectangle): each area keeps up to `max` out, adding one every
+ * `everyMs`; who appears is up to `pick` (rarity, time of day, weather, and
+ * only species with art). They wander inside their area.
  */
 export class TownWild {
   readonly critters: Critter[] = [];
 
   constructor(
     private readonly scene: Phaser.Scene,
-    rules: SpawnRule[],
+    areas: AreaRule[],
+    /** Which species appears in an area right now, or null for nobody. */
+    private readonly pick: (areaId: string) => string | null,
     /** Sprite name for a species, or null when it has no art yet. */
     private readonly artFor: (species: string) => string | null,
     /** Walkable grid: critters only stand on, and walk between, free cells. */
@@ -40,34 +43,37 @@ export class TownWild {
     /** Display scale per species (small animals read smaller than people). */
     private readonly scaleFor: (species: string) => number = () => 1,
   ) {
-    for (const rule of rules) {
-      if (!artFor(rule.species)) continue;
-      this.spawn(rule);
+    for (const a of areas) {
+      if (!a.inTown || a.max <= 0) continue;
+      const area = a as Critter['area'];
+      this.spawn(area);
       const again = () =>
-        scene.time.delayedCall(nextDelay(rule.everyMs, rng), () => {
-          if (this.critters.filter((c) => c.rule === rule).length < rule.max) this.spawn(rule);
+        scene.time.delayedCall(nextDelay(area.everyMs, rng), () => {
+          if (this.critters.filter((c) => c.area === area).length < area.max) this.spawn(area);
           again();
         });
       again();
     }
   }
 
-  private spawn(rule: SpawnRule): void {
-    const name = this.artFor(rule.species);
-    if (!name) return;
-    const p = this.randomIn(rule);
+  private spawn(area: Critter['area']): void {
+    const species = this.pick(area.id);
+    const name = species ? this.artFor(species) : null;
+    if (!species || !name) return;
+    const p = this.randomIn(area);
     if (!p) return;
-    const sprite = this.scene.add.sprite(p.x, p.y, `${name}_idle_down`).setOrigin(0.5, 0.9).setScale(this.scaleFor(rule.species)).setAlpha(0);
+    const sprite = this.scene.add.sprite(p.x, p.y, `${name}_idle_down`).setOrigin(0.5, 0.9).setScale(this.scaleFor(species)).setAlpha(0);
     this.scene.tweens.add({ targets: sprite, alpha: 1, duration: APPEAR_MS });
-    this.critters.push({ species: rule.species, sprite, rule, path: [], waitMs: nextDelay(PAUSE_MS, this.rng), facing: 'down' });
+    this.critters.push({ species, sprite, area, path: [], waitMs: nextDelay(PAUSE_MS, this.rng), facing: 'down' });
   }
 
-  /** A random free spot in the rule's area (never inside a tree trunk, bench or building), or null. */
-  private randomIn(rule: SpawnRule): Pt | null {
+  /** A random free spot in the area (never inside a tree trunk, bench or building), or null. */
+  private randomIn(area: Critter['area']): Pt | null {
     const g = this.nav;
+    const r = area.inTown;
     for (let i = 0; i < 20; i++) {
-      const x = rule.area.x + this.rng() * rule.area.w;
-      const y = rule.area.y + this.rng() * rule.area.h;
+      const x = r.x + this.rng() * r.w;
+      const y = r.y + this.rng() * r.h;
       const cx = Math.floor(x / g.cell);
       const cy = Math.floor(y / g.cell);
       if (g.free[cy]?.[cx]) return { x, y };
@@ -85,7 +91,7 @@ export class TownWild {
       if (!wp) {
         c.waitMs -= dtMs;
         if (c.waitMs <= 0) {
-          const goal = this.randomIn(c.rule);
+          const goal = this.randomIn(c.area);
           c.path = goal ? findPath(this.nav, c.sprite, goal) : [];
           c.waitMs = nextDelay(PAUSE_MS, this.rng);
         }

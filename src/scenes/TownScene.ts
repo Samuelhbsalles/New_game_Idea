@@ -8,7 +8,8 @@ import ui from '../data/ui.json';
 import type { Game } from '../logic/game';
 import { parseMap, type TownMap } from '../logic/map';
 import { followTarget } from '../logic/petBrain';
-import { attemptCatch, baitCount, parseCatchRules, type CatchRules } from '../logic/catching';
+import { attemptCatch, baitCount, eligibleSpecies, parseCatchRules, pickSpawn, type CatchRules } from '../logic/catching';
+import { isNight } from '../logic/gameTime';
 import { buildNavGrid } from '../logic/npcMind';
 import { arrivalPoint, doorAt, parseTown, tileFlip, townLayers, townSolids, type Building, type TownDef } from '../logic/town';
 import { AVATAR_ART, buildAvatar, savedAppearance } from './avatar';
@@ -26,6 +27,9 @@ import { MenuPanel, textStyle, type MenuItem } from './ui/MenuPanel';
 
 /** Every sprite set, plus the player's avatar (built at runtime, not loaded from files). */
 const art: Record<string, CharacterArt> = { ...(spritesJson as Record<string, CharacterArt>), [AVATAR_ART.name]: AVATAR_ART };
+
+/** Weather until a weather system exists: species needing rain, storms or tides do not appear yet. */
+const CURRENT_WEATHER = 'clear';
 
 /** How often (ms) a water sparkle appears somewhere in view. */
 const SPARKLE_EVERY_MS = 180;
@@ -104,7 +108,7 @@ export class TownScene extends Phaser.Scene {
   create(): void {
     const t = (k: string, v?: Record<string, string | number>) => services(this).i18n.t(k, v);
     this.world = services(this).loadGame();
-    this.rules = parseCatchRules(catchingJson, this.world.config.species.map((sp) => sp.id));
+    this.rules = parseCatchRules(catchingJson, this.world.config.species, this.world.config.items.map((i) => i.id));
     const { tileSize: s, cols, rows } = this.town;
     const width = cols * s;
     const height = rows * s;
@@ -292,11 +296,16 @@ export class TownScene extends Phaser.Scene {
     });
 
     if (this.town.birds) this.birds = new TownBirds(this, this.town.birds, Math.random);
-    for (const r of this.rules.spawns) {
-      const a = art[r.species];
-      if (a) createCharacterAnims(this, a, 6);
-    }
-    this.wild = new TownWild(this, this.rules.spawns, (species) => art[species]?.name ?? null, nav, Math.random, (species) => (spritesJson as Record<string, { scale?: number }>)[species]?.scale ?? 1);
+    // Wild creatures: each town area picks who is out now (rarity, time, weather), among species with art.
+    // Pigeons come in flocks to the plaza (TownBirds) rather than through these areas.
+    const all = this.world.config.species;
+    for (const s of all) if (art[s.id]) createCharacterAnims(this, art[s.id], 6);
+    const pick = (areaId: string) => {
+      const ctx = { night: isNight(this.world.gameTime(), this.world.config.time), weather: CURRENT_WEATHER };
+      const withArt = eligibleSpecies(all, areaId, ctx).filter((s) => art[s.id]);
+      return pickSpawn(this.rules, withArt, Math.random)?.id ?? null;
+    };
+    this.wild = new TownWild(this, Object.values(this.rules.areas), pick, (species) => art[species]?.name ?? null, nav, Math.random, (species) => (spritesJson as Record<string, { scale?: number }>)[species]?.scale ?? 1);
 
     for (const c of this.town.smoke) {
       this.time.addEvent({ delay: SMOKE_EVERY_MS, loop: true, callback: () => this.puff(c.x, c.y) });
@@ -364,7 +373,7 @@ export class TownScene extends Phaser.Scene {
     const at = { x: target.sprite.x, y: target.sprite.y - target.sprite.displayHeight };
     const r = attemptCatch(this.world, this.rules, target.species, Math.random);
     if (!r.ok) {
-      if (r.reason === 'no_bait') this.floatText(t('catch.noBait'), at);
+      if (r.reason === 'no_bait') this.floatText(t('catch.needsBait', { bait: t(`items.${r.needs}`) }), at);
       if (r.reason === 'escaped') {
         this.world.save();
         this.refreshBait();
