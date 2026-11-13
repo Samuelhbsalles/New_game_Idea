@@ -56,11 +56,11 @@ describe('story-002 shifts (all workplaces)', () => {
     expect(after.shiftTimeLeft('bakery', 0)).toBe(0);
   });
 
-  it('AC3: output = base × affinity × hours × rate; the monkey bakes 4x the generalist rabbit', () => {
-    const rabbit = shiftOutput(sp('rabbit'), bakery);
-    const monkey = shiftOutput(sp('monkey'), bakery);
-    expect(rabbit).toBe(Math.round(sp('rabbit').baseProduction * bakery.shiftHours * bakery.rate));
-    expect(monkey).toBe(rabbit * 4);
+  it('AC3: output = base × affinity × hours × rate; a bakery specialist out-bakes the generalist rabbit', () => {
+    const f = (id: string) => Math.max(1, Math.round(sp(id).baseProduction * (sp(id).affinities.bakery ?? 1) * bakery.shiftHours * bakery.rate));
+    expect(shiftOutput(sp('rabbit'), bakery)).toBe(f('rabbit'));
+    expect(shiftOutput(sp('bee'), bakery)).toBe(f('bee'));
+    expect(shiftOutput(sp('bee'), bakery)).toBeGreaterThan(shiftOutput(sp('rabbit'), bakery) * 3);
   });
 
   it('AC5: collecting a finished shift adds the product, frees the slot and sends the creature home tired', () => {
@@ -118,8 +118,10 @@ describe('story-002 shifts (all workplaces)', () => {
     const construction = config.shops.find((s) => s.id === 'construction')!;
     expect(factory.productItemId).toBe('planks');
     expect(construction.productItemId).toBe('stone');
-    expect(shiftOutput(sp('rabbit'), construction)).toBeGreaterThan(shiftOutput(sp('rabbit'), factory));
-    expect(shiftOutput(sp('monkey'), factory)).toBeGreaterThan(shiftOutput(sp('monkey'), construction));
+    // A builder is strong at construction and weak elsewhere; the generalist is the same everywhere.
+    expect(shiftOutput(sp('beaver'), construction)).toBeGreaterThan(shiftOutput(sp('beaver'), factory));
+    expect(shiftOutput(sp('octopus'), factory)).toBeGreaterThan(shiftOutput(sp('octopus'), construction));
+    expect(shiftOutput(sp('rabbit'), construction)).toBe(shiftOutput(sp('rabbit'), factory));
   });
 });
 

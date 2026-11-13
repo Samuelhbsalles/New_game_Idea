@@ -1,0 +1,4 @@
+Pixel Operator by Jayvee Enaguas (HarvettFox96)
+License: Creative Commons Zero (CC0) 1.0 — https://creativecommons.org/licenses/zero/1.0/ (stated in the font files themselves)
+Source: https://fontlibrary.org/en/font/pixel-operator
+Files: PixelOperator.ttf (Regular), PixelOperator-Bold.ttf (Bold); native pixel size 16px.

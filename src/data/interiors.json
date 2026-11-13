@@ -1446,6 +1446,35 @@
     },
     "name": "carrot crate"
    }
-  ]
+  ],
+  "counter": {
+   "x": 60,
+   "y": 172,
+   "shelves": [
+    {
+     "id": "basic",
+     "items": [
+      "bait",
+      "food",
+      "fish",
+      "treat",
+      "nectar",
+      "nuts",
+      "hay"
+     ]
+    },
+    {
+     "id": "special",
+     "items": [
+      "worm",
+      "insects",
+      "shellfish",
+      "plankton",
+      "algae",
+      "mulberry"
+     ]
+    }
+   ]
+  }
  }
 }

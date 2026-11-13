@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import ui from '../../data/ui.json';
 import { UI_TEX } from '../BootScene';
 import type { MenuInput } from './input';
+import { nativeFontSize } from './snapPixels';
 
 /** One row in a menu. `label` is re-read on refresh, so it can show live values. */
 export interface MenuItem {
@@ -26,9 +27,13 @@ export interface MenuPanelOptions {
 
 const color = (hex: string) => Phaser.Display.Color.HexStringToColor(hex).color;
 
-/** Text style shared by every panel, from src/data/ui.json. */
+/**
+ * Text style shared by every panel, from src/data/ui.json. The pixel font is
+ * only crisp at its native size (ui.fontSize) or twice it, so any requested
+ * size is rounded to one of those.
+ */
 export function textStyle(bold = false, size = ui.fontSize): Phaser.Types.GameObjects.Text.TextStyle {
-  return { fontFamily: ui.fontFamily, fontSize: `${size}px`, color: ui.ink, fontStyle: bold ? 'bold' : 'normal' };
+  return { fontFamily: ui.fontFamily, fontSize: `${nativeFontSize(size, ui.fontSize)}px`, color: ui.ink, fontStyle: bold ? 'bold' : 'normal' };
 }
 
 /** Space left of each item for the cursor arrow. */

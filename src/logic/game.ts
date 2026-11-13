@@ -100,6 +100,38 @@ export class Game {
     return { ok: true, itemId: shop.productItemId, count, creatureId: creature.id };
   }
 
+  /**
+   * Buys `qty` of an item the market sells, at its JSON price. Refuses
+   * (changing nothing) an item the market does not sell, a bad quantity, or
+   * a cost above the coins held: coins never go negative.
+   */
+  buy(itemId: string, qty = 1): { ok: true; coins: number; count: number } | { ok: false; reason: 'not_sold' | 'bad_qty' | 'no_coins' } {
+    const item = this.config.items.find((i) => i.id === itemId);
+    if (!item || !item.buyable) return { ok: false, reason: 'not_sold' };
+    if (!Number.isInteger(qty) || qty < 1) return { ok: false, reason: 'bad_qty' };
+    const cost = item.price * qty;
+    if (cost > this.state.coins) return { ok: false, reason: 'no_coins' };
+    this.state.coins -= cost;
+    this.state.inventory[itemId] = (this.state.inventory[itemId] ?? 0) + qty;
+    return { ok: true, coins: this.state.coins, count: this.state.inventory[itemId] };
+  }
+
+  /**
+   * Sells `qty` of an item the market buys, at its JSON price. Refuses
+   * (changing nothing) an item the market does not buy, a bad quantity, or
+   * more than the player holds.
+   */
+  sell(itemId: string, qty = 1): { ok: true; coins: number; count: number } | { ok: false; reason: 'not_bought' | 'bad_qty' | 'not_enough' } {
+    const item = this.config.items.find((i) => i.id === itemId);
+    if (!item || !item.sellable) return { ok: false, reason: 'not_bought' };
+    if (!Number.isInteger(qty) || qty < 1) return { ok: false, reason: 'bad_qty' };
+    const held = this.state.inventory[itemId] ?? 0;
+    if (qty > held) return { ok: false, reason: 'not_enough' };
+    this.state.inventory[itemId] = held - qty;
+    this.state.coins += item.price * qty;
+    return { ok: true, coins: this.state.coins, count: this.state.inventory[itemId] };
+  }
+
   /** How many of a workplace's product the player holds (coins for coin-paying ones). */
   productCount(shopId: string): number {
     const id = this.shop(shopId).productItemId;

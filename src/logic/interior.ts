@@ -45,6 +45,15 @@ export interface InteriorDef extends FloorPlan {
   stations: Station[];
   exits: ExitDef[];
   effect: WorkEffect;
+  /** A shop counter the player trades at (the market), or null. */
+  counter: Counter | null;
+}
+
+/** Where the player trades, and what the shelves stock (item ids, one menu per shelf). */
+export interface Counter {
+  x: number;
+  y: number;
+  shelves: { id: string; items: string[] }[];
 }
 
 type Obj = Record<string, unknown>;
@@ -90,7 +99,7 @@ export function pieceBlock(p: { x: number; w: number; foot: number }, depth: num
  * as the shop has slots. Throws an Error naming the bad field.
  * @example const interiors = parseInteriors(json, config.shops);
  */
-export function parseInteriors(raw: unknown, shops: { id: string; slots: number }[]): Record<string, InteriorDef> {
+export function parseInteriors(raw: unknown, shops: { id: string; slots: number }[], buyable: string[] = []): Record<string, InteriorDef> {
   const root = obj(raw, 'interiors');
   const out: Record<string, InteriorDef> = {};
   for (const [id, v] of Object.entries(root)) {
@@ -142,7 +151,22 @@ export function parseInteriors(raw: unknown, shops: { id: string; slots: number 
     const color = str(eo, 'color', `${p}.effect`);
     if (!/^#[0-9a-fA-F]{6}$/.test(color)) fail(`${p}.effect.color`, 'expected #rrggbb');
     const effect = { color, everyMs: num(eo, 'everyMs', `${p}.effect`, 50) };
-    out[id] = { id, shopId, dir: str(o, 'dir', p), width, height, gridSize, walkable, exits, pieces, stations, effect };
+    let counter: Counter | null = null;
+    if (o.counter !== undefined) {
+      const cp = `${p}.counter`;
+      const c = obj(o.counter, cp);
+      const shelves = list(c, 'shelves', cp).map((s, i) => {
+        const sp = `${cp}.shelves[${i}]`;
+        const so = obj(s, sp);
+        const items = list(so, 'items', sp).map((it, j) => {
+          if (typeof it !== 'string' || !buyable.includes(it)) fail(`${sp}.items[${j}]`, 'expected an item the market sells');
+          return it;
+        });
+        return { id: str(so, 'id', sp), items };
+      });
+      counter = { x: num(c, 'x', cp, 0), y: num(c, 'y', cp, 0), shelves };
+    }
+    out[id] = { id, shopId, dir: str(o, 'dir', p), width, height, gridSize, walkable, exits, pieces, stations, effect, counter };
   }
   return out;
 }

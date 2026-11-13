@@ -65,6 +65,7 @@ export class InteriorScene extends Phaser.Scene {
   private panel: MenuPanel | null = null;
   private hint!: Phaser.GameObjects.Container;
   private workers: Worker[] = [];
+  private controlsHint!: HudChip;
   private leaving = false;
   private data_!: InteriorData;
 
@@ -82,7 +83,8 @@ export class InteriorScene extends Phaser.Scene {
   }
 
   preload(): void {
-    const all = parseInteriors(interiorsJson, services(this).config.shops);
+    const cfg = services(this).config;
+    const all = parseInteriors(interiorsJson, cfg.shops, cfg.items.filter((i) => i.buyable).map((i) => i.id));
     const def = all[this.data_.place];
     if (!def) throw new Error(`No interior for "${this.data_.place}"`);
     this.def = def;
@@ -149,7 +151,7 @@ export class InteriorScene extends Phaser.Scene {
     // HUD: place name + controls, the game clock, the material count.
     const t = this.t.bind(this);
     const shop = this.world.shop(def.shopId);
-    new HudChip(this, cam.width / 2, cam.height - 4, { anchor: 'bottomCenter', fixed: true, depth: 60_000, size: 10 }).setText(t('work.hint'));
+    this.controlsHint = new HudChip(this, cam.width / 2, cam.height - 4, { anchor: 'bottomCenter', fixed: true, depth: 60_000, size: 10 }).setText(t('work.hint'));
     addClock(this, this.world, (k, v) => this.t(k, v));
     const stock = new HudChip(this, 4, 4, { anchor: 'topLeft', fixed: true, depth: 60_000 });
     const refreshStock = () =>
@@ -188,6 +190,8 @@ export class InteriorScene extends Phaser.Scene {
     if (this.leaving) return;
     this.refreshWorkers();
     const input = this.keys.read();
+    // The controls line would sit under a tall menu; hide it while one is open.
+    this.controlsHint.container.setVisible(this.panel === null);
     if (this.panel) {
       this.player.setVelocity(0, 0);
       this.pet?.setVelocity(0, 0);
@@ -201,13 +205,104 @@ export class InteriorScene extends Phaser.Scene {
     // Only walking down into the doorway leaves.
     const exit = this.player.body.velocity.y > 0 ? exitAt(this.def, { x: this.player.x, y: this.player.body.bottom }) : null;
     if (exit) return this.leave(exit.to);
-    const slot = stationNear(this.def, { x: this.player.x, y: this.player.body.bottom }, homeJson.player.interactRange);
+    const feet = { x: this.player.x, y: this.player.body.bottom };
+    const range = homeJson.player.interactRange;
+    const c = this.def.counter;
+    // The shop counter wins when the player stands at it.
+    if (c && Math.hypot(c.x - feet.x, c.y - feet.y) <= range) {
+      this.hint.setVisible(true).setPosition(c.x, c.y - 30);
+      if (input.confirm) this.openCounter();
+      return;
+    }
+    const slot = stationNear(this.def, feet, range);
     this.hint.setVisible(slot >= 0);
     if (slot >= 0) {
       const s = this.def.stations[slot];
       this.hint.setPosition(s.x, s.y - 52);
       if (input.confirm) this.openStation(slot);
     }
+  }
+
+  // ---- shop counter (story-003) ------------------------------------------------------
+
+  /** Item label with its translated name. */
+  private itemName(id: string): string {
+    return this.t(`items.${id}`);
+  }
+
+  private openCounter(): void {
+    const counter = this.def.counter;
+    if (!counter) return;
+    this.hint.setVisible(false);
+    const anchor = { kind: 'center' as const };
+    const items: MenuItem[] = [
+      ...counter.shelves.map((s) => ({ label: () => this.t(`market.shelf.${s.id}`), onSelect: () => this.openShelf(s.items) })),
+      { label: () => this.t('market.sell'), onSelect: () => this.openSell() },
+      { label: () => this.t('market.close'), onSelect: () => this.closePanel() },
+    ];
+    this.panel?.destroy();
+    this.panel = new MenuPanel(this, { title: this.t('market.title'), items, help: this.t('market.help'), anchor });
+  }
+
+  /** One shelf: each E buys one. */
+  private openShelf(ids: string[]): void {
+    const c = this.def.counter!;
+    const items: MenuItem[] = [
+      ...ids.map((id) => ({
+        label: () =>
+          this.t('market.buyRow', { item: this.itemName(id), price: this.world.config.items.find((i) => i.id === id)!.price, count: this.world.state.inventory[id] ?? 0 }),
+        onSelect: () => {
+          const r = this.world.buy(id, 1);
+          if (r.ok) {
+            this.world.save();
+            this.events.emit('stock-changed');
+            this.floatText(this.t('market.bought', { item: this.itemName(id) }), c.x, c.y - 40);
+          } else {
+            this.floatText(this.t('market.noCoins'), c.x, c.y - 40);
+          }
+        },
+      })),
+      { label: () => this.t('market.back'), onSelect: () => this.openCounter() },
+    ];
+    this.panel?.destroy();
+    this.panel = new MenuPanel(this, { title: this.t('market.title'), items, help: this.t('market.help'), anchor: { kind: 'center' } });
+  }
+
+  /** Sell one at a time, or everything sellable at once. */
+  private openSell(): void {
+    const c = this.def.counter!;
+    const goods = this.world.config.items.filter((i) => i.sellable);
+    const worth = () => goods.reduce((t, i) => t + i.price * (this.world.state.inventory[i.id] ?? 0), 0);
+    const sold = (coins: number) => {
+      this.world.save();
+      this.events.emit('stock-changed');
+      this.floatText(this.t('market.sold', { coins }), c.x, c.y - 40);
+    };
+    const items: MenuItem[] = [
+      {
+        label: () => this.t('market.sellAll', { coins: worth() }),
+        onSelect: () => {
+          const coins = worth();
+          if (coins === 0) return this.floatText(this.t('market.notEnough'), c.x, c.y - 40);
+          for (const g of goods) {
+            const n = this.world.state.inventory[g.id] ?? 0;
+            if (n > 0) this.world.sell(g.id, n);
+          }
+          sold(coins);
+        },
+      },
+      ...goods.map((g) => ({
+        label: () => this.t('market.sellRow', { item: this.itemName(g.id), price: g.price, count: this.world.state.inventory[g.id] ?? 0 }),
+        onSelect: () => {
+          const r = this.world.sell(g.id, 1);
+          if (r.ok) sold(g.price);
+          else this.floatText(this.t('market.notEnough'), c.x, c.y - 40);
+        },
+      })),
+      { label: () => this.t('market.back'), onSelect: () => this.openCounter() },
+    ];
+    this.panel?.destroy();
+    this.panel = new MenuPanel(this, { title: this.t('market.title'), items, help: this.t('market.help'), anchor: { kind: 'center' } });
   }
 
   // ---- movement --------------------------------------------------------------------

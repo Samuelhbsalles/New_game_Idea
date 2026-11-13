@@ -228,5 +228,23 @@
     "help": "↑↓ choose · E confirm · Esc close",
     "ready": "Ready!",
     "inventory": "{item}: {count}"
+  },
+  "market": {
+    "title": "Market",
+    "shelf": {
+      "basic": "Buy bait and food",
+      "special": "Buy special bait"
+    },
+    "sell": "Sell goods",
+    "sellAll": "Sell everything (+{coins})",
+    "buyRow": "{item} · {price} (have {count})",
+    "sellRow": "{item} · {price} (have {count})",
+    "noCoins": "Not enough coins",
+    "notEnough": "You have none",
+    "bought": "+1 {item}",
+    "sold": "+{coins} coins",
+    "back": "Back",
+    "close": "Close",
+    "help": "↑↓ choose · E buy/sell · Esc back"
   }
 }

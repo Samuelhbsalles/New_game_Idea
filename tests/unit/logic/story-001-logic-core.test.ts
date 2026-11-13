@@ -43,8 +43,8 @@ describe('story-001 logic core', () => {
 
   it('AC2: creatures, shops, items, prices and shift length load from JSON', () => {
     const config = parseConfig(rawConfig);
-    expect(config.species.map((s) => s.id)).toEqual(['rabbit', 'pigeon', 'cat', 'monkey']);
-    expect(config.species.find((s) => s.id === 'monkey')?.affinities.bakery).toBe(4);
+    expect(config.species.map((s) => s.id)).toEqual(creatures.map((c) => c.id));
+    expect(config.species.find((s) => s.id === 'monkey')?.affinities.bakery).toBe(creatures.find((c) => c.id === 'monkey')!.affinities.bakery);
     expect(config.species.find((s) => s.id === 'pigeon')?.affinities.cafe).toBe(creatures.find((c) => c.id === 'pigeon')!.affinities.cafe);
     const bakery = config.shops.find((s) => s.id === 'bakery');
     expect(bakery?.slots).toBe(shops[0].slots);

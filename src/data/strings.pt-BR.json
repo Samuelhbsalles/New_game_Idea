@@ -228,5 +228,23 @@
     "help": "↑↓ escolher · E confirmar · Esc fechar",
     "ready": "Pronto!",
     "inventory": "{item}: {count}"
+  },
+  "market": {
+    "title": "Mercado",
+    "shelf": {
+      "basic": "Comprar iscas e ração",
+      "special": "Comprar iscas especiais"
+    },
+    "sell": "Vender materiais",
+    "sellAll": "Vender tudo (+{coins})",
+    "buyRow": "{item} · {price} (tem {count})",
+    "sellRow": "{item} · {price} (tem {count})",
+    "noCoins": "Moedas insuficientes",
+    "notEnough": "Você não tem",
+    "bought": "+1 {item}",
+    "sold": "+{coins} moedas",
+    "back": "Voltar",
+    "close": "Fechar",
+    "help": "↑↓ escolher · E comprar/vender · Esc voltar"
   }
 }

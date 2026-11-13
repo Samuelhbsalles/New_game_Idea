@@ -8,6 +8,7 @@ import { OptionsScene } from './scenes/OptionsScene';
 import { installServices } from './scenes/services';
 import { TitleScene } from './scenes/TitleScene';
 import { InteriorScene } from './scenes/InteriorScene';
+import { installCrispText } from './scenes/ui/crispText';
 import { TownScene } from './scenes/TownScene';
 
 const WIDTH = 480;
@@ -24,6 +25,9 @@ function pixelPerfectZoom(): number {
   const n = Math.max(1, Math.floor(Math.min((window.innerWidth * dpr) / WIDTH, (window.innerHeight * dpr) / HEIGHT)));
   return n / dpr;
 }
+
+// Pixel-snap every text before the first one is drawn (the font is a pixel font).
+installCrispText();
 
 // 16:9 at a low resolution so 32px pixel art reads large, scaled by a whole number.
 const game = new Phaser.Game({

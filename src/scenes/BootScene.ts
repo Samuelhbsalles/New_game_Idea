@@ -23,9 +23,8 @@ export class BootScene extends Phaser.Scene {
 
   create(): void {
     const next = this.firstScene();
-    const font = `${ui.fontSize}px ${ui.fontFamily}`;
-    document.fonts
-      .load(font)
+    const fonts = [`${ui.fontSize}px ${ui.fontFamily}`, `bold ${ui.fontSize}px ${ui.fontFamily}`];
+    Promise.all(fonts.map((f) => document.fonts.load(f)))
       .catch(() => undefined) // a missing font only costs looks; the fallback is in the family list
       .then(() => this.scene.start(next));
   }
