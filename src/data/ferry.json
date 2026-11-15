@@ -1,0 +1,10 @@
+{
+  "fare": 15,
+  "returnFree": true,
+  "booth": { "x": 1788, "y": 446, "w": 66, "h": 34 },
+  "destinations": [
+    { "id": "shore", "status": "soon" },
+    { "id": "river", "status": "soon" },
+    { "id": "island", "status": "soon" }
+  ]
+}

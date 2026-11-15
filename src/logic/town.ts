@@ -64,6 +64,10 @@ export interface Prop {
   solid: Footprint | null;
   anim?: PropAnim;
   glow?: Glow;
+  /** Lies on the ground (a pier, a rug of planks): drawn under everything that stands. */
+  flat?: boolean;
+  /** Floats: bobs up and down this many px (boats). */
+  bob?: number;
 }
 
 /** A townsperson with a home, favourite places and a temper (see npcMind.ts). */
@@ -119,6 +123,8 @@ export interface TownDef {
   npcs: NpcDef[];
   /** Little bubbles NPCs may show while pausing. */
   npcEmotes: string[];
+  /** Piers and boardwalks over water: water tiles fully inside one can be walked on. */
+  walkways: Box[];
 }
 
 /** Axis-aligned rectangle in town pixels. */
@@ -246,6 +252,11 @@ export function parseTown(raw: unknown): TownDef {
       const go = obj(po.glow, `${p}.glow`);
       prop.glow = { dy: num(go, 'dy', `${p}.glow`), r: num(go, 'r', `${p}.glow`, 1) };
     }
+    if (po.flat !== undefined) {
+      if (typeof po.flat !== 'boolean') fail(`${p}.flat`, 'expected true or false');
+      prop.flat = po.flat as boolean;
+    }
+    if (po.bob !== undefined) prop.bob = num(po, 'bob', p, 0);
     inside(prop.x, prop.y, p);
     return prop;
   });
@@ -308,9 +319,16 @@ export function parseTown(raw: unknown): TownDef {
   const sp = obj(o.spawn, 'town.spawn');
   const spawn = { x: num(sp, 'x', 'town.spawn'), y: num(sp, 'y', 'town.spawn') };
   inside(spawn.x, spawn.y, 'town.spawn');
+  const walkways = (Array.isArray(o.walkways) ? o.walkways : []).map((v, i): Box => {
+    const p = `town.walkways[${i}]`;
+    const wo = obj(v, p);
+    const box = { x: num(wo, 'x', p), y: num(wo, 'y', p), w: num(wo, 'w', p, 1), h: num(wo, 'h', p, 1) };
+    inside(box.x, box.y, p);
+    return box;
+  });
   const cameraLerp = o.cameraLerp === undefined ? 1 : num(o, 'cameraLerp', 'town', 0);
   if (cameraLerp <= 0 || cameraLerp > 1) throw new Error('town.cameraLerp must be in (0, 1]');
-  return { tileSize, cameraLerp, cols, rows, corners, ground: tileset(o.ground, 'town.ground'), water: tileset(o.water, 'town.water'), buildings, props, spots, spawn, smoke, birds, npcs, npcEmotes };
+  return { tileSize, cameraLerp, cols, rows, corners, ground: tileset(o.ground, 'town.ground'), water: tileset(o.water, 'town.water'), buildings, props, spots, spawn, smoke, birds, npcs, npcEmotes, walkways };
 }
 
 function wang(c: string[], upper: (t: string) => boolean): number {
@@ -354,7 +372,8 @@ export function townSolids(town: TownDef): Box[] {
   for (let y = 0; y < town.rows; y++) {
     let start = -1;
     for (let x = 0; x <= town.cols; x++) {
-      const wet = x < town.cols && cornersOf(town.corners, x, y).includes('w');
+      const onWalkway = town.walkways.some((w) => x * s >= w.x && (x + 1) * s <= w.x + w.w && y * s >= w.y && (y + 1) * s <= w.y + w.h);
+      const wet = x < town.cols && cornersOf(town.corners, x, y).includes('w') && !onWalkway;
       if (wet && start < 0) start = x;
       if (!wet && start >= 0) {
         out.push({ x: start * s, y: y * s, w: (x - start) * s, h: s });

@@ -5,6 +5,11 @@ import mapJson from '../data/map.json';
 import spritesJson from '../data/sprites.json';
 import townJson from '../data/town.json';
 import ui from '../data/ui.json';
+import waterJson from '../data/water.json';
+import ferryJson from '../data/ferry.json';
+import { buyTicket, inBooth, parseFerry, type FerryRules } from '../logic/ferry';
+import { parseWaterRules } from '../logic/water';
+import { WaterFx } from './waterFx';
 import type { Game } from '../logic/game';
 import { parseMap, type TownMap } from '../logic/map';
 import { followTarget } from '../logic/petBrain';
@@ -36,6 +41,8 @@ const CURRENT_WEATHER = 'clear';
 
 /** How often (ms) a water sparkle appears somewhere in view. */
 const SPARKLE_EVERY_MS = 180;
+/** Depth of flat props (piers): above water (-1900) and its effects (-1890..-1800), below standing things. */
+const FLAT_DEPTH = -1700;
 /** How often (ms) a chimney puffs. */
 const SMOKE_EVERY_MS = 650;
 /** Nav grid cell (px) for NPC paths, and how far paths keep from walls. */
@@ -136,6 +143,10 @@ export class TownScene extends Phaser.Scene {
         if (tile.index === grass) tile.flipX = tileFlip(tile.x, tile.y).flipX;
       });
     }
+    // Moving water: foam lapping at the banks, wave crests on open water (under the sparkles).
+    const water = new WaterFx(this, parseWaterRules(waterJson), this.town.corners, s, Math.random);
+    water.addFoam(this.town.water.key, layers.water, -1890);
+    water.startCrests(-1850);
 
     // Buildings and props stand on their foot line and depth-sort by it.
     for (const b of this.town.buildings) this.add.image(b.x, b.y, b.sprite).setOrigin(0.5, 1).setDepth(b.y);
@@ -147,7 +158,9 @@ export class TownScene extends Phaser.Scene {
         }
         this.add.sprite(p.x, p.y, `${p.anim.key}_01`).setOrigin(0.5, 1).setDepth(p.y).play(key);
       } else {
-        this.add.image(p.x, p.y, p.sprite).setOrigin(0.5, 1).setDepth(p.y);
+        // Flat pieces (a pier) lie over the water and its effects but under anything standing.
+        const img = this.add.image(p.x, p.y, p.sprite).setOrigin(0.5, 1).setDepth(p.flat ? FLAT_DEPTH : p.y);
+        if (p.bob) this.tweens.add({ targets: img, y: p.y + p.bob, duration: Phaser.Math.Between(1100, 1600), yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
       }
       if (p.glow) this.addGlow(p.x, p.y + p.glow.dy, p.glow.r);
     }
@@ -234,9 +247,12 @@ export class TownScene extends Phaser.Scene {
     if (input.cancel) return this.openPause();
     if (Phaser.Input.Keyboard.JustDown(this.mapKey)) return this.openMap();
     const target = this.catchTarget();
-    this.catchHint.setVisible(target !== null);
+    const atBooth = !target && inBooth(this.ferry, { x: this.player.x, y: this.player.body.bottom });
+    this.catchHint.setVisible(target !== null || atBooth);
     if (target) this.catchHint.setPosition(target.sprite.x, target.sprite.y - target.sprite.displayHeight - 6);
+    else if (atBooth) this.catchHint.setPosition(this.player.x, this.player.y - this.player.displayHeight / 2 - 8);
     if (target && input.confirm) return this.tryCatch(target);
+    if (atBooth && input.confirm) return this.openFerry();
     this.checkDoor();
   }
 
@@ -491,8 +507,13 @@ export class TownScene extends Phaser.Scene {
   }
 
   private toast(b: Building, msg: string): void {
+    this.toastAt(b.x + b.doorDx, b.y - 8, msg);
+  }
+
+  /** A short message that floats up and fades at a town point. */
+  private toastAt(x: number, y: number, msg: string): void {
     const txt = this.add
-      .text(b.x + b.doorDx, b.y - 8, msg, { ...textStyle(true, 10), color: ui.panel, stroke: ui.ink, strokeThickness: 3 })
+      .text(x, y, msg, { ...textStyle(true, 10), color: ui.panel, stroke: ui.ink, strokeThickness: 3 })
       .setOrigin(0.5, 1)
       .setDepth(55_000);
     this.tweens.add({ targets: txt, y: txt.y - 10, alpha: 0, delay: 900, duration: 700, onComplete: () => txt.destroy() });
@@ -556,5 +577,38 @@ export class TownScene extends Phaser.Scene {
   private closePanel(): void {
     this.panel?.destroy();
     this.panel = null;
+  }
+
+  // ---- ferry -------------------------------------------------------------------------
+
+  private readonly ferry: FerryRules = parseFerry(ferryJson);
+
+  /** The ticket booth: where the ferry sails, the fare, and the player's coins. */
+  private openFerry(): void {
+    const t = (k: string, v?: Record<string, string | number>) => services(this).i18n.t(k, v);
+    this.player.setVelocity(0, 0);
+    const f = this.ferry;
+    const items: MenuItem[] = f.destinations.map((d) => {
+      const place = t(`ferry.dest.${d.id}`);
+      return { label: () => (d.status === 'open' ? place : t('ferry.soon', { place })), onSelect: () => this.sail(d.id, place) };
+    });
+    items.push({ label: () => t('ferry.close'), onSelect: () => this.closePanel() });
+    const lines = [t(f.returnFree ? 'ferry.fare' : 'ferry.fareOnly', { fare: f.fare }), t('ferry.coins', { coins: this.world.state.coins })];
+    this.panel?.destroy();
+    this.panel = new MenuPanel(this, { title: t('ferry.title'), lines, items, help: t('work.help'), anchor: { kind: 'center' } });
+  }
+
+  /** Pays the fare and sails, or says why not (nothing is charged then). */
+  private sail(destId: string, place: string): void {
+    const t = (k: string, v?: Record<string, string | number>) => services(this).i18n.t(k, v);
+    const r = buyTicket(this.world.state, this.ferry, destId);
+    const head = { x: this.player.x, y: this.player.y - this.player.displayHeight / 2 - 4 };
+    if (!r.ok) {
+      this.closePanel();
+      return this.toastAt(head.x, head.y, r.reason === 'no_coins' ? t('ferry.noCoins', { fare: this.ferry.fare }) : t('ferry.soonLong', { place }));
+    }
+    this.world.save();
+    this.closePanel();
+    this.enter(r.scene, 'harbor');
   }
 }

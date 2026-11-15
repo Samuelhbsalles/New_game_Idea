@@ -70,6 +70,28 @@ describe('town', () => {
     expect(solids).toHaveLength(4);
   });
 
+  it('a walkway (pier) makes the water tiles it fully covers walkable, and only those', () => {
+    // Arrange: the pier covers the water tile of row 1 only.
+    const r = { ...raw(), walkways: [{ x: 96, y: 32, w: 32, h: 32 }] };
+    // Act
+    const town = parseTown(r);
+    const solids = townSolids(town);
+    // Assert: water runs left in rows 0 and 2, none in row 1.
+    const water = solids.filter((s) => s.x === 96 && s.w === 32);
+    expect(water.map((s) => s.y)).toEqual([0, 64]);
+    expect(solids.some((s) => contains(s, { x: 110, y: 48 }))).toBe(false);
+  });
+
+  it('flat props and bobbing props are parsed; a negative bob is refused', () => {
+    const r = raw();
+    (r.props as unknown[]).push({ sprite: 'pier', x: 100, y: 60, solid: null, flat: true }, { sprite: 'boat', x: 110, y: 90, solid: null, bob: 1 });
+    const town = parseTown(r);
+    expect(town.props[1].flat).toBe(true);
+    expect(town.props[2].bob).toBe(1);
+    (r.props as { bob?: number }[])[2].bob = -1;
+    expect(() => parseTown(r)).toThrow(/props\[2\]/);
+  });
+
   it('finds a door only inside the strip under it', () => {
     const town = parseTown(raw());
     const d = doorBox(town.buildings[0]);

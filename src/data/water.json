@@ -1,0 +1,4 @@
+{
+  "crests": { "everyMs": 45, "lifeMs": [1800, 3200], "drift": [3, 8], "alpha": 0.9, "color": "#eef9ff", "shadow": "#2f74c4" },
+  "foam": { "color": "#f4fbff", "near": [1, 2], "far": [4, 5], "periodMs": 2800, "alpha": [0.1, 0.85] }
+}

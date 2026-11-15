@@ -1,7 +1,7 @@
 {
  "tileSize": 32,
  "cameraLerp": 1,
- "cols": 50,
+ "cols": 72,
  "rows": 28,
  "terrain": {
   "fill": "g",
@@ -38,8 +38,15 @@
     "t": "w",
     "x": 45,
     "y": 16,
-    "w": 6,
+    "w": 28,
     "h": 13
+   },
+   {
+    "t": "g",
+    "x": 66,
+    "y": 16,
+    "w": 7,
+    "h": 5
    }
   ]
  },
@@ -622,12 +629,6 @@
   },
   {
    "sprite": "town_flowers",
-   "x": 1350,
-   "y": 470,
-   "solid": null
-  },
-  {
-   "sprite": "town_flowers",
    "x": 160,
    "y": 820,
    "solid": null
@@ -864,12 +865,6 @@
    "sprite": "town_tuft",
    "x": 544,
    "y": 119,
-   "solid": null
-  },
-  {
-   "sprite": "town_clover",
-   "x": 1367,
-   "y": 532,
    "solid": null
   },
   {
@@ -1285,6 +1280,145 @@
    "x": 162,
    "y": 122,
    "solid": null
+  },
+  {
+   "sprite": "town_pier",
+   "x": 1489,
+   "y": 612,
+   "solid": null,
+   "flat": true
+  },
+  {
+   "sprite": "town_sailboat",
+   "x": 1628,
+   "y": 660,
+   "solid": null,
+   "bob": 1
+  },
+  {
+   "sprite": "town_rowboat",
+   "x": 1540,
+   "y": 566,
+   "solid": null,
+   "bob": 1
+  },
+  {
+   "sprite": "town_fishhut",
+   "x": 1520,
+   "y": 482,
+   "solid": {
+    "w": 84,
+    "h": 26
+   }
+  },
+  {
+   "sprite": "town_crates",
+   "x": 1392,
+   "y": 664,
+   "solid": {
+    "w": 44,
+    "h": 16
+   }
+  },
+  {
+   "sprite": "town_net_rack",
+   "x": 1625,
+   "y": 472,
+   "solid": {
+    "w": 80,
+    "h": 14
+   }
+  },
+  {
+   "sprite": "town_fish_stall",
+   "x": 1730,
+   "y": 458,
+   "solid": {
+    "w": 72,
+    "h": 16
+   }
+  },
+  {
+   "sprite": "town_ticket_booth",
+   "x": 1818,
+   "y": 446,
+   "solid": {
+    "w": 50,
+    "h": 16
+   }
+  },
+  {
+   "sprite": "town_ferry_pier",
+   "x": 1888,
+   "y": 675,
+   "solid": null,
+   "flat": true
+  },
+  {
+   "sprite": "town_ferry",
+   "x": 1990,
+   "y": 700,
+   "solid": null,
+   "bob": 1
+  },
+  {
+   "sprite": "town_harbor_master",
+   "x": 2010,
+   "y": 472,
+   "solid": {
+    "w": 90,
+    "h": 24
+   }
+  },
+  {
+   "sprite": "town_crates",
+   "x": 2110,
+   "y": 476,
+   "solid": {
+    "w": 44,
+    "h": 16
+   }
+  },
+  {
+   "sprite": "town_lighthouse",
+   "x": 2180,
+   "y": 604,
+   "solid": {
+    "w": 56,
+    "h": 22
+   },
+   "glow": {
+    "dy": -172,
+    "r": 16
+   }
+  },
+  {
+   "sprite": "town_rowboat",
+   "x": 2030,
+   "y": 590,
+   "solid": null,
+   "bob": 1
+  },
+  {
+   "sprite": "town_buoy",
+   "x": 1700,
+   "y": 640,
+   "solid": null,
+   "bob": 1
+  },
+  {
+   "sprite": "town_buoy",
+   "x": 1790,
+   "y": 790,
+   "solid": null,
+   "bob": 1
+  },
+  {
+   "sprite": "town_buoy",
+   "x": 2080,
+   "y": 830,
+   "solid": null,
+   "bob": 1
   }
  ],
  "spots": {
@@ -1442,5 +1576,19 @@
   "♪",
   "!",
   "?"
+ ],
+ "walkways": [
+  {
+   "x": 1408,
+   "y": 576,
+   "w": 160,
+   "h": 32
+  },
+  {
+   "x": 1856,
+   "y": 480,
+   "w": 64,
+   "h": 192
+  }
  ]
 }

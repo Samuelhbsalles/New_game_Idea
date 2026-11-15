@@ -14,7 +14,7 @@
     { "id": "petPharmacy", "x": 300, "y": 200, "status": "open", "scene": "InteriorScene" },
     { "id": "factory", "x": 112, "y": 236, "status": "open", "scene": "InteriorScene" },
     { "id": "construction", "x": 262, "y": 234, "status": "open", "scene": "InteriorScene" },
-    { "id": "park", "x": 46, "y": 150, "status": "soon" },
-    { "id": "harbor", "x": 432, "y": 196, "status": "soon" }
+    { "id": "park", "x": 46, "y": 150, "status": "open", "scene": "TownScene" },
+    { "id": "harbor", "x": 432, "y": 196, "status": "open", "scene": "TownScene" }
   ]
 }

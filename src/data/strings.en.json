@@ -279,6 +279,21 @@
     "visitFailed": "Couldn't visit right now",
     "close": "Close"
   },
+  "ferry": {
+    "title": "Ferry",
+    "fare": "Fare: {fare} coins · return is free",
+    "fareOnly": "Fare: {fare} coins",
+    "coins": "You have {coins} coins",
+    "soon": "{place} (soon)",
+    "soonLong": "The trip to {place} isn't ready yet",
+    "noCoins": "Not enough coins: the fare is {fare}",
+    "close": "Close",
+    "dest": {
+      "shore": "Beach",
+      "river": "River",
+      "island": "Island"
+    }
+  },
   "furniture": {
     "bed": "Bed",
     "armchair": "Armchair",

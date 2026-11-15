@@ -279,6 +279,21 @@
     "visitFailed": "Não deu para visitar agora",
     "close": "Fechar"
   },
+  "ferry": {
+    "title": "Barco",
+    "fare": "Passagem: {fare} moedas · volta grátis",
+    "fareOnly": "Passagem: {fare} moedas",
+    "coins": "Você tem {coins} moedas",
+    "soon": "{place} (em breve)",
+    "soonLong": "A viagem para {place} ainda não está pronta",
+    "noCoins": "Faltam moedas: a passagem custa {fare}",
+    "close": "Fechar",
+    "dest": {
+      "shore": "Praia",
+      "river": "Rio",
+      "island": "Ilha"
+    }
+  },
   "furniture": {
     "bed": "Cama",
     "armchair": "Poltrona",
