@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import ui from '../data/ui.json';
 import { joinWorld, SESSION_KEY } from '../net/world';
 import { preloadCreatorLayers } from './avatar';
+import { startMusic } from './music';
 import { services } from './services';
 
 /** Texture keys of the shared UI art loaded here. */
@@ -24,6 +25,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   create(): void {
+    startMusic(this.game);
     const next = this.firstScene();
     const fonts = [`${ui.fontSize}px ${ui.fontFamily}`, `bold ${ui.fontSize}px ${ui.fontFamily}`];
     Promise.all(fonts.map((f) => document.fonts.load(f)))

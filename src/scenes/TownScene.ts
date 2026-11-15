@@ -23,7 +23,7 @@ import { TownNpc } from './TownNpc';
 import { TownWild, type Critter } from './TownWild';
 import type { Bird } from './TownBirds';
 import { services } from './services';
-import { createCharacterAnims, facingFor, loadCharacter, showMotion, type CharacterArt, type Dir } from './sprites';
+import { createCharacterAnims, facingFor, loadCharacter, scaleOf, showMotion, type CharacterArt, type Dir } from './sprites';
 import { Keys } from './ui/input';
 import { HudChip } from './ui/HudChip';
 import { MenuPanel, textStyle, type MenuItem } from './ui/MenuPanel';
@@ -178,7 +178,7 @@ export class TownScene extends Phaser.Scene {
       const petArt = art[species];
       createCharacterAnims(this, petArt, homeJson.pet.walkFps);
       this.petName = petArt.name;
-      this.pet = this.physics.add.sprite(start.x - 20, start.y + 6, `${petArt.name}_idle_down`);
+      this.pet = this.physics.add.sprite(start.x - 20, start.y + 6, `${petArt.name}_idle_down`).setScale(scaleOf(petArt.name));
       this.pet.body.setSize(18, 12).setOffset(15, 30);
       this.pet.setCollideWorldBounds(true);
       this.physics.add.collider(this.pet, solids);

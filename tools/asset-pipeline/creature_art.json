@@ -1,0 +1,92 @@
+{
+  "cat": {
+    "char": "e4074efa-ff30-4726-ab5c-422863aa608d",
+    "anims": [
+      {"action": "walk", "state": "Standing", "name": "walk"},
+      {"action": "eat", "state": "Idle", "name": "eat"},
+      {"action": "sleep", "state": "Idle", "name": "sleep2", "frames": [6, 8]},
+      {"action": "work", "state": "Idle", "name": "work"}
+    ]
+  },
+  "dog": {
+    "char": "f82a9c00-f05d-4a05-acfd-86e5c9880c54",
+    "anims": [
+      {"action": "walk", "state": "Standing", "name": "walk"},
+      {"action": "eat", "state": "Idle", "name": "eat"},
+      {"action": "sleep", "state": "Idle", "name": "sleep", "frames": [6, 8]},
+      {"action": "work", "state": "Idle", "name": "work"}
+    ]
+  },
+  "pug": {
+    "char": "81b89dfb-d817-4702-bd5f-79642ce9df87",
+    "anims": [
+      {"action": "walk", "state": "Standing", "name": "walk"},
+      {"action": "eat", "state": "Idle", "name": "eat"},
+      {"action": "sleep", "state": "Idle", "name": "sleep", "frames": [6, 8]},
+      {"action": "work", "state": "Idle", "name": "work"}
+    ]
+  },
+  "capybara": {
+    "char": "9d2d7dc1-5fb6-4c7d-8a9a-715c2052933b",
+    "anims": [
+      {"action": "walk", "state": "Idle", "name": "walk"},
+      {"action": "eat", "state": "Idle", "name": "eat2"},
+      {"action": "sleep", "state": "Idle", "name": "rest", "frames": [6, 8]},
+      {"action": "work", "state": "Idle", "name": "work"}
+    ]
+  },
+  "sheep": {
+    "char": "829384f8-fa72-47d8-99eb-dc8be3771861",
+    "anims": [
+      {"action": "walk", "state": "Idle", "name": "walk"},
+      {"action": "eat", "state": "Idle", "name": "eat"},
+      {"action": "sleep", "state": "Idle", "name": "sleep", "frames": [6, 8]},
+      {"action": "work", "state": "Idle", "name": "work"}
+    ]
+  },
+  "chicken": {
+    "char": "ae3c7a36-e77e-4869-8222-d4bd3a9f5bad",
+    "anims": [
+      {"action": "walk", "state": "Idle", "name": "walk"},
+      {"action": "eat", "state": "Idle", "name": "eat"},
+      {"action": "sleep", "state": "Idle", "name": "sleep", "frames": [6, 8]},
+      {"action": "work", "state": "Idle", "name": "work"}
+    ]
+  },
+  "squirrel": {
+    "char": "1f9e472d-a018-459e-bd90-bc0bd83a19fd",
+    "anims": [
+      {"action": "walk", "state": "Idle", "name": "hop"},
+      {"action": "eat", "state": "Idle", "name": "eat"},
+      {"action": "sleep", "state": "Idle", "name": "sleep", "frames": [6, 8]},
+      {"action": "work", "state": "Idle", "name": "work"}
+    ]
+  },
+  "beaver": {
+    "char": "62c45a45-6ef2-427b-b3f6-ba9cfa322c57",
+    "anims": [
+      {"action": "walk", "state": "Idle", "name": "walk"},
+      {"action": "eat", "state": "Idle", "name": "eat"},
+      {"action": "sleep", "state": "Idle", "name": "sleep", "frames": [6, 8]},
+      {"action": "work", "state": "Idle", "name": "work"}
+    ]
+  },
+  "penguin": {
+    "char": "670450c7-7937-4806-9900-d39544e0a1c0",
+    "anims": [
+      {"action": "walk", "state": "Idle", "name": "walk"},
+      {"action": "eat", "state": "Idle", "name": "eat"},
+      {"action": "sleep", "state": "Idle", "name": "sleep", "frames": [6, 8]},
+      {"action": "work", "state": "Idle", "name": "work"}
+    ]
+  },
+  "monkey": {
+    "char": "98f124e4-b3c0-4afc-adea-8a5fbac5c7bd",
+    "anims": [
+      {"action": "walk", "state": "Idle", "name": "walk"},
+      {"action": "eat", "state": "Idle", "name": "eat"},
+      {"action": "sleep", "state": "Idle", "name": "sleep", "frames": [5, 7]},
+      {"action": "work", "state": "Idle", "name": "work"}
+    ]
+  }
+}

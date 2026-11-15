@@ -15,7 +15,7 @@ import { openOverlay } from './overlay';
 import { RemotePlayers } from './RemotePlayers';
 import { services } from './services';
 import { BIRD_TEX } from './TownBirds';
-import { createCharacterAnims, extraAnimKey, facingFor, loadCharacter, showMotion, type CharacterArt, type Dir } from './sprites';
+import { createCharacterAnims, extraAnimKey, facingFor, loadCharacter, scaleOf, showMotion, type CharacterArt, type Dir } from './sprites';
 import { Keys } from './ui/input';
 import { HudChip } from './ui/HudChip';
 import { MenuPanel, textStyle, type MenuItem } from './ui/MenuPanel';
@@ -150,7 +150,7 @@ export class InteriorScene extends Phaser.Scene {
       const petArt = art[petCreature.speciesId];
       createCharacterAnims(this, petArt, homeJson.pet.walkFps);
       this.petName = petArt.name;
-      this.pet = this.physics.add.sprite(arrive.x - 18, arrive.y + 6, `${petArt.name}_idle_up`);
+      this.pet = this.physics.add.sprite(arrive.x - 18, arrive.y + 6, `${petArt.name}_idle_up`).setScale(scaleOf(petArt.name));
       this.pet.body.setSize(18, 12).setOffset(15, 30);
       this.pet.setCollideWorldBounds(true);
       this.physics.add.collider(this.pet, walls);
@@ -397,7 +397,7 @@ export class InteriorScene extends Phaser.Scene {
     const depth = st.y;
     if (a) {
       createCharacterAnims(this, a, homeJson.pet.walkFps);
-      return this.add.sprite(st.x, st.y, `${a.name}_idle_${st.face}`).setOrigin(0.5, 1).setDepth(depth);
+      return this.add.sprite(st.x, st.y, `${a.name}_idle_${st.face}`).setOrigin(0.5, 1).setDepth(depth).setScale(scaleOf(a.name));
     }
     if (species === 'pigeon' && this.textures.exists(BIRD_TEX.ground)) {
       return this.add.sprite(st.x, st.y, BIRD_TEX.ground).setOrigin(0.5, 1).setDepth(depth).setFlipX(st.face === 'left');
@@ -453,7 +453,7 @@ export class InteriorScene extends Phaser.Scene {
         w.sprite?.setFlipX(false);
         const st = this.def.stations[w.slot];
         const a = art[this.world.creature(shift.creatureId).speciesId];
-        w.sprite?.setPosition(st.x, st.y).setScale(1);
+        w.sprite?.setPosition(st.x, st.y).setScale(a ? scaleOf(a.name) : 1);
         if (a) w.sprite?.setTexture(`${a.name}_idle_down`);
       }
     }

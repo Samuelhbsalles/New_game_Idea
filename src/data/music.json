@@ -1,0 +1,8 @@
+{
+  "main": {
+    "file": "assets/music/willowbrook_mornings.mp3",
+    "title": "Willowbrook Mornings",
+    "loop": true,
+    "gain": 0.6
+  }
+}

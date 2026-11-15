@@ -6,6 +6,7 @@
   "npc_fisher": { "name": "npc_fisher", "folder": "characters/npc_fisher", "walkFrames": 4, "extras": [] },
   "rabbit": {
     "name": "rabbit",
+    "scale": 0.75,
     "folder": "creatures/rabbit",
     "walkFrames": 8,
     "extras": [
@@ -14,6 +15,56 @@
       { "action": "work", "frames": 8, "fps": 8, "repeat": -1, "dirs": ["down", "up", "right"] }
     ]
   },
+  "cat": { "name": "cat", "scale": 0.72, "folder": "creatures/cat", "walkFrames": 8, "extras": [
+    { "action": "eat", "frames": 8, "fps": 8, "repeat": -1 },
+    { "action": "sleep", "frames": 3, "fps": 2, "repeat": -1 },
+    { "action": "work", "frames": 8, "fps": 8, "repeat": -1, "dirs": ["down", "up", "right"] }
+  ] },
+  "dog": { "name": "dog", "scale": 0.75, "folder": "creatures/dog", "walkFrames": 8, "extras": [
+    { "action": "eat", "frames": 8, "fps": 8, "repeat": -1 },
+    { "action": "sleep", "frames": 3, "fps": 2, "repeat": -1 },
+    { "action": "work", "frames": 8, "fps": 8, "repeat": -1, "dirs": ["down", "up", "right"] }
+  ] },
+  "pug": { "name": "pug", "scale": 0.65, "folder": "creatures/pug", "walkFrames": 8, "extras": [
+    { "action": "eat", "frames": 8, "fps": 8, "repeat": -1 },
+    { "action": "sleep", "frames": 3, "fps": 2, "repeat": -1 },
+    { "action": "work", "frames": 8, "fps": 8, "repeat": -1, "dirs": ["down", "up", "right"] }
+  ] },
+  "capybara": { "name": "capybara", "scale": 0.72, "folder": "creatures/capybara", "walkFrames": 8, "extras": [
+    { "action": "eat", "frames": 8, "fps": 6, "repeat": -1 },
+    { "action": "sleep", "frames": 3, "fps": 2, "repeat": -1 },
+    { "action": "work", "frames": 8, "fps": 8, "repeat": -1, "dirs": ["down", "up", "right"] }
+  ] },
+  "monkey": { "name": "monkey", "scale": 0.78, "folder": "creatures/monkey", "walkFrames": 8, "extras": [
+    { "action": "eat", "frames": 8, "fps": 8, "repeat": -1 },
+    { "action": "sleep", "frames": 3, "fps": 2, "repeat": -1 },
+    { "action": "work", "frames": 8, "fps": 8, "repeat": -1, "dirs": ["down", "up", "right"] }
+  ] },
+  "sheep": { "name": "sheep", "scale": 0.7, "folder": "creatures/sheep", "walkFrames": 8, "extras": [
+    { "action": "eat", "frames": 8, "fps": 8, "repeat": -1 },
+    { "action": "sleep", "frames": 3, "fps": 2, "repeat": -1 },
+    { "action": "work", "frames": 8, "fps": 8, "repeat": -1, "dirs": ["down", "up", "right"] }
+  ] },
+  "chicken": { "name": "chicken", "scale": 0.54, "folder": "creatures/chicken", "walkFrames": 8, "extras": [
+    { "action": "eat", "frames": 8, "fps": 8, "repeat": -1 },
+    { "action": "sleep", "frames": 3, "fps": 2, "repeat": -1 },
+    { "action": "work", "frames": 8, "fps": 8, "repeat": -1, "dirs": ["down", "up", "right"] }
+  ] },
+  "squirrel": { "name": "squirrel", "scale": 0.57, "folder": "creatures/squirrel", "walkFrames": 8, "extras": [
+    { "action": "eat", "frames": 8, "fps": 8, "repeat": -1 },
+    { "action": "sleep", "frames": 3, "fps": 2, "repeat": -1 },
+    { "action": "work", "frames": 8, "fps": 8, "repeat": -1, "dirs": ["down", "up", "right"] }
+  ] },
+  "beaver": { "name": "beaver", "scale": 0.68, "folder": "creatures/beaver", "walkFrames": 8, "extras": [
+    { "action": "eat", "frames": 8, "fps": 8, "repeat": -1 },
+    { "action": "sleep", "frames": 3, "fps": 2, "repeat": -1 },
+    { "action": "work", "frames": 8, "fps": 8, "repeat": -1, "dirs": ["down", "up", "right"] }
+  ] },
+  "penguin": { "name": "penguin", "scale": 0.66, "folder": "creatures/penguin", "walkFrames": 8, "extras": [
+    { "action": "eat", "frames": 8, "fps": 8, "repeat": -1 },
+    { "action": "sleep", "frames": 3, "fps": 2, "repeat": -1 },
+    { "action": "work", "frames": 8, "fps": 8, "repeat": -1, "dirs": ["down", "up", "right"] }
+  ] },
   "pigeon": {
     "name": "pigeon",
     "folder": "creatures/pigeon",

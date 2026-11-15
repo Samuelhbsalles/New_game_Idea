@@ -1,6 +1,15 @@
 import Phaser from 'phaser';
 
+import spritesJson from '../data/sprites.json';
 import type { Dir } from '../logic/facing';
+
+/**
+ * Display scale for a character's art (sprites.json `scale`, default 1).
+ * Creatures are drawn smaller than people, so a 48px animal reads as an animal.
+ */
+export function scaleOf(name: string): number {
+  return (spritesJson as Record<string, { scale?: number }>)[name]?.scale ?? 1;
+}
 
 export type { Dir };
 

@@ -16,10 +16,10 @@ const day = { night: false, weather: 'clear' };
 const night = { night: true, weather: 'clear' };
 
 describe('creatures (design/creatures.md)', () => {
-  it('ships the 27 creatures of the design list plus the monkey', () => {
-    expect(config.species).toHaveLength(28);
+  it('ships the 27 creatures of the design list plus the monkey and the legendary pug', () => {
+    expect(config.species).toHaveLength(29);
     const counts = (r: string) => config.species.filter((s) => s.rarity === r).length;
-    expect([counts('common'), counts('uncommon'), counts('rare'), counts('epic')]).toEqual([8, 9, 8, 3]);
+    expect([counts('common'), counts('uncommon'), counts('rare'), counts('epic'), counts('legendary')]).toEqual([8, 9, 8, 3, 1]);
   });
 
   it('every creature but the generalist rabbit has a strength and a weakness', () => {

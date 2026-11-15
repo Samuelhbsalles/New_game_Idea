@@ -10,7 +10,7 @@ import {
   type Rng,
 } from '../logic/petBrain';
 import type { PetDef, UseKind, UseSpot } from '../logic/room';
-import { facingFor, showMotion, type Dir } from './sprites';
+import { facingFor, scaleOf, showMotion, type Dir } from './sprites';
 
 /** How close (px) counts as "arrived" at a target. */
 const ARRIVE_PX = 4;
@@ -67,7 +67,7 @@ export class PetController {
     private readonly rng: Rng,
     private readonly hooks: PetHooks,
   ) {
-    this.sprite = scene.physics.add.sprite(def.x, def.y, `${name}_idle_down`);
+    this.sprite = scene.physics.add.sprite(def.x, def.y, `${name}_idle_down`).setScale(scaleOf(name));
     this.sprite.body.setSize(18, 12).setOffset(15, 30);
     this.start(this.autoPlan());
   }
