@@ -184,7 +184,21 @@
     "newAlbum": "New in the album!",
     "noBait": "No bait!",
     "escaped": "It got away!",
-    "needsBait": "Needs {bait}!"
+    "needsBait": "Needs {bait}!",
+    "placeTitle": "Put bait down",
+    "placeRow": "{item} ({count})",
+    "favourite": "{item} ({count}) ★ {species}",
+    "noBaitHeld": "You have no bait",
+    "noArea": "No animals around here",
+    "placed": "Step back and wait...",
+    "pickedUp": "Bait picked up",
+    "scared": "Scared it off!",
+    "tooClose": "Too close!",
+    "ateAndLeft": "It ate and left...",
+    "nobodyCame": "Nobody came. Bait picked up",
+    "hold": "Hold E: the marker moves →",
+    "tensionTitle": "{species}!",
+    "close": "Close"
   },
   "items": {
     "bread": "Bread",

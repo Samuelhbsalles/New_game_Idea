@@ -40,6 +40,11 @@ export class Keys {
     };
   }
 
+  /** True while the action key (E, Space or Enter) is held down: minigames that need holding. */
+  holding(): boolean {
+    return this.e.isDown || this.cursors.space.isDown || this.enter.isDown;
+  }
+
   /** Held direction as a unit-ish vector, for walking. */
   axis(): { x: number; y: number } {
     const c = this.cursors;

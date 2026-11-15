@@ -15,7 +15,10 @@ import { parseWildRules } from '../logic/climb';
 import type { Game } from '../logic/game';
 import { parseMap, type TownMap } from '../logic/map';
 import { followTarget } from '../logic/petBrain';
-import { attemptCatch, baitCount, eligibleSpecies, parseCatchRules, pickSpawn, type CatchRules } from '../logic/catching';
+import { acceptsBait, baitCount, baitsHeld, eligibleSpecies, parseCatchRules, pickSpawn, type AreaRule, type CatchRules } from '../logic/catching';
+import lureJson from '../data/lure.json';
+import { parseLureRules } from '../logic/lure';
+import { TownLure } from './TownLure';
 import { isNight } from '../logic/gameTime';
 import { buildNavGrid } from '../logic/npcMind';
 import { arrivalPoint, doorAt, parseTown, tileFlip, townLayers, townSolids, type Building, type TownDef } from '../logic/town';
@@ -248,17 +251,33 @@ export class TownScene extends Phaser.Scene {
       if (this.panel.handle(input) === 'cancel') this.closePanel();
       return;
     }
+    const feet = { x: this.player.x, feet: this.player.body.bottom, moving: this.player.body.velocity.lengthSq() > 0 };
+    // The catching minigame holds the player still and owns the action key.
+    if (this.lure.busy) {
+      this.player.setVelocity(0, 0);
+      showMotion(this.player, art[homeJson.player.character].name, this.facing, false);
+      this.catchHint.setVisible(false);
+      this.lure.update(dt, feet, input.confirm, this.keys.holding());
+      return;
+    }
     this.movePlayer();
     this.movePet();
     if (input.cancel) return this.openPause();
     if (Phaser.Input.Keyboard.JustDown(this.mapKey)) return this.openMap();
-    const target = this.catchTarget();
-    const atBooth = !target && inBooth(this.ferry, { x: this.player.x, y: this.player.body.bottom });
-    this.catchHint.setVisible(target !== null || atBooth);
-    if (target) this.catchHint.setPosition(target.sprite.x, target.sprite.y - target.sprite.displayHeight - 6);
+    if (this.lure.update(dt, feet, input.confirm, this.keys.holding())) return;
+    const bird = this.catchTarget();
+    const lureHint = this.lure.hintAt(feet);
+    const atBooth = !bird && !lureHint && inBooth(this.ferry, { x: this.player.x, y: this.player.body.bottom });
+    this.catchHint.setVisible(bird !== null || lureHint !== null || atBooth);
+    if (lureHint) this.catchHint.setPosition(lureHint.x, lureHint.y);
+    else if (bird) this.catchHint.setPosition(bird.sprite.x, bird.sprite.y - bird.sprite.displayHeight - 6);
     else if (atBooth) this.catchHint.setPosition(this.player.x, this.player.y - this.player.displayHeight / 2 - 8);
-    if (target && input.confirm) return this.tryCatch(target);
-    if (atBooth && input.confirm) return this.openFerry();
+    if (input.confirm) {
+      if (bird) return this.lure.startBird(bird.bird);
+      if (atBooth) return this.openFerry();
+      if (this.lure.pickUpNear(feet)) return;
+      if (!this.lure.baitDown) return this.openBaitMenu();
+    }
     this.checkDoor();
   }
 
@@ -349,6 +368,22 @@ export class TownScene extends Phaser.Scene {
       (species) => (spritesJson as Record<string, { scale?: number }>)[species]?.scale ?? 1,
       { rules: wildRules, trees },
     );
+    this.lure = new TownLure({
+      scene: this,
+      game: this.world,
+      rules: this.rules,
+      lure: parseLureRules(lureJson, Object.keys(this.rules.rarities)),
+      wild: this.wild,
+      birds: this.birds,
+      art: (species) => art[species] ?? null,
+      t: (k, v) => services(this).i18n.t(k, v),
+      say: (msg, at) => this.floatText(msg, at),
+      changed: () => {
+        this.world.save();
+        this.refreshBait();
+      },
+      caughtEffect: (sprite, species, first) => this.caughtEffect(sprite, species, first),
+    });
 
     for (const c of this.town.smoke) {
       this.time.addEvent({ delay: SMOKE_EVERY_MS, loop: true, callback: () => this.puff(c.x, c.y) });
@@ -359,6 +394,7 @@ export class TownScene extends Phaser.Scene {
   private npcs: TownNpc[] = [];
   private birds: TownBirds | null = null;
   private wild: TownWild | null = null;
+  private lure!: TownLure;
   private rules!: CatchRules;
   private baitText!: HudChip;
   private catchHint!: Phaser.GameObjects.Container;
@@ -399,40 +435,53 @@ export class TownScene extends Phaser.Scene {
   // ---- catching ----------------------------------------------------------------------
 
   /** The nearest grounded bird or wild creature within catch range of the player's feet. */
-  private catchTarget(): CatchTarget | null {
+  private catchTarget(): Extract<CatchTarget, { kind: 'bird' }> | null {
     const feet = { x: this.player.x, y: this.player.body.bottom };
-    const range = this.rules.catchRange;
-    const bird = this.birds?.grounded(feet, range)[0];
-    const critter = this.wild?.nearest(feet, range) ?? null;
-    const dist = (o: { x: number; y: number }) => Math.hypot(o.x - feet.x, o.y - feet.y);
-    if (bird && (!critter || dist(bird.sprite) <= dist(critter.sprite))) return { kind: 'bird', bird, species: 'pigeon', sprite: bird.sprite };
-    if (critter) return { kind: 'wild', critter, species: critter.species, sprite: critter.sprite };
-    return null;
+    const bird = this.birds?.grounded(feet, this.rules.catchRange)[0];
+    return bird ? { kind: 'bird', bird, species: 'pigeon', sprite: bird.sprite } : null;
   }
 
-  /** One bait, one try (rules in src/logic/catching.ts). */
-  private tryCatch(target: CatchTarget): void {
+  /** The wild area (with a place in town) the player stands in, or null. */
+  private areaHere(): AreaRule | null {
+    const x = this.player.x;
+    const y = this.player.body.bottom;
+    return Object.values(this.rules.areas).find((a) => a.inTown && x >= a.inTown.x && x < a.inTown.x + a.inTown.w && y >= a.inTown.y && y < a.inTown.y + a.inTown.h) ?? null;
+  }
+
+  /** E out in a wild area: choose a bait to put down. Baits a creature in view loves are starred. */
+  private openBaitMenu(): void {
     const t = (k: string, v?: Record<string, string | number>) => services(this).i18n.t(k, v);
-    const at = { x: target.sprite.x, y: target.sprite.y - target.sprite.displayHeight };
-    const r = attemptCatch(this.world, this.rules, target.species, Math.random);
-    if (!r.ok) {
-      if (r.reason === 'no_bait') this.floatText(t('catch.needsBait', { bait: t(`items.${r.needs}`) }), at);
-      if (r.reason === 'escaped') {
-        this.world.save();
-        this.refreshBait();
-        this.floatText(t('catch.escaped'), at);
-        if (target.kind === 'bird') this.birds?.scare(target.bird, this.player);
-      }
-      return;
-    }
-    this.world.save();
-    this.refreshBait();
-    if (target.kind === 'bird') this.birds?.take(target.bird);
-    else this.wild?.remove(target.critter);
-    this.sparkleBurst(target.sprite.x, target.sprite.y - target.sprite.displayHeight / 2);
-    this.tweens.add({ targets: target.sprite, scale: 0, alpha: 0, duration: 350, ease: 'Back.easeIn', onComplete: () => target.sprite.destroy() });
-    this.floatText(t('catch.caught', { name: t(`species.${target.species}`) }), at);
-    if (r.firstOfSpecies) this.time.delayedCall(700, () => this.floatText(t('catch.newAlbum'), { x: at.x, y: at.y - 12 }));
+    const head = { x: this.player.x, y: this.player.y - this.player.displayHeight / 2 - 4 };
+    if (!this.areaHere()) return this.floatText(t('catch.noArea'), head);
+    const held = baitsHeld(this.world, this.rules);
+    if (held.length === 0) return this.floatText(t('catch.noBaitHeld'), head);
+    this.player.setVelocity(0, 0);
+    const view = this.cameras.main.worldView;
+    const inView = (this.wild?.free() ?? []).filter((c) => view.contains(c.sprite.x, c.sprite.y));
+    const items: MenuItem[] = held.map(({ itemId, count }) => {
+      const fan = inView.find((c) => acceptsBait(this.world, this.rules, c.species, itemId) === 'specific');
+      const item = t(`items.${itemId}`);
+      return {
+        label: () => (fan ? t('catch.favourite', { item, count, species: t(`species.${fan.species}`) }) : t('catch.placeRow', { item, count })),
+        onSelect: () => {
+          this.closePanel();
+          this.lure.placeBait(itemId, { x: this.player.x, y: this.player.body.bottom });
+        },
+      };
+    });
+    items.push({ label: () => t('catch.close'), onSelect: () => this.closePanel() });
+    this.panel?.destroy();
+    this.panel = new MenuPanel(this, { title: t('catch.placeTitle'), items, help: t('work.help'), anchor: { kind: 'center' } });
+  }
+
+  /** Caught: stars, the sprite pops away, and the album line the first time. */
+  private caughtEffect(sprite: Phaser.GameObjects.Sprite, species: string, firstOfSpecies: boolean): void {
+    const t = (k: string, v?: Record<string, string | number>) => services(this).i18n.t(k, v);
+    const at = { x: sprite.x, y: sprite.y - sprite.displayHeight };
+    this.sparkleBurst(sprite.x, sprite.y - sprite.displayHeight / 2);
+    this.tweens.add({ targets: sprite, scale: 0, alpha: 0, duration: 350, ease: 'Back.easeIn', onComplete: () => sprite.destroy() });
+    this.floatText(t('catch.caught', { name: t(`species.${species}`) }), at);
+    if (firstOfSpecies) this.time.delayedCall(700, () => this.floatText(t('catch.newAlbum'), { x: at.x, y: at.y - 12 }));
   }
 
   private refreshBait(): void {

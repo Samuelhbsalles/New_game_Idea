@@ -184,7 +184,21 @@
     "newAlbum": "Novo no álbum!",
     "noBait": "Sem isca!",
     "escaped": "Fugiu!",
-    "needsBait": "Precisa de {bait}!"
+    "needsBait": "Precisa de {bait}!",
+    "placeTitle": "Colocar isca",
+    "placeRow": "{item} ({count})",
+    "favourite": "{item} ({count}) ★ {species}",
+    "noBaitHeld": "Você não tem iscas",
+    "noArea": "Nenhum bicho por aqui",
+    "placed": "Afaste-se e espere...",
+    "pickedUp": "Isca recolhida",
+    "scared": "Assustou!",
+    "tooClose": "Chegou perto demais!",
+    "ateAndLeft": "Comeu e foi embora...",
+    "nobodyCame": "Ninguém veio. Isca recolhida",
+    "hold": "Segure E: o marcador anda →",
+    "tensionTitle": "{species}!",
+    "close": "Fechar"
   },
   "items": {
     "bread": "Pão",

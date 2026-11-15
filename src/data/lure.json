@@ -1,0 +1,25 @@
+{
+  "noticeRadius": 90,
+  "specificNoticeBonus": 1.5,
+  "specificZoneBonus": 1.25,
+  "waitMs": 25000,
+  "eatMs": [5000, 7000],
+  "defaultTemper": "curious",
+  "tempers": {
+    "calm": { "lookEveryMs": [3500, 6000], "lookMs": [500, 800], "speed": 12, "fleeDistance": 26 },
+    "curious": { "lookEveryMs": [2200, 3800], "lookMs": [600, 1000], "speed": 20, "fleeDistance": 34 },
+    "shy": { "lookEveryMs": [1400, 2600], "lookMs": [800, 1300], "speed": 16, "fleeDistance": 48 }
+  },
+  "species": {
+    "capybara": "calm", "sloth": "calm", "sheep": "calm", "penguin": "calm", "pelican": "calm",
+    "squirrel": "curious", "monkey": "curious", "dog": "curious", "pug": "curious", "rabbit": "curious", "pigeon": "curious", "chicken": "curious", "bee": "curious",
+    "cat": "shy", "armadillo": "shy", "mole": "shy", "chameleon": "shy", "firefly": "shy", "beaver": "shy"
+  },
+  "tension": {
+    "common":    { "zoneWidth": 0.34, "zoneSpeed": 0.35, "jumpEveryMs": [1400, 2200], "lift": 2.2, "gravity": 1.6, "fill": 0.30, "drain": 0.22, "start": 0.35, "maxMs": 20000, "graceMs": 1500 },
+    "uncommon":  { "zoneWidth": 0.28, "zoneSpeed": 0.45, "jumpEveryMs": [1100, 1900], "lift": 2.2, "gravity": 1.6, "fill": 0.26, "drain": 0.24, "start": 0.35, "maxMs": 20000, "graceMs": 1500 },
+    "rare":      { "zoneWidth": 0.22, "zoneSpeed": 0.55, "jumpEveryMs": [900, 1600], "lift": 2.3, "gravity": 1.7, "fill": 0.22, "drain": 0.26, "start": 0.35, "maxMs": 22000, "graceMs": 1500 },
+    "epic":      { "zoneWidth": 0.18, "zoneSpeed": 0.65, "jumpEveryMs": [800, 1300], "lift": 2.4, "gravity": 1.8, "fill": 0.20, "drain": 0.30, "start": 0.35, "maxMs": 24000, "graceMs": 1500 },
+    "legendary": { "zoneWidth": 0.14, "zoneSpeed": 0.75, "jumpEveryMs": [700, 1100], "lift": 2.5, "gravity": 1.9, "fill": 0.18, "drain": 0.32, "start": 0.35, "maxMs": 26000, "graceMs": 1500 }
+  }
+}

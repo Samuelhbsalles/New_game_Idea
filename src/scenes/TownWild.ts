@@ -10,6 +10,9 @@ const WANDER_SPEED = 22;
 const PAUSE_MS: [number, number] = [1500, 4000];
 /** Fade-in when one appears on the ground. */
 const APPEAR_MS = 500;
+/** A scared critter runs this far (px) over this long (ms) while fading out. */
+const FLEE_PX = 70;
+const FLEE_MS = 700;
 
 /** Where a climber is on its tree: walking to it, going up, hidden in the leaves, coming down. */
 interface Climb {
@@ -32,6 +35,8 @@ export interface Critter {
   facing: Dir;
   /** Set while a climber is using a tree; null on the ground. */
   climb: Climb | null;
+  /** True while bait (TownLure) is in charge of it: it does not wander on its own. */
+  lured?: boolean;
 }
 
 /** Trees critters may climb, and who climbs them. */
@@ -124,6 +129,7 @@ export class TownWild {
       const name = this.artFor(c.species);
       if (!name) continue;
       c.sprite.setDepth(c.sprite.y);
+      if (c.lured) continue;
       if (c.climb && c.climb.phase !== 'toTree') {
         this.updateClimb(c, name, dtMs);
         continue;
@@ -220,6 +226,33 @@ export class TownWild {
       }
     }
     return best;
+  }
+
+  /** Critters on the ground going about their business: the ones bait can attract. */
+  free(): Critter[] {
+    return this.critters.filter((c) => !c.lured && !c.climb);
+  }
+
+  /** Hands a critter back to its own wandering (bait gone, nothing happened). */
+  release(c: Critter): void {
+    c.lured = false;
+    c.path = [];
+    c.waitMs = nextDelay(PAUSE_MS, this.rng);
+    const name = this.artFor(c.species);
+    if (name) showMotion(c.sprite, name, c.facing, false);
+  }
+
+  /** Scared: it dashes away from `from`, fades out and is gone. */
+  flee(c: Critter, from: Pt): void {
+    c.lured = true;
+    this.remove(c);
+    const dx = c.sprite.x - from.x;
+    const dy = c.sprite.y - from.y;
+    const d = Math.hypot(dx, dy) || 1;
+    c.facing = facingFor(dx, dy, c.facing);
+    const name = this.artFor(c.species);
+    if (name) showMotion(c.sprite, name, c.facing, true);
+    this.scene.tweens.add({ targets: c.sprite, x: c.sprite.x + (dx / d) * FLEE_PX, y: c.sprite.y + (dy / d) * FLEE_PX, alpha: 0, duration: FLEE_MS, onComplete: () => c.sprite.destroy() });
   }
 
   /** Takes a critter out of the world (caught or fled). */

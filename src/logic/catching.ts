@@ -145,11 +145,55 @@ function nextCreatureId(game: Game): string {
 }
 
 /**
- * Tries to catch a wild creature of `speciesId`.
+ * Whether a species goes for this bait, and how much it likes it: its own
+ * bait ('specific', unless its rarity can't be lured at all) or the generic
+ * bait when the rarity allows it. Null = it ignores this bait.
+ */
+export function acceptsBait(game: Game, rules: CatchRules, speciesId: string, itemId: string): 'specific' | 'generic' | null {
+  const species = game.config.species.find((s) => s.id === speciesId);
+  if (!species) return null;
+  const rule = rules.rarities[species.rarity];
+  if (itemId === species.baitId && rule.specific > 0) return 'specific';
+  if (itemId === rules.genericBaitId && rule.generic > 0) return 'generic';
+  return null;
+}
+
+/** Bait items the player holds (any species' favourite, or the generic bait), with how many. */
+export function baitsHeld(game: Game, rules: CatchRules): { itemId: string; count: number }[] {
+  const ids = new Set([rules.genericBaitId, ...game.config.species.map((s) => s.baitId)]);
+  return [...ids].map((itemId) => ({ itemId, count: game.state.inventory[itemId] ?? 0 })).filter((b) => b.count > 0);
+}
+
+/** Takes one bait out of the inventory (it goes on the ground). False if none is held. */
+export function takeBait(game: Game, itemId: string): boolean {
+  if ((game.state.inventory[itemId] ?? 0) <= 0) return false;
+  game.state.inventory[itemId] -= 1;
+  return true;
+}
+
+/** Puts an untouched bait back in the inventory (nobody came for it, or the player picked it up). */
+export function returnBait(game: Game, itemId: string): void {
+  game.state.inventory[itemId] = (game.state.inventory[itemId] ?? 0) + 1;
+}
+
+/** A won catch: a full-energy idle creature joins the player, and the album records the species. */
+export function catchCreature(game: Game, speciesId: string): { creature: Creature; firstOfSpecies: boolean } {
+  const species = game.config.species.find((s) => s.id === speciesId);
+  if (!species) throw new Error(`Unknown species "${speciesId}"`);
+  const creature: Creature = { id: nextCreatureId(game), speciesId, energy: species.maxEnergy, energyAt: game.clock.now(), status: 'idle' };
+  game.state.creatures.push(creature);
+  const caught = (game.state.caught ??= []);
+  const firstOfSpecies = !caught.includes(speciesId);
+  if (firstOfSpecies) caught.push(speciesId);
+  return { creature, firstOfSpecies };
+}
+
+/**
+ * Instant catch roll (the original story-006 rule, kept for tests and tools):
  * - No usable bait: nothing changes, reason 'no_bait' with the species' own bait in `needs`.
  * - Otherwise one bait is used (its own bait first, see baitFor), then the
- *   rarity's chance decides: success adds a full-energy idle creature and
- *   records the species in the album; failure is 'escaped'.
+ *   rarity's chance decides: success adds the creature; failure is 'escaped'.
+ * The game itself now catches with bait + the tension minigame (lure.ts, tension.ts).
  * Does not save; the caller saves after a change.
  */
 export function attemptCatch(game: Game, rules: CatchRules, speciesId: string, rng: () => number): CatchResult {
@@ -159,11 +203,7 @@ export function attemptCatch(game: Game, rules: CatchRules, speciesId: string, r
   if (!bait) return { ok: false, reason: 'no_bait', needs: species.baitId };
   game.state.inventory[bait.itemId] -= 1;
   if (rng() >= bait.chance) return { ok: false, reason: 'escaped', baitUsed: bait.itemId };
-  const creature: Creature = { id: nextCreatureId(game), speciesId, energy: species.maxEnergy, energyAt: game.clock.now(), status: 'idle' };
-  game.state.creatures.push(creature);
-  const caught = (game.state.caught ??= []);
-  const firstOfSpecies = !caught.includes(speciesId);
-  if (firstOfSpecies) caught.push(speciesId);
+  const { creature, firstOfSpecies } = catchCreature(game, speciesId);
   return { ok: true, creature, firstOfSpecies, baitUsed: bait.itemId };
 }
 
