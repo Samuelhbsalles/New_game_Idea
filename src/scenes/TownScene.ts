@@ -10,6 +10,8 @@ import ferryJson from '../data/ferry.json';
 import { buyTicket, inBooth, parseFerry, type FerryRules } from '../logic/ferry';
 import { parseWaterRules } from '../logic/water';
 import { WaterFx } from './waterFx';
+import wildJson from '../data/wild.json';
+import { parseWildRules } from '../logic/climb';
 import type { Game } from '../logic/game';
 import { parseMap, type TownMap } from '../logic/map';
 import { followTarget } from '../logic/petBrain';
@@ -43,6 +45,8 @@ const CURRENT_WEATHER = 'clear';
 const SPARKLE_EVERY_MS = 180;
 /** Depth of flat props (piers): above water (-1900) and its effects (-1890..-1800), below standing things. */
 const FLAT_DEPTH = -1700;
+/** Opacity of prop ground shadows (ink colour). */
+const SHADOW_ALPHA = 0.35;
 /** How often (ms) a chimney puffs. */
 const SMOKE_EVERY_MS = 650;
 /** Nav grid cell (px) for NPC paths, and how far paths keep from walls. */
@@ -151,6 +155,8 @@ export class TownScene extends Phaser.Scene {
     // Buildings and props stand on their foot line and depth-sort by it.
     for (const b of this.town.buildings) this.add.image(b.x, b.y, b.sprite).setOrigin(0.5, 1).setDepth(b.y);
     for (const p of this.town.props) {
+      // A soft shadow on the ground, so raised pieces (a cottage on stilts) sit on it instead of floating.
+      if (p.shadow) this.add.ellipse(p.x, p.y + p.shadow.dy, p.shadow.w, p.shadow.h, Phaser.Display.Color.HexStringToColor(ui.ink).color, SHADOW_ALPHA).setDepth(FLAT_DEPTH + 1);
       if (p.anim) {
         const key = `${p.anim.key}_loop`;
         if (!this.anims.exists(key)) {
@@ -330,7 +336,19 @@ export class TownScene extends Phaser.Scene {
       const withArt = eligibleSpecies(all, areaId, ctx).filter((s) => art[s.id]);
       return pickSpawn(this.rules, withArt, Math.random)?.id ?? null;
     };
-    this.wild = new TownWild(this, Object.values(this.rules.areas), pick, (species) => art[species]?.name ?? null, nav, Math.random, (species) => (spritesJson as Record<string, { scale?: number }>)[species]?.scale ?? 1);
+    // Squirrels and other climbers use the big trees (wild.json).
+    const wildRules = parseWildRules(wildJson);
+    const trees = this.town.props.filter((p) => wildRules.treeSprites.includes(p.sprite)).map((p) => ({ x: p.x, y: p.y }));
+    this.wild = new TownWild(
+      this,
+      Object.values(this.rules.areas),
+      pick,
+      (species) => art[species]?.name ?? null,
+      nav,
+      Math.random,
+      (species) => (spritesJson as Record<string, { scale?: number }>)[species]?.scale ?? 1,
+      { rules: wildRules, trees },
+    );
 
     for (const c of this.town.smoke) {
       this.time.addEvent({ delay: SMOKE_EVERY_MS, loop: true, callback: () => this.puff(c.x, c.y) });

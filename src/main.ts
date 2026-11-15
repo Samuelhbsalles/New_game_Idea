@@ -9,6 +9,7 @@ import { installServices } from './scenes/services';
 import { TitleScene } from './scenes/TitleScene';
 import { InteriorScene } from './scenes/InteriorScene';
 import { installCrispText } from './scenes/ui/crispText';
+import { installTouchControls, wantsTouchControls } from './scenes/ui/touchControls';
 import { TownScene } from './scenes/TownScene';
 
 const WIDTH = 480;
@@ -44,6 +45,9 @@ const game = new Phaser.Game({
   scene: [BootScene, TitleScene, CreatorScene, HomeScene, TownScene, InteriorScene, MapScene, OptionsScene, CreditsScene],
 });
 installServices(game);
+// Phones and tablets: an on-screen stick and buttons that press the same keys.
+// Shown at once on touch devices; on any device they appear on the first touch.
+installTouchControls(wantsTouchControls());
 window.addEventListener('resize', () => game.scale.setZoom(pixelPerfectZoom()));
 
 // Dev-only handle for inspecting the running game from the browser console.

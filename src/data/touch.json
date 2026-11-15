@@ -1,0 +1,7 @@
+{
+  "margin": 24,
+  "stickRadius": 62,
+  "knobRadius": 26,
+  "deadZone": 0.25,
+  "buttonSize": 64
+}

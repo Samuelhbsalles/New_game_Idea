@@ -92,6 +92,14 @@ describe('town', () => {
     expect(() => parseTown(r)).toThrow(/props\[2\]/);
   });
 
+  it('a prop can cast a ground shadow; a shadow without a size is refused', () => {
+    const r = raw();
+    (r.props as unknown[]).push({ sprite: 'hut', x: 50, y: 60, solid: null, shadow: { w: 40, h: 10, dy: -2 } });
+    expect(parseTown(r).props[1].shadow).toEqual({ w: 40, h: 10, dy: -2 });
+    (r.props as { shadow?: unknown }[])[1].shadow = { dy: 0 };
+    expect(() => parseTown(r)).toThrow(/props\[1\]\.shadow/);
+  });
+
   it('finds a door only inside the strip under it', () => {
     const town = parseTown(raw());
     const d = doorBox(town.buildings[0]);

@@ -2,7 +2,8 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
     <title>Little Willowbrook</title>
     <style>
       @font-face {
@@ -15,7 +16,7 @@
         src: url('/assets/fonts/PixelOperator-Bold.ttf') format('truetype');
         font-weight: 700;
       }
-      html, body { margin: 0; height: 100%; background: #3b2a3f; } /* = ui.json ink, so the page and the game read as one frame */
+      html, body { margin: 0; height: 100%; background: #3b2a3f; overflow: hidden; touch-action: none; overscroll-behavior: none; -webkit-user-select: none; user-select: none; } /* = ui.json ink, so the page and the game read as one frame */
       #game { display: flex; align-items: center; justify-content: center; height: 100%; }
       #game canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
     </style>

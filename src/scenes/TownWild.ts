@@ -1,14 +1,25 @@
 import Phaser from 'phaser';
 import { nextDelay } from '../logic/ambient';
 import type { AreaRule } from '../logic/catching';
+import { climbAlpha, climbStep, nearestTree, trunkFront, type ClimberRules, type WildRules } from '../logic/climb';
 import { findPath, type NavGrid, type Pt } from '../logic/npcMind';
 import { facingFor, showMotion, type Dir } from './sprites';
 
 /** Wander speed (px/s) and pauses between little trips (ms). */
 const WANDER_SPEED = 22;
 const PAUSE_MS: [number, number] = [1500, 4000];
-/** Fade-in when one appears. */
+/** Fade-in when one appears on the ground. */
 const APPEAR_MS = 500;
+
+/** Where a climber is on its tree: walking to it, going up, hidden in the leaves, coming down. */
+interface Climb {
+  tree: Pt;
+  base: Pt;
+  /** Height above the base (px). */
+  up: number;
+  phase: 'toTree' | 'up' | 'hidden' | 'down';
+  hideLeft: number;
+}
 
 /** A wild creature roaming its spawn area until caught. */
 export interface Critter {
@@ -19,13 +30,24 @@ export interface Critter {
   path: Pt[];
   waitMs: number;
   facing: Dir;
+  /** Set while a climber is using a tree; null on the ground. */
+  climb: Climb | null;
+}
+
+/** Trees critters may climb, and who climbs them. */
+export interface Climbing {
+  rules: WildRules;
+  /** Foot points of climbable trees. */
+  trees: Pt[];
 }
 
 /**
  * Wild creatures in the town's neighbourhoods (catching.json areas with a
  * town rectangle): each area keeps up to `max` out, adding one every
  * `everyMs`; who appears is up to `pick` (rarity, time of day, weather, and
- * only species with art). They wander inside their area.
+ * only species with art). They wander inside their area. Climbers (squirrels)
+ * come down a nearby tree when they appear, and now and then run up one to
+ * hide in the leaves for a while (wild.json).
  */
 export class TownWild {
   readonly critters: Critter[] = [];
@@ -42,6 +64,7 @@ export class TownWild {
     private readonly rng: () => number,
     /** Display scale per species (small animals read smaller than people). */
     private readonly scaleFor: (species: string) => number = () => 1,
+    private readonly climbing: Climbing | null = null,
   ) {
     for (const a of areas) {
       if (!a.inTown || a.max <= 0) continue;
@@ -56,6 +79,10 @@ export class TownWild {
     }
   }
 
+  private climberRules(species: string): ClimberRules | null {
+    return this.climbing?.rules.climbers[species] ?? null;
+  }
+
   private spawn(area: Critter['area']): void {
     const species = this.pick(area.id);
     const name = species ? this.artFor(species) : null;
@@ -63,8 +90,18 @@ export class TownWild {
     const p = this.randomIn(area);
     if (!p) return;
     const sprite = this.scene.add.sprite(p.x, p.y, `${name}_idle_down`).setOrigin(0.5, 0.9).setScale(this.scaleFor(species)).setAlpha(0);
+    const critter: Critter = { species, sprite, area, path: [], waitMs: nextDelay(PAUSE_MS, this.rng), facing: 'down', climb: null };
+    this.critters.push(critter);
+    // A climber near a tree arrives by coming down it; everyone else fades in where they stand.
+    const rules = this.climberRules(species);
+    const tree = rules && this.climbing ? nearestTree(p, this.climbing.trees, rules.treeRange) : null;
+    if (rules && tree) {
+      const base = trunkFront(tree, rules);
+      critter.climb = { tree, base, up: rules.height, phase: 'down', hideLeft: 0 };
+      sprite.setPosition(base.x, base.y - rules.height);
+      return;
+    }
     this.scene.tweens.add({ targets: sprite, alpha: 1, duration: APPEAR_MS });
-    this.critters.push({ species, sprite, area, path: [], waitMs: nextDelay(PAUSE_MS, this.rng), facing: 'down' });
   }
 
   /** A random free spot in the area (never inside a tree trunk, bench or building), or null. */
@@ -81,20 +118,24 @@ export class TownWild {
     return null;
   }
 
-  /** Per frame: pause, then hop over to a new spot in the area. */
+  /** Per frame: pause, then hop over to a new spot in the area (or climb a tree). */
   update(dtMs: number): void {
     for (const c of this.critters) {
       const name = this.artFor(c.species);
       if (!name) continue;
       c.sprite.setDepth(c.sprite.y);
+      if (c.climb && c.climb.phase !== 'toTree') {
+        this.updateClimb(c, name, dtMs);
+        continue;
+      }
       const wp = c.path[0];
       if (!wp) {
-        c.waitMs -= dtMs;
-        if (c.waitMs <= 0) {
-          const goal = this.randomIn(c.area);
-          c.path = goal ? findPath(this.nav, c.sprite, goal) : [];
-          c.waitMs = nextDelay(PAUSE_MS, this.rng);
+        if (c.climb?.phase === 'toTree') {
+          c.climb.phase = 'up';
+          continue;
         }
+        c.waitMs -= dtMs;
+        if (c.waitMs <= 0) this.planTrip(c);
         continue;
       }
       const dx = wp.x - c.sprite.x;
@@ -113,11 +154,65 @@ export class TownWild {
     }
   }
 
-  /** The closest critter within `range` of a point, or null. */
+  /** Next little trip: usually a spot in the area; for a climber, sometimes the nearest tree. */
+  private planTrip(c: Critter): void {
+    c.waitMs = nextDelay(PAUSE_MS, this.rng);
+    const rules = this.climberRules(c.species);
+    const tree = rules && this.climbing ? nearestTree(c.sprite, this.climbing.trees, rules.treeRange) : null;
+    if (rules && tree && this.rng() < rules.chance) {
+      const base = trunkFront(tree, rules);
+      const path = findPath(this.nav, c.sprite, base);
+      if (path.length > 0 || Math.hypot(base.x - c.sprite.x, base.y - c.sprite.y) < 2) {
+        c.path = path;
+        c.climb = { tree, base, up: 0, phase: 'toTree', hideLeft: 0 };
+        return;
+      }
+    }
+    const goal = this.randomIn(c.area);
+    c.path = goal ? findPath(this.nav, c.sprite, goal) : [];
+  }
+
+  /** Going up the trunk, waiting in the leaves, or coming back down. */
+  private updateClimb(c: Critter, name: string, dtMs: number): void {
+    const climb = c.climb!;
+    const rules = this.climberRules(c.species);
+    if (!rules) {
+      c.climb = null;
+      return;
+    }
+    // In front of its own tree's trunk (trees sort by their foot line).
+    c.sprite.setDepth(climb.tree.y + 1);
+    if (climb.phase === 'hidden') {
+      climb.hideLeft -= dtMs;
+      if (climb.hideLeft <= 0) climb.phase = 'down';
+      return;
+    }
+    const dir = climb.phase === 'up' ? 1 : -1;
+    const r = climbStep(climb.up, dir, rules, dtMs);
+    climb.up = r.up;
+    c.sprite.setPosition(climb.base.x, climb.base.y - climb.up).setAlpha(climbAlpha(climb.up, rules));
+    const anim = `${name}_climb_up`;
+    if (this.scene.anims.exists(anim)) c.sprite.anims.play(anim, true);
+    if (!r.done) return;
+    if (dir === 1) {
+      climb.phase = 'hidden';
+      climb.hideLeft = nextDelay(rules.hideMs, this.rng);
+      return;
+    }
+    // Back on the ground: wander again, facing away from the trunk.
+    c.climb = null;
+    c.facing = 'down';
+    c.sprite.setAlpha(1);
+    showMotion(c.sprite, name, c.facing, false);
+    c.waitMs = nextDelay(PAUSE_MS, this.rng);
+  }
+
+  /** The closest critter on the ground within `range` of a point, or null (up a tree = out of reach). */
   nearest(p: { x: number; y: number }, range: number): Critter | null {
     let best: Critter | null = null;
     let bestD = range;
     for (const c of this.critters) {
+      if (c.climb && c.climb.phase !== 'toTree') continue;
       const d = Math.hypot(c.sprite.x - p.x, c.sprite.y - p.y);
       if (d <= bestD) {
         best = c;

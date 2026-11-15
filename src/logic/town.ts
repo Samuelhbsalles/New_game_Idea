@@ -68,6 +68,8 @@ export interface Prop {
   flat?: boolean;
   /** Floats: bobs up and down this many px (boats). */
   bob?: number;
+  /** A soft ground shadow under it (w x h ellipse centred dy px below the foot line), so it sits on the ground. */
+  shadow?: { w: number; h: number; dy: number };
 }
 
 /** A townsperson with a home, favourite places and a temper (see npcMind.ts). */
@@ -257,6 +259,10 @@ export function parseTown(raw: unknown): TownDef {
       prop.flat = po.flat as boolean;
     }
     if (po.bob !== undefined) prop.bob = num(po, 'bob', p, 0);
+    if (po.shadow !== undefined) {
+      const so = obj(po.shadow, `${p}.shadow`);
+      prop.shadow = { w: num(so, 'w', `${p}.shadow`, 1), h: num(so, 'h', `${p}.shadow`, 1), dy: typeof so.dy === 'number' ? so.dy : 0 };
+    }
     inside(prop.x, prop.y, p);
     return prop;
   });

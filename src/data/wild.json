@@ -1,0 +1,6 @@
+{
+  "treeSprites": ["town_tree_oak", "town_tree_maple"],
+  "climbers": {
+    "squirrel": { "height": 46, "speed": 18, "chance": 0.35, "hideMs": [6000, 14000], "treeRange": 160, "frontDy": 4 }
+  }
+}
