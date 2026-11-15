@@ -245,7 +245,16 @@
     "sold": "+{coins} moedas",
     "back": "Voltar",
     "close": "Fechar",
-    "help": "↑↓ escolher · E comprar/vender · Esc voltar"
+    "help": "↑↓ escolher · E comprar/vender · Esc voltar",
+    "furniture": "Comprar móveis",
+    "furnitureTitle": "Móveis",
+    "furnitureRow": "{item} · {price} moedas",
+    "furnitureBought": "{item} guardado! Coloque em casa (I)",
+    "furnitureHint": "Para colocar: no apartamento, modo decorar, tecla I",
+    "coins": "Você tem {coins} moedas",
+    "more": "Mais móveis →",
+    "prev": "← Anteriores",
+    "page": "Página {page} de {pages}"
   },
   "login": {
     "title": "Qual é o seu nome?",
@@ -304,6 +313,22 @@
     "sofa": "Sofá",
     "table": "Mesa",
     "rug": "Tapete",
-    "cottage_rug": "Tapete da casa"
+    "cottage_rug": "Tapete da casa",
+    "floor_lamp": "Luminária de chão",
+    "table_lamp": "Abajur",
+    "wood_chair": "Cadeira de madeira",
+    "coffee_table": "Mesinha de centro",
+    "dresser": "Cômoda",
+    "wardrobe": "Guarda-roupa",
+    "fireplace": "Lareira",
+    "grandfather_clock": "Relógio de pêndulo",
+    "flower_vase": "Vaso de flores",
+    "tall_fern": "Samambaia",
+    "cat_tree": "Arranhador",
+    "pet_house": "Casinha de pet",
+    "round_rug": "Tapete redondo",
+    "chest": "Baú",
+    "desk": "Escrivaninha",
+    "sofa3": "Sofá de 3 lugares"
   }
 }

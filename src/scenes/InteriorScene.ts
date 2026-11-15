@@ -1,12 +1,14 @@
 import Phaser from 'phaser';
 import homeJson from '../data/home.json';
+import furnitureJson from '../data/furniture.json';
 import interiorsJson from '../data/interiors.json';
 import spritesJson from '../data/sprites.json';
 import ui from '../data/ui.json';
 import type { Game } from '../logic/game';
 import { formatCountdown, parseInteriors, stationNear, workPoint, WORK_REACH, type InteriorDef, type Station } from '../logic/interior';
 import { followTarget } from '../logic/petBrain';
-import { exitAt, wallRects } from '../logic/room';
+import { buyFurniture, shopFurniture } from '../logic/furnitureShop';
+import { exitAt, parseCatalog, wallRects, type FurnitureItem } from '../logic/room';
 import { shiftOutput } from '../logic/work';
 import { AVATAR_ART, buildAvatar, savedAppearance } from './avatar';
 import { SESSION_KEY, type WorldSession } from '../net/world';
@@ -22,6 +24,9 @@ import { MenuPanel, textStyle, type MenuItem } from './ui/MenuPanel';
 import { addClock } from './clockHud';
 
 /** Every sprite set, plus the player's avatar (built at runtime, not loaded from files). */
+/** Furniture pieces per page at the counter, so the panel fits the 270px-tall screen. */
+const FURNITURE_PAGE = 5;
+
 const art: Record<string, CharacterArt> = { ...(spritesJson as Record<string, CharacterArt>), [AVATAR_ART.name]: AVATAR_ART };
 
 /** Scene opened by each exit's `to`. */
@@ -248,6 +253,7 @@ export class InteriorScene extends Phaser.Scene {
     const anchor = { kind: 'center' as const };
     const items: MenuItem[] = [
       ...counter.shelves.map((s) => ({ label: () => this.t(`market.shelf.${s.id}`), onSelect: () => this.openShelf(s.items) })),
+      { label: () => this.t('market.furniture'), onSelect: () => this.openFurniture() },
       { label: () => this.t('market.sell'), onSelect: () => this.openSell() },
       { label: () => this.t('market.close'), onSelect: () => this.closePanel() },
     ];
@@ -277,6 +283,32 @@ export class InteriorScene extends Phaser.Scene {
     ];
     this.panel?.destroy();
     this.panel = new MenuPanel(this, { title: this.t('market.title'), items, help: this.t('market.help'), anchor: { kind: 'center' } });
+  }
+
+  /** The furniture catalog (shop pieces carry "shop": true). */
+  private readonly catalog: FurnitureItem[] = parseCatalog(furnitureJson);
+
+  /** Furniture counter, a few pieces per page (the panel must fit the screen): each E buys one, which goes to the apartment storage. */
+  private openFurniture(page = 0): void {
+    const all = shopFurniture(this.catalog);
+    const pages = Math.max(1, Math.ceil(all.length / FURNITURE_PAGE));
+    const p = Math.min(Math.max(0, page), pages - 1);
+    const items: MenuItem[] = all.slice(p * FURNITURE_PAGE, (p + 1) * FURNITURE_PAGE).map((f) => ({
+      label: () => this.t('market.furnitureRow', { item: this.t(`furniture.${f.id}`), price: f.price }),
+      onSelect: () => {
+        const r = buyFurniture(this.world.state, this.catalog, homeJson.placements, f.id);
+        if (!r.ok) return this.toastTop(this.t('market.noCoins'));
+        this.world.save();
+        this.events.emit('stock-changed');
+        this.toastTop(this.t('market.furnitureBought', { item: this.t(`furniture.${f.id}`) }));
+      },
+    }));
+    if (p < pages - 1) items.push({ label: () => this.t('market.more'), onSelect: () => this.openFurniture(p + 1) });
+    if (p > 0) items.push({ label: () => this.t('market.prev'), onSelect: () => this.openFurniture(p - 1) });
+    items.push({ label: () => this.t('market.back'), onSelect: () => this.openCounter() });
+    const lines = [this.t('market.page', { page: p + 1, pages })];
+    this.panel?.destroy();
+    this.panel = new MenuPanel(this, { title: this.t('market.furnitureTitle'), lines, items, help: this.t('market.help'), anchor: { kind: 'center' } });
   }
 
   /** Sell one at a time, or everything sellable at once. */
@@ -548,6 +580,16 @@ export class InteriorScene extends Phaser.Scene {
   private closePanel(): void {
     this.panel?.destroy();
     this.panel = null;
+  }
+
+  /** A message at the top centre of the view, above any open panel (menus cover the counter). */
+  private toastTop(msg: string): void {
+    const v = this.cameras.main.worldView;
+    const txt = this.add
+      .text(Math.round(v.centerX), Math.round(v.y + 14), msg, { ...textStyle(), backgroundColor: ui.panel, padding: { x: 3, y: 1 } })
+      .setOrigin(0.5, 0)
+      .setDepth(61_000);
+    this.tweens.add({ targets: txt, alpha: 0, delay: 1600, duration: 700, onComplete: () => txt.destroy() });
   }
 
   private floatText(msg: string, x: number, y: number): void {

@@ -27,6 +27,8 @@ export interface FurnitureItem {
   flat?: boolean;
   /** Its own shadow picture, drawn at the piece's centre + (dx, dy) (top-left), so it moves with it. */
   shadow?: { sprite: string; dx: number; dy: number };
+  /** Sold at the market's furniture counter. */
+  shop?: boolean;
 }
 
 /** A furniture item placed in a room; x/y are the sprite centre in pixels. */
@@ -149,6 +151,10 @@ export function parseCatalog(raw: unknown): FurnitureItem[] {
     if (o.flat !== undefined) {
       if (typeof o.flat !== 'boolean') fail(`${p}.flat`, 'expected boolean');
       item.flat = o.flat;
+    }
+    if (o.shop !== undefined) {
+      if (typeof o.shop !== 'boolean') fail(`${p}.shop`, 'expected boolean');
+      item.shop = o.shop;
     }
     if (o.shadow !== undefined) {
       const sh = obj(o.shadow, `${p}.shadow`);

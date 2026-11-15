@@ -245,7 +245,16 @@
     "sold": "+{coins} coins",
     "back": "Back",
     "close": "Close",
-    "help": "↑↓ choose · E buy/sell · Esc back"
+    "help": "↑↓ choose · E buy/sell · Esc back",
+    "furniture": "Buy furniture",
+    "furnitureTitle": "Furniture",
+    "furnitureRow": "{item} · {price} coins",
+    "furnitureBought": "{item} stored! Place it at home (I)",
+    "furnitureHint": "To place it: in your apartment, decorate mode, key I",
+    "coins": "You have {coins} coins",
+    "more": "More furniture →",
+    "prev": "← Previous",
+    "page": "Page {page} of {pages}"
   },
   "login": {
     "title": "What's your name?",
@@ -304,6 +313,22 @@
     "sofa": "Sofa",
     "table": "Table",
     "rug": "Rug",
-    "cottage_rug": "Cottage rug"
+    "cottage_rug": "Cottage rug",
+    "floor_lamp": "Floor lamp",
+    "table_lamp": "Table lamp",
+    "wood_chair": "Wooden chair",
+    "coffee_table": "Coffee table",
+    "dresser": "Dresser",
+    "wardrobe": "Wardrobe",
+    "fireplace": "Fireplace",
+    "grandfather_clock": "Grandfather clock",
+    "flower_vase": "Flower vase",
+    "tall_fern": "Tall fern",
+    "cat_tree": "Cat tree",
+    "pet_house": "Pet house",
+    "round_rug": "Round rug",
+    "chest": "Chest",
+    "desk": "Desk",
+    "sofa3": "3-seat sofa"
   }
 }

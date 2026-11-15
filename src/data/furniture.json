@@ -8,5 +8,21 @@
   {"id": "sofa", "sprite": "home_sofa", "w": 64, "h": 40, "solid": true, "price": 150, "use": {"kind": "lounge", "dx": 0, "dy": -6, "approachDy": 30}},
   {"id": "table", "sprite": "home_table", "w": 48, "h": 48, "solid": true, "price": 60},
   {"id": "rug", "sprite": "home_rug", "w": 64, "h": 48, "solid": false, "price": 40, "flat": true},
-  {"id": "cottage_rug", "sprite": "home_cottage_rug", "w": 74, "h": 67, "solid": false, "flat": true, "price": 45}
+  {"id": "cottage_rug", "sprite": "home_cottage_rug", "w": 74, "h": 67, "solid": false, "flat": true, "price": 45},
+  {"id": "floor_lamp", "sprite": "home_floor_lamp", "w": 20, "h": 60, "solid": true, "price": 40, "shop": true},
+  {"id": "table_lamp", "sprite": "home_table_lamp", "w": 21, "h": 36, "solid": true, "price": 25, "shop": true},
+  {"id": "wood_chair", "sprite": "home_wood_chair", "w": 24, "h": 43, "solid": true, "price": 35, "shop": true},
+  {"id": "coffee_table", "sprite": "home_coffee_table", "w": 50, "h": 30, "solid": true, "price": 50, "shop": true},
+  {"id": "dresser", "sprite": "home_dresser", "w": 44, "h": 60, "solid": true, "price": 80, "shop": true},
+  {"id": "wardrobe", "sprite": "home_wardrobe", "w": 52, "h": 88, "solid": true, "price": 140, "shop": true},
+  {"id": "fireplace", "sprite": "home_fireplace", "w": 56, "h": 61, "solid": true, "price": 250, "shop": true},
+  {"id": "grandfather_clock", "sprite": "home_grandfather_clock", "w": 32, "h": 92, "solid": true, "price": 120, "shop": true},
+  {"id": "flower_vase", "sprite": "home_flower_vase", "w": 29, "h": 35, "solid": true, "price": 25, "shop": true},
+  {"id": "tall_fern", "sprite": "home_tall_fern", "w": 31, "h": 61, "solid": true, "price": 35, "shop": true},
+  {"id": "cat_tree", "sprite": "home_cat_tree", "w": 37, "h": 85, "solid": true, "price": 90, "shop": true, "use": {"kind": "sleep", "dx": 0, "dy": -34}},
+  {"id": "pet_house", "sprite": "home_pet_house", "w": 54, "h": 47, "solid": true, "price": 110, "shop": true, "use": {"kind": "sleep", "dx": 0, "dy": 8}},
+  {"id": "round_rug", "sprite": "home_round_rug", "w": 59, "h": 58, "solid": false, "price": 40, "shop": true, "flat": true},
+  {"id": "chest", "sprite": "home_chest", "w": 49, "h": 34, "solid": true, "price": 70, "shop": true},
+  {"id": "desk", "sprite": "home_desk", "w": 52, "h": 46, "solid": true, "price": 100, "shop": true},
+  {"id": "sofa3", "sprite": "home_sofa3", "w": 78, "h": 34, "solid": true, "price": 200, "shop": true, "use": {"kind": "lounge", "dx": 0, "dy": -6, "approachDy": 30}}
 ]
