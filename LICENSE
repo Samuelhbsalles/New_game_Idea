@@ -1,0 +1,13 @@
+Copyright (c) 2026 Samuel Salles. All rights reserved.
+
+Little Willowbrook, including its source code, art, music, text and design,
+is proprietary. No part of it may be copied, modified, distributed or used
+in other projects without the prior written permission of the copyright
+holder.
+
+Third-party components keep their own licenses:
+- Pixel Operator font by Jayvee Enaguas, CC0 1.0
+  (public/assets/fonts/PixelOperator-LICENSE.txt)
+- Claude Code Game Studios development framework in .claude/, MIT
+  (.claude/LICENSE-claude-code-game-studios)
+- npm dependencies, under the licenses listed in their packages
