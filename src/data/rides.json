@@ -9,9 +9,8 @@
       "look": {
         "over": false,
         "dy": 6,
-        "style": "push",
-        "pushMs": 420,
-        "glideMs": 900
+        "bobPx": 1,
+        "bobMs": 700
       }
     },
     {
@@ -23,7 +22,8 @@
       "look": {
         "over": true,
         "dy": 1,
-        "style": "stride"
+        "bobPx": 1,
+        "bobMs": 520
       }
     },
     {

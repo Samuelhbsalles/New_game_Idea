@@ -38,7 +38,7 @@ import { TownNpc } from './TownNpc';
 import { TownStrollers } from './TownStrollers';
 import { FerryClerk } from './FerryClerk';
 import ridesJson from '../data/rides.json';
-import { buyRide, currentRide, parseRides, pushPhase, speedFactor, toggleRide, type RideRules } from '../logic/rides';
+import { buyRide, currentRide, parseRides, rideLift, speedFactor, toggleRide, type RideRules } from '../logic/rides';
 import { RideSprite } from './rideArt';
 import { TownWild, type Critter } from './TownWild';
 import type { Bird } from './TownBirds';
@@ -64,6 +64,8 @@ const FLAT_DEPTH = -1700;
 const BOOTH_SPRITE = 'town_ticket_booth';
 /** The building whose door opens the sports shop (rides) instead of an interior. */
 const SPORTS_SHOP = 'sports';
+/** The player's feet body offset inside the 48px frame. */
+const PLAYER_BODY = { x: 16, y: 34 };
 /** Opacity of prop ground shadows (ink colour). */
 const SHADOW_ALPHA = 0.35;
 /** How often (ms) a chimney puffs. */
@@ -239,7 +241,7 @@ export class TownScene extends Phaser.Scene {
     createCharacterAnims(this, pArt, pDef.walkFps);
     const start = (this.data_.place && arrivalPoint(this.town, this.data_.place)) || arrivalPoint(this.town, 'home') || this.town.spawn;
     this.player = this.physics.add.sprite(start.x, start.y, `${pArt.name}_idle_down`);
-    this.player.body.setSize(16, 10).setOffset(16, 34);
+    this.player.body.setSize(16, 10).setOffset(PLAYER_BODY.x, PLAYER_BODY.y);
     this.player.setCollideWorldBounds(true);
     this.rideSprite = new RideSprite(this);
     this.physics.add.collider(this.player, solids);
@@ -355,13 +357,17 @@ export class TownScene extends Phaser.Scene {
     }
     this.player.setVelocity(vx * speed, vy * speed);
     this.facing = facingFor(vx, vy, this.facing);
-    // Legs: walking on foot; on roller skates, skating strides; on a skateboard, a kick then a glide standing still.
+    // On foot the legs walk; on a ride the player stands still and glides, bobbing gently with it
+    // (walking legs would step off the board or out of the skates).
     const moving = vx !== 0 || vy !== 0;
     this.rollingMs = moving ? this.rollingMs + this.game.loop.delta : 0;
-    const legs = moving && (!riding?.look || pushPhase(riding.look, this.rollingMs) === 'kick');
-    showMotion(this.player, art[character].name, this.facing, legs);
+    showMotion(this.player, art[character].name, this.facing, moving && !riding);
     this.player.setDepth(this.player.body.bottom);
-    this.rideSprite.update(riding, { x: this.player.x, y: this.player.body.bottom }, this.facing, this.player.depth);
+    const lift = riding?.look ? rideLift(riding.look, moving, this.rollingMs) : 0;
+    // Lift the drawing only: moving the display origin also moves the physics body, so the body offset compensates.
+    this.player.setDisplayOrigin(this.player.width / 2, this.player.height / 2 + lift);
+    this.player.body.setOffset(PLAYER_BODY.x, PLAYER_BODY.y + lift);
+    this.rideSprite.update(riding, { x: this.player.x, y: this.player.body.bottom - lift }, this.facing, this.player.depth);
   }
 
   // ---- rides & sports shop ----------------------------------------------------------

@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import ridesJson from '../../../src/data/rides.json';
 import { deserialize, SAVE_VERSION } from '../../../src/logic/state';
-import { buyRide, currentRide, parseRides, pushPhase, speedFactor, toggleRide, type RideWallet } from '../../../src/logic/rides';
+import { buyRide, currentRide, parseRides, rideLift, speedFactor, toggleRide, type RideWallet } from '../../../src/logic/rides';
 
 /** A shop with one ride for sale and one coming soon. */
 function rules() {
   return parseRides({
     rides: [
-      { id: 'skate', price: 120, speedBonus: 0.3, status: 'open', roughFactor: 0.8, look: { over: false, dy: 6, style: 'push', pushMs: 400, glideMs: 800 } },
+      { id: 'skate', price: 120, speedBonus: 0.3, status: 'open', roughFactor: 0.8, look: { over: false, dy: 6, bobPx: 1, bobMs: 800 } },
       { id: 'bike', price: 450, speedBonus: 0.8, status: 'soon', roughFactor: 0.9 },
     ],
   });
@@ -25,9 +25,9 @@ describe('rides config', () => {
     expect(() => parseRides({ rides: [{ id: 'x', price: 1, speedBonus: 0.2, status: 'soon', roughFactor: 1.5 }] })).toThrow(/roughFactor/);
   });
 
-  it('needs a look for a ride on sale, and kick/glide times for a "push" ride', () => {
+  it('needs a look with a bob for a ride on sale', () => {
     expect(() => parseRides({ rides: [{ id: 'x', price: 1, speedBonus: 0.2, status: 'open', roughFactor: 0.8 }] })).toThrow(/look/);
-    expect(() => parseRides({ rides: [{ id: 'x', price: 1, speedBonus: 0.2, status: 'open', roughFactor: 0.8, look: { over: false, dy: 0, style: 'push' } }] })).toThrow(/pushMs/);
+    expect(() => parseRides({ rides: [{ id: 'x', price: 1, speedBonus: 0.2, status: 'open', roughFactor: 0.8, look: { over: false, dy: 0 } }] })).toThrow(/bobPx/);
   });
 });
 
@@ -101,18 +101,16 @@ describe('rides in the save', () => {
   });
 });
 
-describe('skateboard kick and glide', () => {
-  const look = { over: false, dy: 6, style: 'push' as const, pushMs: 400, glideMs: 800 };
+describe('gliding on a ride', () => {
+  const look = { over: false, dy: 6, bobPx: 1, bobMs: 800 };
 
-  it('kicks first, then glides, then kicks again', () => {
-    expect(pushPhase(look, 0)).toBe('kick');
-    expect(pushPhase(look, 399)).toBe('kick');
-    expect(pushPhase(look, 400)).toBe('glide');
-    expect(pushPhase(look, 1199)).toBe('glide');
-    expect(pushPhase(look, 1200)).toBe('kick');
+  it('bobs smoothly up and back down while moving', () => {
+    expect(rideLift(look, true, 0)).toBe(0);
+    expect(rideLift(look, true, 400)).toBe(1);
+    expect(rideLift(look, true, 800)).toBe(0);
   });
 
-  it('a "stride" ride always moves its legs', () => {
-    expect(pushPhase({ over: true, dy: 1, style: 'stride' }, 900)).toBe('kick');
+  it('stays level when stopped', () => {
+    expect(rideLift(look, false, 400)).toBe(0);
   });
 });

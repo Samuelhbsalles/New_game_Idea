@@ -23,19 +23,18 @@ export interface Ride {
 }
 
 /**
- * How a ride is drawn and how the player moves on it.
- * - "push": a skateboard — a kick with one foot (the walk cycle), then a glide standing still.
- * - "stride": roller skates — the walk cycle the whole time (skating strides).
+ * How a ride is drawn under the player. On every ride the player stands
+ * still (no steps: walking legs would leave the board or skates behind) and
+ * bobs gently with it while moving.
  */
 export interface RideLook {
   /** Drawn over the shoes (roller skates) instead of under the feet (a board). */
   over: boolean;
   /** Px below the player's feet line where the ride's bottom sits. */
   dy: number;
-  style: 'push' | 'stride';
-  /** "push" only: how long each kick and each glide lasts (ms). */
-  pushMs?: number;
-  glideMs?: number;
+  /** The gentle up-down bob while moving: how high (px) and one full cycle (ms). */
+  bobPx: number;
+  bobMs: number;
 }
 
 /** The sports shop. */
@@ -85,23 +84,18 @@ function parseLook(v: unknown, p: string): RideLook {
   const o = v && typeof v === 'object' ? (v as Record<string, unknown>) : fail(p, 'expected an object');
   if (typeof o.over !== 'boolean') fail(`${p}.over`, 'expected true or false');
   if (typeof o.dy !== 'number') fail(`${p}.dy`, 'expected a number');
-  const style = o.style === 'push' || o.style === 'stride' ? o.style : fail(`${p}.style`, 'expected "push" or "stride"');
-  const look: RideLook = { over: o.over as boolean, dy: o.dy as number, style };
-  if (style === 'push') {
-    const ms = (k: 'pushMs' | 'glideMs') => (typeof o[k] === 'number' && (o[k] as number) > 0 ? (o[k] as number) : fail(`${p}.${k}`, 'expected a number > 0 for a "push" ride'));
-    look.pushMs = ms('pushMs');
-    look.glideMs = ms('glideMs');
-  }
-  return look;
+  const n = (k: 'bobPx' | 'bobMs', min: number) => (typeof o[k] === 'number' && (o[k] as number) >= min ? (o[k] as number) : fail(`${p}.${k}`, `expected a number >= ${min}`));
+  return { over: o.over as boolean, dy: o.dy as number, bobPx: n('bobPx', 0), bobMs: n('bobMs', 1) };
 }
 
 /**
- * Whether a "push" ride is in the kick (legs moving) or the glide at `elapsedMs`
- * since the player started rolling: kick first, then glide, repeating.
+ * How far up the bob lifts rider and ride `elapsedMs` after starting to roll:
+ * whole px, 0 at the start, smoothly up to bobPx and back. 0 when stopped.
  */
-export function pushPhase(look: RideLook, elapsedMs: number): 'kick' | 'glide' {
-  if (look.style !== 'push' || !look.pushMs || !look.glideMs) return 'kick';
-  return elapsedMs % (look.pushMs + look.glideMs) < look.pushMs ? 'kick' : 'glide';
+export function rideLift(look: RideLook, moving: boolean, elapsedMs: number): number {
+  if (!moving) return 0;
+  const phase = (elapsedMs % look.bobMs) / look.bobMs;
+  return Math.round(look.bobPx * (0.5 - 0.5 * Math.cos(phase * 2 * Math.PI)));
 }
 
 /** Buys `id`: takes its price and adds it to the rides owned. Nothing changes when it can't be bought. */
