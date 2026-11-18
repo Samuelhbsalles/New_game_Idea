@@ -54,6 +54,8 @@ export interface PropAnim {
 export interface Glow {
   dy: number;
   r: number;
+  /** Light colour, "#rrggbb"; warm lamp light when left out. */
+  color?: string;
 }
 
 /** A decoration; (x, y) is the middle of its bottom edge. */
@@ -92,6 +94,40 @@ export interface StrollerDef {
   pauseMs: [number, number];
   /** Points walked in order, then back to the first. At least two. */
   route: { x: number; y: number }[];
+}
+
+/**
+ * A soft patch of colour painted on the ground, fading out at its edges: a
+ * darker forest floor, or a mossy glade that glows a little ("add").
+ */
+export interface GroundTint {
+  /** Centre and size of the ellipse (px). */
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  /** "#rrggbb". */
+  color: string;
+  /** Opacity at the centre, 0-1. */
+  alpha: number;
+  /** "normal" darkens or tints; "add" lightens (a glow). */
+  blend: 'normal' | 'add';
+}
+
+/** Little magic lights drifting in an area (the forest): they rise slowly, glow and fade. */
+export interface Motes {
+  /** Where they float. */
+  area: Box;
+  /** How many are alive at once. */
+  count: number;
+  /** "#rrggbb" choices, picked at random per mote. */
+  colors: string[];
+  /** One mote's life, fade in to fade out (ms). */
+  lifeMs: [number, number];
+  /** How far it drifts up over its life (px). */
+  rise: [number, number];
+  /** Peak opacity, 0-1. */
+  alpha: number;
 }
 
 /** Darkens open water with distance from the shore: light shallows, deep blue further out. */
@@ -157,6 +193,15 @@ export interface TownDef {
   ferryBack: Box | null;
   /** Shallow-to-deep tint on open water; null = none. */
   deepWater: DeepWater | null;
+  /**
+   * Invisible walls: keep the player out of strips that only look like more
+   * world, such as behind the forest's top row of trees (where the camera stops).
+   */
+  blockers: Box[];
+  /** Soft colour patches on the ground (forest floor, glades). */
+  groundTints: GroundTint[];
+  /** Magic lights drifting somewhere on the map; null = none. */
+  motes: Motes | null;
   /** Terrain letters that are paved (wheels roll fast); every other terrain is rough. Piers (walkways) are paved too. */
   paved: Terrain[];
   /** Where the ferry ticket clerk stands inside the booth (feet; drawn between the booth and its front layer). Null = no clerk. */
@@ -287,6 +332,10 @@ export function parseTown(raw: unknown): TownDef {
     if (po.glow !== undefined) {
       const go = obj(po.glow, `${p}.glow`);
       prop.glow = { dy: num(go, 'dy', `${p}.glow`), r: num(go, 'r', `${p}.glow`, 1) };
+      if (go.color !== undefined) {
+        if (typeof go.color !== 'string' || !/^#[0-9a-f]{6}$/i.test(go.color)) fail(`${p}.glow.color`, 'expected "#rrggbb"');
+        prop.glow.color = go.color as string;
+      }
     }
     if (po.flat !== undefined) {
       if (typeof po.flat !== 'boolean') fail(`${p}.flat`, 'expected true or false');
@@ -396,11 +445,42 @@ export function parseTown(raw: unknown): TownDef {
     deepWater = { color: dw.color as string, alpha, tiles: num(dw, 'tiles', p, 1) };
   }
   const clerk = o.clerk === undefined ? null : point(o.clerk, 'town.clerk');
+  const blockers = (Array.isArray(o.blockers) ? o.blockers : []).map((v, i): Box => {
+    const p = `town.blockers[${i}]`;
+    const bo = obj(v, p);
+    return { x: num(bo, 'x', p), y: num(bo, 'y', p), w: num(bo, 'w', p, 1), h: num(bo, 'h', p, 1) };
+  });
+  let motes: Motes | null = null;
+  if (o.motes !== undefined) {
+    const p = 'town.motes';
+    const mo = obj(o.motes, p);
+    const ao = obj(mo.area, `${p}.area`);
+    const colors = Array.isArray(mo.colors) && mo.colors.length > 0 && mo.colors.every((c) => typeof c === 'string' && /^#[0-9a-f]{6}$/i.test(c)) ? (mo.colors as string[]) : fail(`${p}.colors`, 'expected a list of "#rrggbb"');
+    const alpha = num(mo, 'alpha', p, 0);
+    if (alpha > 1) fail(`${p}.alpha`, 'expected an opacity between 0 and 1');
+    motes = {
+      area: { x: num(ao, 'x', `${p}.area`), y: num(ao, 'y', `${p}.area`), w: num(ao, 'w', `${p}.area`, 1), h: num(ao, 'h', `${p}.area`, 1) },
+      count: num(mo, 'count', p, 0),
+      colors,
+      lifeMs: pair(mo.lifeMs, `${p}.lifeMs`),
+      rise: pair(mo.rise, `${p}.rise`),
+      alpha,
+    };
+  }
+  const groundTints = (Array.isArray(o.groundTints) ? o.groundTints : []).map((v, i): GroundTint => {
+    const p = `town.groundTints[${i}]`;
+    const go = obj(v, p);
+    if (typeof go.color !== 'string' || !/^#[0-9a-f]{6}$/i.test(go.color)) fail(`${p}.color`, 'expected "#rrggbb"');
+    const alpha = num(go, 'alpha', p, 0);
+    if (alpha > 1) fail(`${p}.alpha`, 'expected an opacity between 0 and 1');
+    const blend = go.blend === undefined ? 'normal' : go.blend === 'normal' || go.blend === 'add' ? go.blend : fail(`${p}.blend`, 'expected "normal" or "add"');
+    return { x: num(go, 'x', p), y: num(go, 'y', p), w: num(go, 'w', p, 1), h: num(go, 'h', p, 1), color: go.color as string, alpha, blend };
+  });
   // Which letters are paved differs per map: in town "c" is the cobbled street, on the shore it is grass.
   const paved = o.paved === undefined ? (['c'] as Terrain[]) : Array.isArray(o.paved) ? o.paved.map((t, i) => terrain(t, `town.paved[${i}]`)) : fail('town.paved', 'expected a list of terrain letters');
   const cameraLerp = o.cameraLerp === undefined ? 1 : num(o, 'cameraLerp', 'town', 0);
   if (cameraLerp <= 0 || cameraLerp > 1) throw new Error('town.cameraLerp must be in (0, 1]');
-  return { tileSize, cameraLerp, cols, rows, corners, ground: tileset(o.ground, 'town.ground'), water: tileset(o.water, 'town.water'), buildings, props, spots, spawn, smoke, birds, npcs, strollers, npcEmotes, walkways, ferryBack, deepWater, clerk, paved };
+  return { tileSize, cameraLerp, cols, rows, corners, ground: tileset(o.ground, 'town.ground'), water: tileset(o.water, 'town.water'), buildings, props, spots, spawn, smoke, birds, npcs, strollers, npcEmotes, walkways, ferryBack, deepWater, clerk, paved, groundTints, motes, blockers };
 }
 
 function wang(c: string[], upper: (t: string) => boolean): number {
@@ -455,6 +535,7 @@ export function townSolids(town: TownDef): Box[] {
   }
   for (const b of town.buildings) out.push(footBox(b.x, b.y, b.solid));
   for (const p of town.props) if (p.solid) out.push(footBox(p.x, p.y, p.solid));
+  out.push(...town.blockers);
   return out;
 }
 

@@ -1,6 +1,45 @@
 {
-  "treeSprites": ["town_tree_oak", "town_tree_maple"],
+  "treeSprites": [
+    "town_tree_oak",
+    "town_tree_maple",
+    "forest_tree_teal",
+    "forest_tree_fig",
+    "forest_tree_purple",
+    "forest_tree_tall"
+  ],
   "climbers": {
-    "squirrel": { "height": 46, "speed": 18, "chance": 0.35, "hideMs": [6000, 14000], "treeRange": 160, "frontDy": 4 }
+    "squirrel": {
+      "height": 46,
+      "speed": 18,
+      "chance": 0.35,
+      "hideMs": [
+        6000,
+        14000
+      ],
+      "treeRange": 160,
+      "frontDy": 4
+    },
+    "monkey": {
+      "height": 70,
+      "speed": 28,
+      "chance": 0.5,
+      "hideMs": [
+        5000,
+        12000
+      ],
+      "treeRange": 180,
+      "frontDy": 4
+    },
+    "sloth": {
+      "height": 60,
+      "speed": 6,
+      "chance": 0.7,
+      "hideMs": [
+        15000,
+        30000
+      ],
+      "treeRange": 160,
+      "frontDy": 4
+    }
   }
 }

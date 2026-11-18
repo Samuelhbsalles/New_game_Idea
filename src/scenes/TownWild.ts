@@ -72,6 +72,8 @@ export class TownWild {
     /** Display scale per species (small animals read smaller than people). */
     private readonly scaleFor: (species: string) => number = () => 1,
     private readonly climbing: Climbing | null = null,
+    /** Spots hidden behind tall art (the ground behind a tree, under its canopy): critters never stop there. */
+    private readonly hideouts: { x: number; y: number; w: number; h: number }[] = [],
   ) {
     for (const a of areas) {
       if (!a.inTown || a.max <= 0) continue;
@@ -124,7 +126,8 @@ export class TownWild {
       const y = r.y + this.rng() * r.h;
       const cx = Math.floor(x / g.cell);
       const cy = Math.floor(y / g.cell);
-      if (g.free[cy]?.[cx]) return { x, y, box: r };
+      const hidden = this.hideouts.some((h) => x >= h.x && x < h.x + h.w && y >= h.y && y < h.y + h.h);
+      if (g.free[cy]?.[cx] && !hidden) return { x, y, box: r };
     }
     return null;
   }

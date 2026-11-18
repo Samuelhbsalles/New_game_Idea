@@ -86,6 +86,7 @@
     "char": "98f124e4-b3c0-4afc-adea-8a5fbac5c7bd",
     "anims": [
       {"action": "walk", "state": "Idle", "name": "walk"},
+      {"action": "climb", "state": "Idle", "name": "climb"},
       {"action": "eat", "state": "Idle", "name": "eat"},
       {"action": "sleep", "state": "Idle", "name": "sleep", "frames": [5, 7]},
       {"action": "work", "state": "Idle", "name": "work"}
@@ -123,6 +124,7 @@
     "char": "6c5b2bec-a91b-4154-9d01-a1621909bc21",
     "anims": [
       {"action": "walk", "state": "Idle", "name": "walk"},
+      {"action": "climb", "state": "Idle", "name": "climb"},
       {"action": "eat", "state": "Idle", "name": "eat"},
       {"action": "sleep", "state": "Idle", "name": "sleep", "frames": [6, 8]},
       {"action": "work", "state": "Idle", "name": "work"}

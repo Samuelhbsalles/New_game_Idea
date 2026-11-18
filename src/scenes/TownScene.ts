@@ -37,6 +37,8 @@ import { TownBirds } from './TownBirds';
 import { TownNpc } from './TownNpc';
 import { TownStrollers } from './TownStrollers';
 import { FerryClerk } from './FerryClerk';
+import { MagicMotes } from './MagicMotes';
+import { ensureSoftDisc } from './softDisc';
 import ridesJson from '../data/rides.json';
 import { buyRide, currentRide, parseRides, rideLift, speedFactor, toggleRide, type RideRules } from '../logic/rides';
 import { RideSprite } from './rideArt';
@@ -60,10 +62,15 @@ const FOLLOW_SLACK = 12;
 const SPARKLE_EVERY_MS = 180;
 /** Depth of flat props (piers): above water (-1900) and its effects (-1890..-1800), below standing things. */
 const FLAT_DEPTH = -1700;
+/** Ground colour patches: over the ground and water tiles, under flat props. */
+const GROUND_TINT_DEPTH = -1880;
 /** The ferry booth prop the clerk stands in. */
 const BOOTH_SPRITE = 'town_ticket_booth';
 /** The building whose door opens the sports shop (rides) instead of an interior. */
 const SPORTS_SHOP = 'sports';
+/** Share of a tree's image (width, height up from its foot) that hides whatever stands behind it. */
+const HIDEOUT_WIDTH = 0.7;
+const HIDEOUT_HEIGHT = 0.8;
 /** The player's feet body offset inside the 48px frame. */
 const PLAYER_BODY = { x: 16, y: 34 };
 /** Opacity of prop ground shadows (ink colour). */
@@ -183,6 +190,19 @@ export class TownScene extends Phaser.Scene {
         if (tile.index === grass) tile.flipX = tileFlip(tile.x, tile.y).flipX;
       });
     }
+    // Soft colour patches on the ground: a darker forest floor, glades that glow a little.
+    if (this.town.groundTints.length > 0) {
+      ensureSoftDisc(this);
+      for (const g of this.town.groundTints) {
+        this.add
+          .image(g.x, g.y, ensureSoftDisc(this))
+          .setDisplaySize(g.w, g.h)
+          .setTint(Phaser.Display.Color.HexStringToColor(g.color).color)
+          .setAlpha(g.alpha)
+          .setBlendMode(g.blend === 'add' ? Phaser.BlendModes.ADD : Phaser.BlendModes.NORMAL)
+          .setDepth(GROUND_TINT_DEPTH);
+      }
+    }
     // Shallows stay light by the shore; open water darkens with distance (calms the busy sea texture).
     if (this.town.deepWater) {
       const dw = this.town.deepWater;
@@ -217,7 +237,7 @@ export class TownScene extends Phaser.Scene {
         const img = this.add.image(p.x, p.y, p.sprite).setOrigin(0.5, 1).setDepth(p.flat ? FLAT_DEPTH : p.y + (p.depthBias ?? 0));
         if (p.bob) this.tweens.add({ targets: img, y: p.y + p.bob, duration: Phaser.Math.Between(1100, 1600), yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
       }
-      if (p.glow) this.addGlow(p.x, p.y + p.glow.dy, p.glow.r);
+      if (p.glow) this.addGlow(p.x, p.y + p.glow.dy, p.glow.r, p.glow.color);
     }
 
     // The ticket clerk stands inside the booth, between it and its front layer (counter, awning).
@@ -255,6 +275,7 @@ export class TownScene extends Phaser.Scene {
     if (followerId) this.spawnFollower(followerId, start);
 
     this.startAmbient(solids);
+    if (this.town.motes) new MagicMotes(this, this.town.motes, Math.random);
 
     const cam = this.cameras.main;
     cam.setBounds(0, 0, width, height).setRoundPixels(true);
@@ -538,6 +559,7 @@ export class TownScene extends Phaser.Scene {
       Math.random,
       (species) => (spritesJson as Record<string, { scale?: number }>)[species]?.scale ?? 1,
       { rules: wildRules, trees },
+      this.treeHideouts(wildRules.treeSprites),
     );
     this.lureRules = parseLureRules(lureJson, Object.keys(this.rules.rarities));
     this.lure = new TownLure({
@@ -569,6 +591,20 @@ export class TownScene extends Phaser.Scene {
     this.time.addEvent({ delay: SPARKLE_EVERY_MS, loop: true, callback: () => this.sparkle() });
   }
 
+  /**
+   * The ground behind each tree, covered by its trunk and canopy: a critter
+   * resting there would be invisible ("under the tree"), so it never stops there.
+   */
+  private treeHideouts(treeSprites: string[]): { x: number; y: number; w: number; h: number }[] {
+    return this.town.props
+      .filter((p) => treeSprites.includes(p.sprite) && this.textures.exists(p.sprite))
+      .map((p) => {
+        const img = this.textures.get(p.sprite).getSourceImage() as { width: number; height: number };
+        const w = img.width * HIDEOUT_WIDTH;
+        return { x: p.x - w / 2, y: p.y - img.height * HIDEOUT_HEIGHT, w, h: img.height * HIDEOUT_HEIGHT };
+      });
+  }
+
   private npcs: TownNpc[] = [];
   private strollers: TownStrollers | null = null;
   private clerk: FerryClerk | null = null;
@@ -595,9 +631,17 @@ export class TownScene extends Phaser.Scene {
   }
 
   /** A warm halo that flickers gently (street lamps). */
-  private addGlow(x: number, y: number, r: number): void {
-    const glow = this.add.circle(x, y, r, 0xffd27a, 0.28).setDepth(y + 4000).setBlendMode(Phaser.BlendModes.ADD);
-    this.tweens.add({ targets: glow, alpha: 0.16, scale: 0.9, yoyo: true, repeat: -1, duration: Phaser.Math.Between(700, 1300), ease: 'Sine.easeInOut' });
+  private addGlow(x: number, y: number, r: number, color = '#ffd27a'): void {
+    // A soft disc fading at its edge, so the light blends into the ground instead of reading as a bubble.
+    const glow = this.add
+      .image(x, y, ensureSoftDisc(this))
+      .setDisplaySize(r * 2.4, r * 2.4)
+      .setTint(Phaser.Display.Color.HexStringToColor(color).color)
+      .setAlpha(0.4)
+      .setDepth(y + 4000)
+      .setBlendMode(Phaser.BlendModes.ADD);
+    const base = glow.scale;
+    this.tweens.add({ targets: glow, alpha: 0.22, scale: base * 0.9, yoyo: true, repeat: -1, duration: Phaser.Math.Between(700, 1300), ease: 'Sine.easeInOut' });
   }
 
   /** A short glint on a water tile in view. */

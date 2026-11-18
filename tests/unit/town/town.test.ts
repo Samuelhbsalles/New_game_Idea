@@ -218,3 +218,31 @@ describe('ground under the player', () => {
     expect(() => parseTown({ ...townJson, paved: ['x'] })).toThrow(/paved/);
   });
 });
+
+describe('ground tints', () => {
+  it('reads soft colour patches, defaulting to a normal blend', () => {
+    const town = parseTown({ ...townJson, groundTints: [{ x: 10, y: 20, w: 30, h: 40, color: '#102030', alpha: 0.5 }] });
+    expect(town.groundTints).toEqual([{ x: 10, y: 20, w: 30, h: 40, color: '#102030', alpha: 0.5, blend: 'normal' }]);
+  });
+
+  it('refuses a bad colour, an opacity above 1 and an unknown blend', () => {
+    const tint = { x: 0, y: 0, w: 1, h: 1, color: '#000000', alpha: 0.5 };
+    expect(() => parseTown({ ...townJson, groundTints: [{ ...tint, color: 'green' }] })).toThrow(/color/);
+    expect(() => parseTown({ ...townJson, groundTints: [{ ...tint, alpha: 2 }] })).toThrow(/alpha/);
+    expect(() => parseTown({ ...townJson, groundTints: [{ ...tint, blend: 'multiply' }] })).toThrow(/blend/);
+  });
+});
+
+describe('magic motes', () => {
+  const motes = { area: { x: 0, y: 0, w: 100, h: 50 }, count: 10, colors: ['#aaffcc'], lifeMs: [2000, 4000], rise: [10, 20], alpha: 0.8 };
+
+  it('reads where the lights float and how they look', () => {
+    expect(parseTown({ ...townJson, motes }).motes).toEqual(motes);
+  });
+
+  it('refuses no colours, a reversed life range and an opacity above 1', () => {
+    expect(() => parseTown({ ...townJson, motes: { ...motes, colors: [] } })).toThrow(/colors/);
+    expect(() => parseTown({ ...townJson, motes: { ...motes, lifeMs: [4000, 2000] } })).toThrow(/lifeMs/);
+    expect(() => parseTown({ ...townJson, motes: { ...motes, alpha: 1.5 } })).toThrow(/alpha/);
+  });
+});

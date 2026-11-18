@@ -40,6 +40,7 @@
     { "action": "work", "frames": 8, "fps": 8, "repeat": -1, "dirs": ["down", "up", "right"] }
   ] },
   "monkey": { "name": "monkey", "scale": 0.78, "folder": "creatures/monkey", "walkFrames": 8, "extras": [
+    { "action": "climb", "frames": 8, "fps": 10, "repeat": -1, "dirs": ["up"] },
     { "action": "eat", "frames": 8, "fps": 8, "repeat": -1 },
     { "action": "sleep", "frames": 3, "fps": 2, "repeat": -1 },
     { "action": "work", "frames": 8, "fps": 8, "repeat": -1, "dirs": ["down", "up", "right"] }
@@ -86,6 +87,7 @@
     { "action": "work", "frames": 8, "fps": 8, "repeat": -1, "dirs": ["down", "up", "right"] }
   ] },
   "sloth": { "name": "sloth", "scale": 0.62, "folder": "creatures/sloth", "walkFrames": 8, "extras": [
+    { "action": "climb", "frames": 8, "fps": 4, "repeat": -1, "dirs": ["up"] },
     { "action": "eat", "frames": 8, "fps": 6, "repeat": -1 },
     { "action": "sleep", "frames": 3, "fps": 2, "repeat": -1 },
     { "action": "work", "frames": 8, "fps": 6, "repeat": -1, "dirs": ["down", "up", "right"] }
