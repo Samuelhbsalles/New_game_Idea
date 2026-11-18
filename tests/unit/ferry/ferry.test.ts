@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import ferryJson from '../../../src/data/ferry.json';
-import { buyTicket, inBooth, parseFerry } from '../../../src/logic/ferry';
+import { buyTicket, clerkGreets, inBooth, parseFerry } from '../../../src/logic/ferry';
 
 /** A ferry with one open destination and one still coming. */
 function rules() {
@@ -12,6 +12,7 @@ function rules() {
       { id: 'shore', status: 'open', map: 'shore' },
       { id: 'island', status: 'soon' },
     ],
+    clerk: { greetRadius: 60, leaveRadius: 110, waveFps: 8, farewellMs: 900 },
   });
 }
 
@@ -54,5 +55,27 @@ describe('ferry', () => {
     expect(inBooth(r, { x: 100, y: 200 })).toBe(true);
     expect(inBooth(r, { x: 139, y: 219 })).toBe(true);
     expect(inBooth(r, { x: 140, y: 200 })).toBe(false);
+  });
+});
+
+describe('ferry clerk', () => {
+  const c = rules().clerk;
+
+  it('greets once when the player comes close', () => {
+    expect(clerkGreets(false, c.greetRadius, c)).toEqual({ greeted: true, greetNow: true });
+    expect(clerkGreets(true, c.greetRadius - 10, c)).toEqual({ greeted: true, greetNow: false });
+  });
+
+  it('does not greet from further away', () => {
+    expect(clerkGreets(false, c.greetRadius + 1, c)).toEqual({ greeted: false, greetNow: false });
+  });
+
+  it('is ready to greet again only after the player has walked past leaveRadius', () => {
+    expect(clerkGreets(true, c.leaveRadius, c).greeted).toBe(true);
+    expect(clerkGreets(true, c.leaveRadius + 1, c)).toEqual({ greeted: false, greetNow: false });
+  });
+
+  it('refuses a leave radius smaller than the greet radius', () => {
+    expect(() => parseFerry({ ...ferryJson, clerk: { greetRadius: 80, leaveRadius: 40, waveFps: 8, farewellMs: 0 } })).toThrow(/clerk\.leaveRadius/);
   });
 });

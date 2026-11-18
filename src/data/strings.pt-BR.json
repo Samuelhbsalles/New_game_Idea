@@ -51,7 +51,8 @@
     "petPharmacy": "Farmácia animal",
     "careHome": "Casa de cuidados",
     "park": "Parque",
-    "harbor": "Porto"
+    "harbor": "Porto",
+    "sports": "Loja de esportes"
   },
   "pet": {
     "hint": "E",
@@ -320,7 +321,20 @@
     },
     "onlyBoat": "Daqui, só de barco: vá ao cais",
     "backToTown": "Voltar para a cidade",
-    "backFree": "A volta é grátis"
+    "backFree": "A volta é grátis",
+    "clerk": {
+      "name": "Marinheiro Téo",
+      "greetTown1": "Olá! Vai viajar hoje?",
+      "greetTown2": "Ahoy! O barco já vai sair!",
+      "greetTown3": "Que tal um passeio até a praia?",
+      "greetAway1": "Aproveitando o sol?",
+      "greetAway2": "Quando quiser, eu levo você de volta!",
+      "ask": "Para onde vamos hoje?",
+      "askBack": "Pronto para voltar para a cidade?",
+      "goodTrip": "Boa viagem!",
+      "bye": "Até mais!",
+      "noCoins": "Ih, a passagem custa {fare} moedas..."
+    }
   },
   "furniture": {
     "bed": "Cama",
@@ -387,5 +401,28 @@
       "recovering": "recuperando",
       "tired": "cansado"
     }
+  },
+  "rides": {
+    "skate": "Skate",
+    "rollers": "Patins",
+    "bike": "Bicicleta",
+    "inUse": "Em uso · E para descer",
+    "faster": "{pct}% mais rápido ao ar livre",
+    "use": "Usar",
+    "getOff": "Descer",
+    "indoors": "Só dá para usar ao ar livre",
+    "on": "De {ride}!",
+    "off": "Andando a pé"
+  },
+  "sports": {
+    "name": "Rita · Loja de esportes",
+    "hello": "Quer andar mais rápido? Dá uma olhada!",
+    "row": "{ride} · {price} moedas · +{pct}%",
+    "owned": "{ride} (já é seu)",
+    "soon": "{ride} (em breve)",
+    "close": "Fechar",
+    "bought": "Aproveite! Use pela bolsa.",
+    "noCoins": "Faltam moedas: precisa de {price}",
+    "soonLong": "A {ride} chega em breve!"
   }
 }

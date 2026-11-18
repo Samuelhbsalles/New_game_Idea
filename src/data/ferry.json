@@ -21,5 +21,11 @@
       "id": "island",
       "status": "soon"
     }
-  ]
+  ],
+  "clerk": {
+    "greetRadius": 60,
+    "leaveRadius": 110,
+    "waveFps": 8,
+    "farewellMs": 900
+  }
 }

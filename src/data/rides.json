@@ -1,0 +1,37 @@
+{
+  "rides": [
+    {
+      "id": "skate",
+      "price": 120,
+      "speedBonus": 0.3,
+      "status": "open",
+      "roughFactor": 0.8,
+      "look": {
+        "over": false,
+        "dy": 6,
+        "style": "push",
+        "pushMs": 420,
+        "glideMs": 900
+      }
+    },
+    {
+      "id": "rollers",
+      "price": 200,
+      "speedBonus": 0.45,
+      "status": "open",
+      "roughFactor": 0.85,
+      "look": {
+        "over": true,
+        "dy": 1,
+        "style": "stride"
+      }
+    },
+    {
+      "id": "bike",
+      "price": 450,
+      "speedBonus": 0.8,
+      "status": "soon",
+      "roughFactor": 0.9
+    }
+  ]
+}

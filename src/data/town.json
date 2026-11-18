@@ -127,6 +127,17 @@
    }
   },
   {
+   "id": "sports",
+   "sprite": "town_sports_tall",
+   "x": 800,
+   "y": 320,
+   "doorDx": 0,
+   "solid": {
+    "w": 140,
+    "h": 80
+   }
+  },
+  {
    "id": "careHome",
    "sprite": "town_careHome_tall",
    "x": 1000,
@@ -310,7 +321,7 @@
   },
   {
    "sprite": "town_lamp",
-   "x": 720,
+   "x": 712,
    "y": 318,
    "solid": {
     "w": 8,
@@ -323,7 +334,7 @@
   },
   {
    "sprite": "town_lamp",
-   "x": 880,
+   "x": 888,
    "y": 318,
    "solid": {
     "w": 8,
@@ -581,12 +592,6 @@
   },
   {
    "sprite": "town_flowers",
-   "x": 870,
-   "y": 280,
-   "solid": null
-  },
-  {
-   "sprite": "town_flowers",
    "x": 1110,
    "y": 300,
    "solid": null
@@ -679,12 +684,6 @@
    "sprite": "town_tuft",
    "x": 560,
    "y": 230,
-   "solid": null
-  },
-  {
-   "sprite": "town_tuft",
-   "x": 760,
-   "y": 220,
    "solid": null
   },
   {
@@ -908,15 +907,6 @@
    "x": 1021,
    "y": 135,
    "solid": null
-  },
-  {
-   "sprite": "town_hedge",
-   "x": 801,
-   "y": 192,
-   "solid": {
-    "w": 36,
-    "h": 10
-   }
   },
   {
    "sprite": "town_tuft",
@@ -1153,12 +1143,6 @@
    "solid": null
   },
   {
-   "sprite": "town_clover",
-   "x": 774,
-   "y": 242,
-   "solid": null
-  },
-  {
    "sprite": "town_hedge",
    "x": 223,
    "y": 500,
@@ -1357,10 +1341,17 @@
     "h": 16
    },
    "shadow": {
-    "w": 62,
+    "w": 54,
     "h": 10,
     "dy": -2
    }
+  },
+  {
+   "sprite": "town_ticket_booth_front",
+   "x": 1818,
+   "y": 446,
+   "solid": null,
+   "depthBias": 2
   },
   {
    "sprite": "town_ferry_pier",
@@ -1614,5 +1605,9 @@
    "w": 64,
    "h": 192
   }
- ]
+ ],
+ "clerk": {
+  "x": 1822,
+  "y": 451
+ }
 }

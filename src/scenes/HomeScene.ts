@@ -343,6 +343,9 @@ export class HomeScene extends Phaser.Scene {
         new BagPanel(
           this,
           bagContent({
+            rides: null,
+            ridesBlocked: this.t('rides.indoors'),
+            ridesOwned: this.world.state.rides ?? [],
             game: this.world,
             rules: this.bagRules,
             genericBaitId: catchingJson.genericBaitId,

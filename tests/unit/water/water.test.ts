@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import waterJson from '../../../src/data/water.json';
-import { foamMask, isOpenWater, isWaterPixel, parseWaterRules, shoreDistance } from '../../../src/logic/water';
+import { foamMask, isOpenWater, isWaterPixel, parseWaterRules, shoreDistance, waterDepth } from '../../../src/logic/water';
 
 const WATER = [80, 150, 230, 255];
 const GRASS = [70, 150, 60, 255];
@@ -62,5 +62,28 @@ describe('shore foam', () => {
     const sparse = foamMask(d, w, [1, 2], true);
     expect(Array.from(sparse.slice(0, w))).toEqual([0, 0, 1, 0, 0, 0, 0, 0]);
     expect(Array.from(sparse.slice(w, 2 * w))).toEqual([0, 0, 0, 1, 0, 0, 0, 0]);
+  });
+});
+
+describe('water depth', () => {
+  // 6 x 4 tiles: sand on the top corner row, sea below it.
+  const corners = ['ggggggg', 'wwwwwww', 'wwwwwww', 'wwwwwww', 'wwwwwww'];
+
+  it('counts open-water tiles outward from the shore and leaves shore tiles at 0', () => {
+    expect(waterDepth(corners, 6, 4, 9).map((r) => r[2])).toEqual([0, 1, 2, 3]);
+  });
+
+  it('caps the depth', () => {
+    expect(waterDepth(corners, 6, 4, 2).map((r) => r[2])).toEqual([0, 1, 2, 2]);
+  });
+
+  it('follows a bend in the coast with diagonal neighbours', () => {
+    // Sand only in the top-left corner.
+    const bay = ['ggwww', 'ggwww', 'wwwww', 'wwwww'];
+    const d = waterDepth(bay, 4, 3, 9);
+    expect(d[0][0]).toBe(0);
+    expect(d[1][1]).toBe(0);
+    expect(d[2][2]).toBe(1);
+    expect(d[0][3]).toBe(2);
   });
 });

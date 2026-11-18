@@ -24,6 +24,9 @@ down/up/right/left; the game mirrors right for left, so west is only used for id
 Frames are written as <species>_<action>_<dir>_NN.png (01-based), flat-colour
 backgrounds are keyed out, and everything is put on a 48x48 canvas (the size the
 existing creatures use). Prints what it wrote; observations only.
+
+An optional "root" in a spec entry overrides the output root (e.g.
+"public/assets/characters" for townsfolk instead of creatures).
 """
 import io
 import json
@@ -71,7 +74,7 @@ def install(species, spec):
     z = zipfile.ZipFile(io.BytesIO(fetch(f"{API}/characters/{spec['char']}/download")))
     meta = json.loads(z.read("metadata.json"))
     states = {s["character"]["name"]: s for s in meta["states"]}
-    out = os.path.join(OUT_ROOT, species)
+    out = os.path.join(spec.get("root", OUT_ROOT), species)
     os.makedirs(out, exist_ok=True)
     report = {"species": species, "written": {}, "keyed_px": 0}
 

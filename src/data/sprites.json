@@ -4,6 +4,10 @@
   "npc_elder": { "name": "npc_elder", "folder": "characters/npc_elder", "walkFrames": 4, "extras": [] },
   "npc_girl": { "name": "npc_girl", "folder": "characters/npc_girl", "walkFrames": 4, "extras": [] },
   "npc_fisher": { "name": "npc_fisher", "folder": "characters/npc_fisher", "walkFrames": 4, "extras": [] },
+  "npc_beach_woman": { "name": "npc_beach_woman", "folder": "characters/npc_beach_woman", "walkFrames": 4, "extras": [] },
+  "npc_beach_man": { "name": "npc_beach_man", "folder": "characters/npc_beach_man", "walkFrames": 4, "extras": [] },
+  "npc_beach_kid": { "name": "npc_beach_kid", "folder": "characters/npc_beach_kid", "walkFrames": 4, "extras": [] },
+  "npc_surfer": { "name": "npc_surfer", "folder": "characters/npc_surfer", "walkFrames": 4, "extras": [] },
   "rabbit": {
     "name": "rabbit",
     "scale": 0.75,

@@ -87,6 +87,8 @@ export function deserialize(data: string | null): GameState | null {
   if (raw.cosmetics !== undefined && !(Array.isArray(raw.cosmetics) && raw.cosmetics.every((c) => typeof c === 'string'))) return null;
   if (raw.caught !== undefined && !(Array.isArray(raw.caught) && raw.caught.every((c) => typeof c === 'string'))) return null;
   if (raw.follower !== undefined && typeof raw.follower !== 'string') return null;
+  if (raw.rides !== undefined && !(Array.isArray(raw.rides) && raw.rides.every((r) => typeof r === 'string'))) return null;
+  if (raw.riding !== undefined && typeof raw.riding !== 'string') return null;
   if (raw.party !== undefined && !(Array.isArray(raw.party) && raw.party.every((c) => typeof c === 'string'))) return null;
   if (raw.worldStartAt !== undefined && !isNum(raw.worldStartAt)) return null;
   // Furniture details are vetted against the catalog by the scenes (parseLayout); here only the shape.

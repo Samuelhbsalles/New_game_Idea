@@ -74,6 +74,40 @@ export function isOpenWater(corners: string[], tx: number, ty: number): boolean 
   return a[tx] === 'w' && a[tx + 1] === 'w' && b[tx] === 'w' && b[tx + 1] === 'w';
 }
 
+/**
+ * How far each open-water tile is from the shore, in tiles (1 = next to a
+ * shore tile), capped at `cap`. Tiles that are not open water get 0. Used to
+ * darken the sea gradually: shallow and light by the beach, deep further out.
+ */
+export function waterDepth(corners: string[], cols: number, rows: number, cap: number): number[][] {
+  const depth = Array.from({ length: rows }, () => Array<number>(cols).fill(0));
+  let frontier: [number, number][] = [];
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      if (!isOpenWater(corners, x, y)) frontier.push([x, y]);
+      else depth[y][x] = -1;
+    }
+  }
+  // Breadth-first outwards from the shore, 8 neighbours, so the bands follow the coast.
+  for (let d = 1; d <= cap && frontier.length > 0; d++) {
+    const next: [number, number][] = [];
+    for (const [x, y] of frontier) {
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= cols || ny >= rows || depth[ny][nx] !== -1) continue;
+          depth[ny][nx] = d;
+          next.push([nx, ny]);
+        }
+      }
+    }
+    frontier = next;
+  }
+  // Open water beyond the cap (or cut off from any shore) is as deep as it gets.
+  return depth.map((row) => row.map((v) => (v === -1 ? cap : v)));
+}
+
 /** Is this RGBA pixel water (clearly blue)? Grass is green, the bank is brown. */
 export function isWaterPixel(r: number, g: number, b: number, a: number): boolean {
   return a > 128 && b > r + 40 && b >= g;

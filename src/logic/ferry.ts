@@ -21,6 +21,20 @@ export interface FerryRules {
   /** Where the player stands to talk to the booth (town px; x, y = top-left). */
   booth: { x: number; y: number; w: number; h: number };
   destinations: FerryDestination[];
+  /** The clerk in the booth: when they greet and how lively they are. */
+  clerk: ClerkRules;
+}
+
+/** The ticket clerk's manners. */
+export interface ClerkRules {
+  /** The clerk waves and says hello when the player comes this close (px). */
+  greetRadius: number;
+  /** ...and is ready to greet again once the player has gone this far (px). */
+  leaveRadius: number;
+  /** Wave animation speed (frames per second). */
+  waveFps: number;
+  /** Pause after "have a good trip!" before the boat leaves (ms). */
+  farewellMs: number;
 }
 
 export type TicketResult = { ok: true; coins: number; map: string } | { ok: false; reason: 'unknown' | 'soon' | 'no_coins' };
@@ -58,7 +72,31 @@ export function parseFerry(json: unknown): FerryRules {
     returnFree: o.returnFree as boolean,
     booth: { x: num(b, 'x', 'booth'), y: num(b, 'y', 'booth'), w: num(b, 'w', 'booth', 1), h: num(b, 'h', 'booth', 1) },
     destinations,
+    clerk: parseClerk(o.clerk),
   };
+}
+
+function parseClerk(v: unknown): ClerkRules {
+  const c = obj(v, 'clerk');
+  const clerk = {
+    greetRadius: num(c, 'greetRadius', 'clerk', 1),
+    leaveRadius: num(c, 'leaveRadius', 'clerk', 1),
+    waveFps: num(c, 'waveFps', 'clerk', 1),
+    farewellMs: num(c, 'farewellMs', 'clerk', 0),
+  };
+  if (clerk.leaveRadius < clerk.greetRadius) fail('clerk.leaveRadius', 'must be at least greetRadius');
+  return clerk;
+}
+
+/**
+ * Whether the clerk greets the player now. They greet once on coming within
+ * `greetRadius`, then not again until the player has walked past
+ * `leaveRadius` (so standing at the edge does not make them say hello twice).
+ */
+export function clerkGreets(greeted: boolean, distance: number, c: ClerkRules): { greeted: boolean; greetNow: boolean } {
+  if (!greeted && distance <= c.greetRadius) return { greeted: true, greetNow: true };
+  if (greeted && distance > c.leaveRadius) return { greeted: false, greetNow: false };
+  return { greeted, greetNow: false };
 }
 
 /**

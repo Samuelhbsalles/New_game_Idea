@@ -1,5 +1,7 @@
 import itemsJson from '../data/items.json';
 import Phaser from 'phaser';
+import ridesJson from '../data/rides.json';
+import { RIDE_VIEWS } from './rideArt';
 import ui from '../data/ui.json';
 import { joinWorld, SESSION_KEY } from '../net/world';
 import { preloadCreatorLayers } from './avatar';
@@ -25,6 +27,10 @@ export class BootScene extends Phaser.Scene {
     preloadCreatorLayers(this);
     // Item icons for the bag, shops and bait on the ground: assets/items/item_<id>.png.
     for (const it of itemsJson) this.load.image(`item_${it.id}`, `assets/items/item_${it.id}.png`);
+    // Rides on sale: side and front views under the player, and the bag icon (assets/rides/ride_<id>_<view>.png).
+    for (const r of ridesJson.rides.filter((x) => x.status === 'open')) {
+      for (const v of RIDE_VIEWS) this.load.image(`ride_${r.id}_${v}`, `assets/rides/ride_${r.id}_${v}.png`);
+    }
   }
 
   create(): void {

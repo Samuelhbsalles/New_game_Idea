@@ -10,43 +10,113 @@
     "t": "c",
     "x": 0,
     "y": 0,
-    "w": 41,
+    "w": 3,
+    "h": 8
+   },
+   {
+    "t": "c",
+    "x": 3,
+    "y": 0,
+    "w": 4,
+    "h": 5
+   },
+   {
+    "t": "c",
+    "x": 7,
+    "y": 0,
+    "w": 5,
     "h": 3
    },
    {
     "t": "c",
-    "x": 0,
-    "y": 3,
+    "x": 12,
+    "y": 0,
+    "w": 6,
+    "h": 2
+   },
+   {
+    "t": "c",
+    "x": 18,
+    "y": 0,
+    "w": 6,
+    "h": 3
+   },
+   {
+    "t": "c",
+    "x": 24,
+    "y": 0,
     "w": 6,
     "h": 2
    },
    {
     "t": "c",
     "x": 30,
-    "y": 3,
-    "w": 11,
-    "h": 2
+    "y": 0,
+    "w": 5,
+    "h": 4
+   },
+   {
+    "t": "c",
+    "x": 35,
+    "y": 0,
+    "w": 6,
+    "h": 5
    },
    {
     "t": "w",
     "x": 0,
+    "y": 15,
+    "w": 4,
+    "h": 10
+   },
+   {
+    "t": "w",
+    "x": 4,
+    "y": 16,
+    "w": 3,
+    "h": 9
+   },
+   {
+    "t": "w",
+    "x": 7,
+    "y": 17,
+    "w": 4,
+    "h": 8
+   },
+   {
+    "t": "w",
+    "x": 11,
     "y": 18,
-    "w": 41,
+    "w": 15,
     "h": 7
    },
    {
     "t": "w",
-    "x": 30,
-    "y": 15,
-    "w": 11,
-    "h": 4
+    "x": 26,
+    "y": 17,
+    "w": 3,
+    "h": 8
    },
    {
     "t": "w",
-    "x": 0,
+    "x": 29,
     "y": 16,
-    "w": 8,
-    "h": 3
+    "w": 3,
+    "h": 9
+   },
+   {
+    "t": "w",
+    "x": 32,
+    "y": 14,
+    "w": 4,
+    "h": 11
+   },
+   {
+    "t": "w",
+    "x": 36,
+    "y": 15,
+    "w": 5,
+    "h": 10
    }
   ]
  },
@@ -96,26 +166,26 @@
  "props": [
   {
    "sprite": "shore_palm",
-   "x": 110,
+   "x": 60,
+   "y": 250,
+   "solid": {
+    "w": 16,
+    "h": 10
+   }
+  },
+  {
+   "sprite": "shore_palm_small",
+   "x": 150,
    "y": 150,
    "solid": {
-    "w": 16,
-    "h": 10
+    "w": 14,
+    "h": 8
    }
   },
   {
-   "sprite": "shore_palm_small",
+   "sprite": "shore_palm",
    "x": 300,
-   "y": 120,
-   "solid": {
-    "w": 14,
-    "h": 8
-   }
-  },
-  {
-   "sprite": "shore_palm",
-   "x": 520,
-   "y": 110,
+   "y": 96,
    "solid": {
     "w": 16,
     "h": 10
@@ -123,8 +193,8 @@
   },
   {
    "sprite": "shore_palm_small",
-   "x": 760,
-   "y": 120,
+   "x": 470,
+   "y": 84,
    "solid": {
     "w": 14,
     "h": 8
@@ -132,8 +202,8 @@
   },
   {
    "sprite": "shore_palm",
-   "x": 1020,
-   "y": 180,
+   "x": 700,
+   "y": 96,
    "solid": {
     "w": 16,
     "h": 10
@@ -141,17 +211,35 @@
   },
   {
    "sprite": "shore_palm_small",
-   "x": 1210,
-   "y": 190,
+   "x": 880,
+   "y": 84,
    "solid": {
     "w": 14,
     "h": 8
    }
   },
   {
+   "sprite": "shore_palm",
+   "x": 1010,
+   "y": 140,
+   "solid": {
+    "w": 16,
+    "h": 10
+   }
+  },
+  {
+   "sprite": "shore_palm",
+   "x": 1180,
+   "y": 160,
+   "solid": {
+    "w": 16,
+    "h": 10
+   }
+  },
+  {
    "sprite": "shore_palm_small",
-   "x": 60,
-   "y": 420,
+   "x": 1250,
+   "y": 170,
    "solid": {
     "w": 14,
     "h": 8
@@ -160,7 +248,7 @@
   {
    "sprite": "shore_kiosk",
    "x": 330,
-   "y": 300,
+   "y": 250,
    "solid": {
     "w": 76,
     "h": 20
@@ -172,17 +260,243 @@
    }
   },
   {
-   "sprite": "shore_umbrella",
+   "sprite": "shore_icecream_cart",
    "x": 470,
-   "y": 360,
+   "y": 262,
+   "solid": {
+    "w": 26,
+    "h": 10
+   },
+   "shadow": {
+    "w": 30,
+    "h": 8,
+    "dy": -1
+   }
+  },
+  {
+   "sprite": "shore_npc_icecream",
+   "x": 498,
+   "y": 262,
+   "solid": {
+    "w": 14,
+    "h": 8
+   }
+  },
+  {
+   "sprite": "shore_umbrella",
+   "x": 170,
+   "y": 340,
    "solid": {
     "w": 12,
     "h": 8
    }
   },
   {
+   "sprite": "shore_sunbather",
+   "x": 206,
+   "y": 386,
+   "solid": null,
+   "flat": true
+  },
+  {
+   "sprite": "shore_lounger",
+   "x": 110,
+   "y": 392,
+   "solid": {
+    "w": 30,
+    "h": 8
+   }
+  },
+  {
+   "sprite": "shore_lounger",
+   "x": 150,
+   "y": 410,
+   "solid": {
+    "w": 30,
+    "h": 8
+   }
+  },
+  {
    "sprite": "shore_umbrella",
+   "x": 290,
+   "y": 400,
+   "solid": {
+    "w": 12,
+    "h": 8
+   }
+  },
+  {
+   "sprite": "shore_reader",
+   "x": 320,
+   "y": 420,
+   "solid": {
+    "w": 20,
+    "h": 8
+   }
+  },
+  {
+   "sprite": "shore_cooler",
+   "x": 258,
+   "y": 424,
+   "solid": {
+    "w": 30,
+    "h": 8
+   }
+  },
+  {
+   "sprite": "shore_umbrella",
+   "x": 440,
+   "y": 370,
+   "solid": {
+    "w": 12,
+    "h": 8
+   }
+  },
+  {
+   "sprite": "shore_couple_towel",
+   "x": 462,
+   "y": 442,
+   "solid": null,
+   "flat": true
+  },
+  {
+   "sprite": "shore_knitter",
+   "x": 640,
+   "y": 250,
+   "solid": {
+    "w": 30,
+    "h": 10
+   }
+  },
+  {
+   "sprite": "shore_sandcastle",
+   "x": 780,
+   "y": 470,
+   "solid": {
+    "w": 30,
+    "h": 10
+   }
+  },
+  {
+   "sprite": "shore_beach_toys",
+   "x": 830,
+   "y": 488,
+   "solid": null
+  },
+  {
+   "sprite": "shore_umbrella",
+   "x": 640,
+   "y": 370,
+   "solid": {
+    "w": 12,
+    "h": 8
+   }
+  },
+  {
+   "sprite": "shore_sunbather_girl",
+   "x": 672,
+   "y": 418,
+   "solid": null,
+   "flat": true
+  },
+  {
+   "sprite": "shore_cooler",
+   "x": 604,
+   "y": 398,
+   "solid": {
+    "w": 30,
+    "h": 8
+   }
+  },
+  {
+   "sprite": "shore_umbrella",
+   "x": 980,
+   "y": 250,
+   "solid": {
+    "w": 12,
+    "h": 8
+   }
+  },
+  {
+   "sprite": "shore_lounger",
+   "x": 950,
+   "y": 280,
+   "solid": {
+    "w": 30,
+    "h": 8
+   }
+  },
+  {
+   "sprite": "shore_lounger",
+   "x": 1000,
+   "y": 286,
+   "solid": {
+    "w": 30,
+    "h": 8
+   }
+  },
+  {
+   "sprite": "shore_volley_net",
    "x": 880,
+   "y": 300,
+   "solid": {
+    "w": 80,
+    "h": 6
+   }
+  },
+  {
+   "sprite": "shore_umbrella",
+   "x": 760,
+   "y": 350,
+   "solid": {
+    "w": 12,
+    "h": 8
+   }
+  },
+  {
+   "sprite": "shore_lounger",
+   "x": 730,
+   "y": 380,
+   "solid": {
+    "w": 30,
+    "h": 8
+   }
+  },
+  {
+   "sprite": "shore_lifeguard",
+   "x": 1060,
+   "y": 380,
+   "solid": {
+    "w": 40,
+    "h": 12
+   },
+   "shadow": {
+    "w": 50,
+    "h": 10,
+    "dy": -2
+   }
+  },
+  {
+   "sprite": "shore_surfboard",
+   "x": 1110,
+   "y": 392,
+   "solid": {
+    "w": 12,
+    "h": 6
+   }
+  },
+  {
+   "sprite": "shore_surfboard",
+   "x": 1132,
+   "y": 396,
+   "solid": {
+    "w": 12,
+    "h": 6
+   }
+  },
+  {
+   "sprite": "shore_umbrella",
+   "x": 1200,
    "y": 330,
    "solid": {
     "w": 12,
@@ -190,34 +504,16 @@
    }
   },
   {
-   "sprite": "shore_sandcastle",
-   "x": 960,
-   "y": 420,
-   "solid": {
-    "w": 30,
-    "h": 10
-   }
-  },
-  {
-   "sprite": "shore_driftwood",
-   "x": 780,
-   "y": 460,
+   "sprite": "shore_sunbather",
+   "x": 1176,
+   "y": 380,
    "solid": null,
    "flat": true
   },
   {
    "sprite": "shore_rocks",
-   "x": 200,
-   "y": 480,
-   "solid": {
-    "w": 44,
-    "h": 14
-   }
-  },
-  {
-   "sprite": "shore_rocks",
-   "x": 1120,
-   "y": 420,
+   "x": 40,
+   "y": 470,
    "solid": {
     "w": 44,
     "h": 14
@@ -225,15 +521,52 @@
   },
   {
    "sprite": "shore_tidepool",
-   "x": 300,
+   "x": 160,
+   "y": 488,
+   "solid": null,
+   "flat": true
+  },
+  {
+   "sprite": "shore_shells",
+   "x": 380,
    "y": 540,
    "solid": null,
    "flat": true
   },
   {
+   "sprite": "shore_shells",
+   "x": 930,
+   "y": 500,
+   "solid": null,
+   "flat": true
+  },
+  {
+   "sprite": "shore_shells",
+   "x": 1240,
+   "y": 452,
+   "solid": null,
+   "flat": true
+  },
+  {
+   "sprite": "shore_driftwood",
+   "x": 250,
+   "y": 510,
+   "solid": null,
+   "flat": true
+  },
+  {
+   "sprite": "shore_rocks",
+   "x": 1000,
+   "y": 450,
+   "solid": {
+    "w": 44,
+    "h": 14
+   }
+  },
+  {
    "sprite": "shore_tidepool",
-   "x": 1060,
-   "y": 470,
+   "x": 1180,
+   "y": 430,
    "solid": null,
    "flat": true
   },
@@ -260,10 +593,17 @@
     "h": 16
    },
    "shadow": {
-    "w": 62,
+    "w": 54,
     "h": 10,
     "dy": -2
    }
+  },
+  {
+   "sprite": "town_ticket_booth_front",
+   "x": 578,
+   "y": 520,
+   "solid": null,
+   "depthBias": 2
   }
  ],
  "spots": {
@@ -289,5 +629,136 @@
   "y": 470,
   "w": 70,
   "h": 50
- }
+ },
+ "strollers": [
+  {
+   "art": "npc_beach_woman",
+   "speed": 22,
+   "pauseMs": [
+    1500,
+    5000
+   ],
+   "route": [
+    {
+     "x": 230,
+     "y": 470
+    },
+    {
+     "x": 520,
+     "y": 480
+    },
+    {
+     "x": 880,
+     "y": 510
+    },
+    {
+     "x": 960,
+     "y": 440
+    },
+    {
+     "x": 700,
+     "y": 420
+    },
+    {
+     "x": 420,
+     "y": 470
+    }
+   ]
+  },
+  {
+   "art": "npc_beach_man",
+   "speed": 18,
+   "pauseMs": [
+    2500,
+    7000
+   ],
+   "route": [
+    {
+     "x": 560,
+     "y": 180
+    },
+    {
+     "x": 800,
+     "y": 190
+    },
+    {
+     "x": 820,
+     "y": 250
+    },
+    {
+     "x": 600,
+     "y": 320
+    },
+    {
+     "x": 540,
+     "y": 220
+    }
+   ]
+  },
+  {
+   "art": "npc_beach_kid",
+   "speed": 34,
+   "pauseMs": [
+    800,
+    3000
+   ],
+   "route": [
+    {
+     "x": 700,
+     "y": 500
+    },
+    {
+     "x": 860,
+     "y": 520
+    },
+    {
+     "x": 760,
+     "y": 440
+    },
+    {
+     "x": 680,
+     "y": 470
+    }
+   ]
+  },
+  {
+   "art": "npc_surfer",
+   "speed": 30,
+   "pauseMs": [
+    2000,
+    6000
+   ],
+   "route": [
+    {
+     "x": 980,
+     "y": 190
+    },
+    {
+     "x": 1000,
+     "y": 330
+    },
+    {
+     "x": 1150,
+     "y": 420
+    },
+    {
+     "x": 1000,
+     "y": 330
+    }
+   ]
+  }
+ ],
+ "deepWater": {
+  "color": "#1d6f9c",
+  "alpha": [
+   0.1,
+   0.55
+  ],
+  "tiles": 5
+ },
+ "clerk": {
+  "x": 582,
+  "y": 525
+ },
+ "paved": []
 }

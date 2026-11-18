@@ -9,7 +9,7 @@ import ui from '../data/ui.json';
 import waterJson from '../data/water.json';
 import ferryJson from '../data/ferry.json';
 import { buyTicket, inBooth, parseFerry, type FerryRules } from '../logic/ferry';
-import { parseWaterRules } from '../logic/water';
+import { parseWaterRules, waterDepth } from '../logic/water';
 import { WaterFx } from './waterFx';
 import wildJson from '../data/wild.json';
 import { parseWildRules } from '../logic/climb';
@@ -26,7 +26,7 @@ import { bagContent } from './bagContent';
 import { BagPanel } from './ui/BagPanel';
 import { isNight } from '../logic/gameTime';
 import { buildNavGrid } from '../logic/npcMind';
-import { arrivalPoint, doorAt, parseTown, tileFlip, townLayers, townSolids, type Building, type TownDef } from '../logic/town';
+import { arrivalPoint, doorAt, parseTown, surfaceAt, tileFlip, townLayers, townSolids, type Building, type TownDef } from '../logic/town';
 import { AVATAR_ART, buildAvatar, savedAppearance } from './avatar';
 import { addClock } from './clockHud';
 import { fetchHomeOf, SESSION_KEY, type WorldSession } from '../net/world';
@@ -35,6 +35,11 @@ import { openOverlay } from './overlay';
 import { RemotePlayers } from './RemotePlayers';
 import { TownBirds } from './TownBirds';
 import { TownNpc } from './TownNpc';
+import { TownStrollers } from './TownStrollers';
+import { FerryClerk } from './FerryClerk';
+import ridesJson from '../data/rides.json';
+import { buyRide, currentRide, parseRides, pushPhase, speedFactor, toggleRide, type RideRules } from '../logic/rides';
+import { RideSprite } from './rideArt';
 import { TownWild, type Critter } from './TownWild';
 import type { Bird } from './TownBirds';
 import { services } from './services';
@@ -55,6 +60,10 @@ const FOLLOW_SLACK = 12;
 const SPARKLE_EVERY_MS = 180;
 /** Depth of flat props (piers): above water (-1900) and its effects (-1890..-1800), below standing things. */
 const FLAT_DEPTH = -1700;
+/** The ferry booth prop the clerk stands in. */
+const BOOTH_SPRITE = 'town_ticket_booth';
+/** The building whose door opens the sports shop (rides) instead of an interior. */
+const SPORTS_SHOP = 'sports';
 /** Opacity of prop ground shadows (ink colour). */
 const SHADOW_ALPHA = 0.35;
 /** How often (ms) a chimney puffs. */
@@ -127,6 +136,8 @@ export class TownScene extends Phaser.Scene {
     this.panel = null;
     this.atDoor = null;
     this.pet = null;
+    this.strollers = null;
+    this.clerk = null;
   }
 
   preload(): void {
@@ -141,6 +152,7 @@ export class TownScene extends Phaser.Scene {
     for (const [key, n] of anims) for (let i = 1; i <= n; i++) this.load.image(`${key}_${pad2(i)}`, `assets/town/${key}_${pad2(i)}.png`);
     for (const a of Object.values(art)) if (a !== AVATAR_ART) loadCharacter(this, a);
     if (this.town.birds) TownBirds.preload(this);
+    if (this.town.clerk) FerryClerk.preload(this);
   }
 
   create(): void {
@@ -169,6 +181,19 @@ export class TownScene extends Phaser.Scene {
         if (tile.index === grass) tile.flipX = tileFlip(tile.x, tile.y).flipX;
       });
     }
+    // Shallows stay light by the shore; open water darkens with distance (calms the busy sea texture).
+    if (this.town.deepWater) {
+      const dw = this.town.deepWater;
+      const g = this.add.graphics().setDepth(-1895);
+      const color = Phaser.Display.Color.HexStringToColor(dw.color).color;
+      waterDepth(this.town.corners, cols, rows, dw.tiles).forEach((row, ty) =>
+        row.forEach((d, tx) => {
+          if (d === 0) return;
+          g.fillStyle(color, dw.alpha[0] + ((dw.alpha[1] - dw.alpha[0]) * (d - 1)) / Math.max(1, dw.tiles - 1));
+          g.fillRect(tx * s, ty * s, s, s);
+        }),
+      );
+    }
     // Moving water: foam lapping at the banks, wave crests on open water (under the sparkles).
     const water = new WaterFx(this, parseWaterRules(waterJson), this.town.corners, s, Math.random);
     water.addFoam(this.town.water.key, layers.water, -1890);
@@ -187,10 +212,20 @@ export class TownScene extends Phaser.Scene {
         this.add.sprite(p.x, p.y, `${p.anim.key}_01`).setOrigin(0.5, 1).setDepth(p.y).play(key);
       } else {
         // Flat pieces (a pier) lie over the water and its effects but under anything standing.
-        const img = this.add.image(p.x, p.y, p.sprite).setOrigin(0.5, 1).setDepth(p.flat ? FLAT_DEPTH : p.y);
+        const img = this.add.image(p.x, p.y, p.sprite).setOrigin(0.5, 1).setDepth(p.flat ? FLAT_DEPTH : p.y + (p.depthBias ?? 0));
         if (p.bob) this.tweens.add({ targets: img, y: p.y + p.bob, duration: Phaser.Math.Between(1100, 1600), yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
       }
       if (p.glow) this.addGlow(p.x, p.y + p.glow.dy, p.glow.r);
+    }
+
+    // The ticket clerk stands inside the booth, between it and its front layer (counter, awning).
+    if (this.town.clerk) {
+      const at = this.town.clerk;
+      const booth = this.town.props.filter((p) => p.sprite === BOOTH_SPRITE).sort((a, b) => Math.abs(a.x - at.x) - Math.abs(b.x - at.x))[0];
+      if (!booth) throw new Error(`town.clerk needs a "${BOOTH_SPRITE}" prop`);
+      const t = services(this).i18n;
+      const greet = this.mapId === 'town' ? ['greetTown1', 'greetTown2', 'greetTown3'] : ['greetAway1', 'greetAway2'];
+      this.clerk = new FerryClerk(this, at, booth.y, this.ferry.clerk, greet.map((k) => t.t(`ferry.clerk.${k}`)), Math.random);
     }
 
     const solids = this.physics.add.staticGroup();
@@ -206,6 +241,7 @@ export class TownScene extends Phaser.Scene {
     this.player = this.physics.add.sprite(start.x, start.y, `${pArt.name}_idle_down`);
     this.player.body.setSize(16, 10).setOffset(16, 34);
     this.player.setCollideWorldBounds(true);
+    this.rideSprite = new RideSprite(this);
     this.physics.add.collider(this.player, solids);
     // Other players here (online): drawn from the world room's synced state.
     const session = this.registry.get(SESSION_KEY) as WorldSession | undefined;
@@ -286,7 +322,8 @@ export class TownScene extends Phaser.Scene {
     const atBooth = !lureHint && this.atFerry({ x: this.player.x, y: this.player.body.bottom });
     this.catchHint.setVisible(lureHint !== null || atBooth);
     if (lureHint) this.catchHint.setPosition(lureHint.x, lureHint.y);
-    else if (atBooth) this.catchHint.setPosition(this.player.x, this.player.y - this.player.displayHeight / 2 - 8);
+    // Beside the head, not above it: standing at the counter, above the head is the clerk's face.
+    else if (atBooth) this.catchHint.setPosition(this.player.x + 18, this.player.y - this.player.displayHeight / 2 + 6);
     if (input.confirm) {
       if (atBooth) return this.mapId === 'town' ? this.openFerry() : this.openFerryBack();
       if (this.lure.pickUpNear(feet)) return;
@@ -306,7 +343,11 @@ export class TownScene extends Phaser.Scene {
   }
 
   private movePlayer(): void {
-    const { speed, character } = homeJson.player;
+    const { character } = homeJson.player;
+    // Outdoors a ride from the sports shop makes the player faster.
+    const surface = surfaceAt(this.town, { x: this.player.x, y: this.player.body.bottom });
+    const speed = homeJson.player.speed * speedFactor(this.world.state, this.rides, surface);
+    const riding = currentRide(this.world.state, this.rides);
     let { x: vx, y: vy } = this.keys.axis();
     if (vx !== 0 && vy !== 0) {
       vx *= Math.SQRT1_2;
@@ -314,8 +355,62 @@ export class TownScene extends Phaser.Scene {
     }
     this.player.setVelocity(vx * speed, vy * speed);
     this.facing = facingFor(vx, vy, this.facing);
-    showMotion(this.player, art[character].name, this.facing, vx !== 0 || vy !== 0);
+    // Legs: walking on foot; on roller skates, skating strides; on a skateboard, a kick then a glide standing still.
+    const moving = vx !== 0 || vy !== 0;
+    this.rollingMs = moving ? this.rollingMs + this.game.loop.delta : 0;
+    const legs = moving && (!riding?.look || pushPhase(riding.look, this.rollingMs) === 'kick');
+    showMotion(this.player, art[character].name, this.facing, legs);
     this.player.setDepth(this.player.body.bottom);
+    this.rideSprite.update(riding, { x: this.player.x, y: this.player.body.bottom }, this.facing, this.player.depth);
+  }
+
+  // ---- rides & sports shop ----------------------------------------------------------
+
+  private readonly rides: RideRules = parseRides(ridesJson);
+  private rideSprite!: RideSprite;
+  /** How long the player has been moving without stopping (ms): paces a skateboard's kick and glide. */
+  private rollingMs = 0;
+
+  /** Gets on or off a ride from the bag. */
+  private toggleRide(id: string): void {
+    const t = (k: string, v?: Record<string, string | number>) => services(this).i18n.t(k, v);
+    const now = toggleRide(this.world.state, id);
+    if (now === 'not_owned') return;
+    this.world.save();
+    this.closePanel();
+    this.toastAt(this.player.x, this.player.y - 30, now ? t('rides.on', { ride: t(`rides.${now}`).toLowerCase() }) : t('rides.off'));
+  }
+
+  /** The sports shop at its door: every ride with its price; ones not on sale yet say "soon". */
+  private openSportsShop(): void {
+    const t = (k: string, v?: Record<string, string | number>) => services(this).i18n.t(k, v);
+    this.player.setVelocity(0, 0);
+    const owned = this.world.state.rides ?? [];
+    const items: MenuItem[] = this.rides.rides.map((r) => {
+      const ride = t(`rides.${r.id}`);
+      const label = r.status !== 'open' ? t('sports.soon', { ride }) : owned.includes(r.id) ? t('sports.owned', { ride }) : t('sports.row', { ride, price: r.price, pct: Math.round(r.speedBonus * 100) });
+      return { label: () => label, onSelect: () => this.buyRide(r.id) };
+    });
+    items.push({ label: () => t('sports.close'), onSelect: () => this.closePanel() });
+    const lines = [t('sports.hello'), t('ferry.coins', { coins: this.world.state.coins })];
+    this.panel?.destroy();
+    this.panel = new MenuPanel(this, { title: t('sports.name'), lines, items, help: t('work.help'), anchor: { kind: 'center' } });
+  }
+
+  /** Buys a ride at the sports shop, or says why not. */
+  private buyRide(id: string): void {
+    const t = (k: string, v?: Record<string, string | number>) => services(this).i18n.t(k, v);
+    const r = buyRide(this.world.state, this.rides, id);
+    const ride = t(`rides.${id}`);
+    const price = this.rides.rides.find((x) => x.id === id)?.price ?? 0;
+    this.closePanel();
+    const at = { x: this.player.x, y: this.player.y - 30 };
+    if (r.ok) {
+      this.world.save();
+      return this.toastAt(at.x, at.y, t('sports.bought', { ride: ride.toLowerCase() }));
+    }
+    if (r.reason === 'no_coins') return this.toastAt(at.x, at.y, t('sports.noCoins', { price }));
+    if (r.reason === 'soon') return this.toastAt(at.x, at.y, t('sports.soonLong', { ride: ride.toLowerCase() }));
   }
 
   private solids!: Phaser.Physics.Arcade.StaticGroup;
@@ -370,7 +465,7 @@ export class TownScene extends Phaser.Scene {
     } else {
       // Far behind: hurry; close: walk at the player's pace so it doesn't bump into them and stop.
       const far = Math.hypot(this.player.x - pet.x, this.player.y - pet.y) > p.followDistance * 2;
-      this.physics.moveTo(pet, goal.x, goal.y, far ? p.speed * 2 : homeJson.player.speed);
+      this.physics.moveTo(pet, goal.x, goal.y, far ? p.speed * 2 : homeJson.player.speed * speedFactor(this.world.state, this.rides, surfaceAt(this.town, { x: this.player.x, y: this.player.body.bottom })));
       this.petFacing = facingFor(goal.x - pet.x, goal.y - pet.y, this.petFacing);
       showMotion(pet, this.petName, this.petFacing, true);
     }
@@ -402,6 +497,18 @@ export class TownScene extends Phaser.Scene {
       if (this.pet) this.physics.add.collider(this.pet, npc.sprite);
       return npc;
     });
+    // Visitors on fixed routes (beachgoers): solid, and they wait for the player instead of pushing.
+    if (this.town.strollers.length > 0) {
+      for (const s of this.town.strollers) {
+        if (!art[s.art]) throw new Error(`Stroller art "${s.art}" is not in sprites.json`);
+        createCharacterAnims(this, art[s.art], 6);
+      }
+      this.strollers = new TownStrollers(this, this.town.strollers, (k) => art[k].name, Math.random);
+      for (const sp of this.strollers.sprites) {
+        this.physics.add.collider(this.player, sp);
+        if (this.pet) this.physics.add.collider(this.pet, sp);
+      }
+    }
 
     if (this.town.birds) this.birds = new TownBirds(this, this.town.birds, Math.random);
     // Wild creatures: each town area picks who is out now (rarity, time, weather), among species with art.
@@ -457,6 +564,8 @@ export class TownScene extends Phaser.Scene {
   }
 
   private npcs: TownNpc[] = [];
+  private strollers: TownStrollers | null = null;
+  private clerk: FerryClerk | null = null;
   private birds: TownBirds | null = null;
   private wild: TownWild | null = null;
   private lure!: TownLure;
@@ -467,6 +576,8 @@ export class TownScene extends Phaser.Scene {
 
   private moveNpcs(dt: number): void {
     for (const n of this.npcs) n.update(dt, this.npcs);
+    this.strollers?.update(dt, { x: this.player.x, y: this.player.body.bottom });
+    if (!this.panel) this.clerk?.update({ x: this.player.x, y: this.player.body.bottom });
     this.wild?.update(dt);
     this.birds?.update(this.time.now, { x: this.player.x, y: this.player.body.bottom, moving: this.player.body.velocity.lengthSq() > 0 });
   }
@@ -529,6 +640,11 @@ export class TownScene extends Phaser.Scene {
         : null,
       baitBlocked,
       atHome: false,
+      rides: {
+        owned: this.rides.rides.filter((r) => r.status === 'open' && (this.world.state.rides ?? []).includes(r.id)),
+        current: () => this.world.state.riding ?? null,
+        toggle: (id) => this.toggleRide(id),
+      },
       sendHome: (id) => {
         if (this.world.state.follower === id) this.dropFollower();
       },
@@ -604,6 +720,7 @@ export class TownScene extends Phaser.Scene {
     const place = this.map.places.find((p) => p.id === b.id);
     // The apartment building, online: your own apartment, or visit a neighbour's.
     if (b.id === 'home' && this.registry.get(SESSION_KEY)) return this.openApartments(b);
+    if (b.id === SPORTS_SHOP) return this.openSportsShop();
     if (place?.status === 'open' && place.scene) return this.enter(place.scene, b.id);
     this.toast(b, services(this).i18n.t('map.soonLong', { place: services(this).i18n.t(`places.${b.id}`) }));
   }
@@ -744,10 +861,11 @@ export class TownScene extends Phaser.Scene {
       const place = t(`ferry.dest.${d.id}`);
       return { label: () => (d.status === 'open' ? place : t('ferry.soon', { place })), onSelect: () => this.sail(d.id, place) };
     });
-    items.push({ label: () => t('ferry.close'), onSelect: () => this.closePanel() });
-    const lines = [t(f.returnFree ? 'ferry.fare' : 'ferry.fareOnly', { fare: f.fare }), t('ferry.coins', { coins: this.world.state.coins })];
+    items.push({ label: () => t('ferry.close'), onSelect: () => this.leaveBooth() });
+    const lines = [t('ferry.clerk.ask'), t(f.returnFree ? 'ferry.fare' : 'ferry.fareOnly', { fare: f.fare }), t('ferry.coins', { coins: this.world.state.coins })];
+    this.clerk?.wave();
     this.panel?.destroy();
-    this.panel = new MenuPanel(this, { title: t('ferry.title'), lines, items, help: t('work.help'), anchor: { kind: 'center' } });
+    this.panel = new MenuPanel(this, { title: this.clerk ? t('ferry.clerk.name') : t('ferry.title'), lines, items, help: t('work.help'), anchor: { kind: 'center' } });
   }
 
   /** Pays the fare and sails, or says why not (nothing is charged then). */
@@ -757,11 +875,12 @@ export class TownScene extends Phaser.Scene {
     const head = { x: this.player.x, y: this.player.y - this.player.displayHeight / 2 - 4 };
     if (!r.ok) {
       this.closePanel();
+      if (r.reason === 'no_coins' && this.clerk) return this.clerk.say(t('ferry.clerk.noCoins', { fare: this.ferry.fare }));
       return this.toastAt(head.x, head.y, r.reason === 'no_coins' ? t('ferry.noCoins', { fare: this.ferry.fare }) : t('ferry.soonLong', { place }));
     }
     this.world.save();
     this.closePanel();
-    this.sailTo(r.map, 'dock');
+    this.sailAfterGoodbye(r.map, 'dock');
   }
 
   /** In town: the ticket booth. Away (a biome): the dock where the ferry takes you back. */
@@ -776,12 +895,29 @@ export class TownScene extends Phaser.Scene {
     const t = (k: string, v?: Record<string, string | number>) => services(this).i18n.t(k, v);
     this.player.setVelocity(0, 0);
     const items: MenuItem[] = [
-      { label: () => t('ferry.backToTown'), onSelect: () => (this.closePanel(), this.sailTo('town', 'ferryDock')) },
-      { label: () => t('ferry.close'), onSelect: () => this.closePanel() },
+      { label: () => t('ferry.backToTown'), onSelect: () => (this.closePanel(), this.sailAfterGoodbye('town', 'ferryDock')) },
+      { label: () => t('ferry.close'), onSelect: () => this.leaveBooth() },
     ];
-    const lines = [t(this.ferry.returnFree ? 'ferry.backFree' : 'ferry.fareOnly', { fare: this.ferry.fare })];
+    const lines = [t('ferry.clerk.askBack'), t(this.ferry.returnFree ? 'ferry.backFree' : 'ferry.fareOnly', { fare: this.ferry.fare })];
+    this.clerk?.wave();
     this.panel?.destroy();
-    this.panel = new MenuPanel(this, { title: t('ferry.title'), lines, items, help: t('work.help'), anchor: { kind: 'center' } });
+    this.panel = new MenuPanel(this, { title: this.clerk ? t('ferry.clerk.name') : t('ferry.title'), lines, items, help: t('work.help'), anchor: { kind: 'center' } });
+  }
+
+  /** Closes the ticket menu with a goodbye from the clerk. */
+  private leaveBooth(): void {
+    this.closePanel();
+    this.clerk?.say(services(this).i18n.t('ferry.clerk.bye'));
+  }
+
+  /** The clerk waves and wishes a good trip, then the boat leaves. */
+  private sailAfterGoodbye(map: string, place: string): void {
+    if (!this.clerk) return this.sailTo(map, place);
+    this.clerk.wave();
+    this.clerk.say(services(this).i18n.t('ferry.clerk.goodTrip'));
+    this.leaving = true;
+    this.player.setVelocity(0, 0);
+    this.time.delayedCall(this.ferry.clerk.farewellMs, () => this.sailTo(map, place));
   }
 
   /** Fades out and reopens this scene on another map, arriving at `place`. The follower comes along. */

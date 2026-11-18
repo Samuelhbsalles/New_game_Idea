@@ -68,6 +68,8 @@ export interface Prop {
   flat?: boolean;
   /** Floats: bobs up and down this many px (boats). */
   bob?: number;
+  /** Added to its depth: a booth's front layer (counter, awning) drawn over the clerk standing inside. */
+  depthBias?: number;
   /** A soft ground shadow under it (w x h ellipse centred dy px below the foot line), so it sits on the ground. */
   shadow?: { w: number; h: number; dy: number };
 }
@@ -78,6 +80,28 @@ export interface NpcDef extends NpcPersona {
   art: string;
   /** Walking speed, px/s. */
   speed: number;
+}
+
+/** A visitor who walks a fixed looping route (beachgoers), pausing at each point. */
+export interface StrollerDef {
+  /** Key in sprites.json. */
+  art: string;
+  /** Walking speed, px/s. */
+  speed: number;
+  /** How long it stands at each route point (ms). */
+  pauseMs: [number, number];
+  /** Points walked in order, then back to the first. At least two. */
+  route: { x: number; y: number }[];
+}
+
+/** Darkens open water with distance from the shore: light shallows, deep blue further out. */
+export interface DeepWater {
+  /** Tint colour, "#rrggbb". */
+  color: string;
+  /** Tint opacity one tile from the shore and at full depth. */
+  alpha: [number, number];
+  /** Tiles from the shore to full depth. */
+  tiles: number;
 }
 
 /** A flock that now and then flies in, lands in an area (the plaza) and later leaves. */
@@ -123,12 +147,20 @@ export interface TownDef {
   smoke: { x: number; y: number }[];
   birds: BirdsDef | null;
   npcs: NpcDef[];
+  /** Route walkers that need no buildings (a biome's visitors). */
+  strollers: StrollerDef[];
   /** Little bubbles NPCs may show while pausing. */
   npcEmotes: string[];
   /** Piers and boardwalks over water: water tiles fully inside one can be walked on. */
   walkways: Box[];
   /** Away from town (a biome reached by ferry): where to stand to sail back. Null in town. */
   ferryBack: Box | null;
+  /** Shallow-to-deep tint on open water; null = none. */
+  deepWater: DeepWater | null;
+  /** Terrain letters that are paved (wheels roll fast); every other terrain is rough. Piers (walkways) are paved too. */
+  paved: Terrain[];
+  /** Where the ferry ticket clerk stands inside the booth (feet; drawn between the booth and its front layer). Null = no clerk. */
+  clerk: { x: number; y: number } | null;
 }
 
 /** Axis-aligned rectangle in town pixels. */
@@ -261,6 +293,10 @@ export function parseTown(raw: unknown): TownDef {
       prop.flat = po.flat as boolean;
     }
     if (po.bob !== undefined) prop.bob = num(po, 'bob', p, 0);
+    if (po.depthBias !== undefined) {
+      if (typeof po.depthBias !== 'number' || !Number.isFinite(po.depthBias)) fail(`${p}.depthBias`, 'expected a number');
+      prop.depthBias = po.depthBias as number;
+    }
     if (po.shadow !== undefined) {
       const so = obj(po.shadow, `${p}.shadow`);
       prop.shadow = { w: num(so, 'w', `${p}.shadow`, 1), h: num(so, 'h', `${p}.shadow`, 1), dy: typeof so.dy === 'number' ? so.dy : 0 };
@@ -316,6 +352,17 @@ export function parseTown(raw: unknown): TownDef {
       temper: num(no, 'temper', p, 1),
     };
   });
+  const strollers = (Array.isArray(o.strollers) ? o.strollers : []).map((v, i): StrollerDef => {
+    const p = `town.strollers[${i}]`;
+    const so = obj(v, p);
+    if (!Array.isArray(so.route) || so.route.length < 2) fail(`${p}.route`, 'expected at least two points');
+    return {
+      art: str(so, 'art', p),
+      speed: num(so, 'speed', p, 1),
+      pauseMs: pair(so.pauseMs, `${p}.pauseMs`),
+      route: (so.route as unknown[]).map((pt, j) => point(pt, `${p}.route[${j}]`)),
+    };
+  });
   const npcEmotes = Array.isArray(o.npcEmotes) ? o.npcEmotes.filter((e): e is string => typeof e === 'string' && e !== '') : [];
   const so = obj(o.spots ?? {}, 'town.spots');
   const spots: Record<string, { x: number; y: number }> = {};
@@ -339,9 +386,21 @@ export function parseTown(raw: unknown): TownDef {
     const fo = obj(o.ferryBack, 'town.ferryBack');
     ferryBack = { x: num(fo, 'x', 'town.ferryBack'), y: num(fo, 'y', 'town.ferryBack'), w: num(fo, 'w', 'town.ferryBack', 1), h: num(fo, 'h', 'town.ferryBack', 1) };
   }
+  let deepWater: DeepWater | null = null;
+  if (o.deepWater !== undefined) {
+    const p = 'town.deepWater';
+    const dw = obj(o.deepWater, p);
+    const alpha = pair(dw.alpha, `${p}.alpha`);
+    if (alpha[1] > 1) fail(`${p}.alpha`, 'expected opacities between 0 and 1');
+    if (typeof dw.color !== 'string' || !/^#[0-9a-f]{6}$/i.test(dw.color)) fail(`${p}.color`, 'expected "#rrggbb"');
+    deepWater = { color: dw.color as string, alpha, tiles: num(dw, 'tiles', p, 1) };
+  }
+  const clerk = o.clerk === undefined ? null : point(o.clerk, 'town.clerk');
+  // Which letters are paved differs per map: in town "c" is the cobbled street, on the shore it is grass.
+  const paved = o.paved === undefined ? (['c'] as Terrain[]) : Array.isArray(o.paved) ? o.paved.map((t, i) => terrain(t, `town.paved[${i}]`)) : fail('town.paved', 'expected a list of terrain letters');
   const cameraLerp = o.cameraLerp === undefined ? 1 : num(o, 'cameraLerp', 'town', 0);
   if (cameraLerp <= 0 || cameraLerp > 1) throw new Error('town.cameraLerp must be in (0, 1]');
-  return { tileSize, cameraLerp, cols, rows, corners, ground: tileset(o.ground, 'town.ground'), water: tileset(o.water, 'town.water'), buildings, props, spots, spawn, smoke, birds, npcs, npcEmotes, walkways, ferryBack };
+  return { tileSize, cameraLerp, cols, rows, corners, ground: tileset(o.ground, 'town.ground'), water: tileset(o.water, 'town.water'), buildings, props, spots, spawn, smoke, birds, npcs, strollers, npcEmotes, walkways, ferryBack, deepWater, clerk, paved };
 }
 
 function wang(c: string[], upper: (t: string) => boolean): number {
@@ -436,4 +495,15 @@ export function arrivalPoint(town: TownDef, place: string): { x: number; y: numb
   const b = town.buildings.find((x) => x.id === place);
   if (b) return { x: b.x + b.doorDx, y: b.y + DOOR_DEPTH + 14 };
   return town.spots[place] ?? null;
+}
+
+/**
+ * Whether the ground at `p` (the player's feet) is paved or rough: on a pier,
+ * paved; otherwise the terrain at the nearest corner of the tile grid.
+ */
+export function surfaceAt(town: TownDef, p: { x: number; y: number }): 'paved' | 'rough' {
+  if (town.walkways.some((w) => p.x >= w.x && p.x < w.x + w.w && p.y >= w.y && p.y < w.y + w.h)) return 'paved';
+  const cx = Math.min(town.cols, Math.max(0, Math.round(p.x / town.tileSize)));
+  const cy = Math.min(town.rows, Math.max(0, Math.round(p.y / town.tileSize)));
+  return town.paved.includes(town.corners[cy][cx] as Terrain) ? 'paved' : 'rough';
 }

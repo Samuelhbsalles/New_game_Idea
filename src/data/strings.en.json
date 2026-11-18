@@ -51,7 +51,8 @@
     "petPharmacy": "Pet pharmacy",
     "careHome": "Care home",
     "park": "Park",
-    "harbor": "Harbor"
+    "harbor": "Harbor",
+    "sports": "Sports shop"
   },
   "pet": {
     "hint": "E",
@@ -320,7 +321,20 @@
     },
     "onlyBoat": "From here, only by boat: go to the dock",
     "backToTown": "Back to town",
-    "backFree": "The trip back is free"
+    "backFree": "The trip back is free",
+    "clerk": {
+      "name": "Sailor Téo",
+      "greetTown1": "Hello! Off somewhere today?",
+      "greetTown2": "Ahoy! The boat leaves soon!",
+      "greetTown3": "Fancy a trip to the beach?",
+      "greetAway1": "Enjoying the sun?",
+      "greetAway2": "Whenever you're ready, I'll take you back!",
+      "ask": "Where are we heading today?",
+      "askBack": "Ready to head back to town?",
+      "goodTrip": "Have a good trip!",
+      "bye": "See you later!",
+      "noCoins": "Oh no, the fare is {fare} coins..."
+    }
   },
   "furniture": {
     "bed": "Bed",
@@ -387,5 +401,28 @@
       "recovering": "recovering",
       "tired": "tired"
     }
+  },
+  "rides": {
+    "skate": "Skateboard",
+    "rollers": "Roller skates",
+    "bike": "Bicycle",
+    "inUse": "Riding it now · E to get off",
+    "faster": "{pct}% faster outdoors",
+    "use": "Ride",
+    "getOff": "Get off",
+    "indoors": "Rides are for outdoors",
+    "on": "On the {ride}!",
+    "off": "Walking again"
+  },
+  "sports": {
+    "name": "Rita · Sports shop",
+    "hello": "Want to get around faster? Take a look!",
+    "row": "{ride} · {price} coins · +{pct}%",
+    "owned": "{ride} (yours)",
+    "soon": "{ride} (soon)",
+    "close": "Close",
+    "bought": "Enjoy your {ride}! Use it from the bag.",
+    "noCoins": "Not enough coins: {price} needed",
+    "soonLong": "The {ride} arrives soon!"
   }
 }

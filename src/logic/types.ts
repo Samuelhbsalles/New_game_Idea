@@ -131,4 +131,8 @@ export interface GameState {
   party?: string[];
   /** Id of the creature following the player around town (chosen in the bag). Missing = nobody chosen. */
   follower?: string;
+  /** Rides bought at the sports shop (rides.ts). Missing = none. */
+  rides?: string[];
+  /** The ride in use outdoors. Missing = walking. */
+  riding?: string;
 }

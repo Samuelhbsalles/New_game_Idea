@@ -1,0 +1,62 @@
+{
+  "npc_beach_woman": {
+    "char": "519bba6e-4299-46b1-9470-b3fc92bafafe",
+    "root": "public/assets/characters",
+    "anims": [
+      {
+        "action": "walk",
+        "state": "Idle",
+        "name": "walk"
+      }
+    ]
+  },
+  "npc_beach_man": {
+    "char": "505cd2f5-8842-451e-851a-5548f9751be2",
+    "root": "public/assets/characters",
+    "anims": [
+      {
+        "action": "walk",
+        "state": "Idle",
+        "name": "walk"
+      }
+    ]
+  },
+  "npc_beach_kid": {
+    "char": "dae4ce19-0bd2-424d-b28f-230d7cbf9d47",
+    "root": "public/assets/characters",
+    "anims": [
+      {
+        "action": "walk",
+        "state": "Idle",
+        "name": "walk"
+      }
+    ]
+  },
+  "npc_surfer": {
+    "char": "375964e1-9039-40ea-a3d6-20e6e80dec67",
+    "root": "public/assets/characters",
+    "anims": [
+      {
+        "action": "walk",
+        "state": "Idle",
+        "name": "walk"
+      }
+    ]
+  },
+  "npc_clerk": {
+    "char": "cbd41d5a-c7fe-4c31-9acd-e23496d1eba9",
+    "root": "public/assets/characters",
+    "anims": [
+      {
+        "action": "breathe",
+        "state": "Idle",
+        "name": "idle"
+      },
+      {
+        "action": "wave",
+        "state": "Idle",
+        "name": "wave"
+      }
+    ]
+  }
+}

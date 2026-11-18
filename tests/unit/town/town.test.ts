@@ -5,7 +5,7 @@ import shoreJson from '../../../src/data/shore.json';
 import townJson from '../../../src/data/town.json';
 import { parseMap } from '../../../src/logic/map';
 import { buildNavGrid, findPath } from '../../../src/logic/npcMind';
-import { arrivalPoint, doorAt, doorBox, paintCorners, parseTown, tileFlip, townLayers, townSolids, type Box } from '../../../src/logic/town';
+import { arrivalPoint, doorAt, doorBox, paintCorners, parseTown, surfaceAt, tileFlip, townLayers, townSolids, type Box } from '../../../src/logic/town';
 
 const WANG = [6, 7, 10, 9, 2, 11, 4, 15, 5, 14, 1, 8, 3, 0, 13, 12];
 
@@ -195,3 +195,26 @@ describe('town', () => {
   });
 });
 
+
+describe('ground under the player', () => {
+  it('in town the cobbled street is paved and the grass is rough', () => {
+    // Arrange: the shipped town, a point on the main street and one on the park lawn.
+    const town = parseTown(townJson);
+    const street = { x: 800, y: 360 };
+    const lawn = { x: 200, y: 580 };
+    // Assert
+    expect(surfaceAt(town, street)).toBe('paved');
+    expect(surfaceAt(town, lawn)).toBe('rough');
+  });
+
+  it('on the shore sand and grass are rough, but the pier is paved', () => {
+    const shore = parseTown(shoreJson);
+    expect(surfaceAt(shore, { x: 640, y: 300 })).toBe('rough');
+    expect(surfaceAt(shore, { x: 640, y: 120 })).toBe('rough');
+    expect(surfaceAt(shore, { x: 640, y: 620 })).toBe('paved');
+  });
+
+  it('refuses an unknown terrain letter in the paved list', () => {
+    expect(() => parseTown({ ...townJson, paved: ['x'] })).toThrow(/paved/);
+  });
+});
