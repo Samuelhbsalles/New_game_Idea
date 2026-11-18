@@ -16,6 +16,11 @@ import { RemotePlayers } from './RemotePlayers';
 import { services } from './services';
 import { createCharacterAnims, facingFor, loadCharacter, showMotion, type CharacterArt, type Dir } from './sprites';
 import { Keys } from './ui/input';
+import catchingJson from '../data/catching.json';
+import bagJson from '../data/bag.json';
+import { parseBagRules } from '../logic/bag';
+import { bagContent } from './bagContent';
+import { BagPanel } from './ui/BagPanel';
 import { HudChip } from './ui/HudChip';
 import { MenuPanel, textStyle, type MenuItem } from './ui/MenuPanel';
 
@@ -64,7 +69,9 @@ export class HomeScene extends Phaser.Scene {
   private keys!: Keys;
   private facing: Dir = 'down';
   private hint!: Phaser.GameObjects.Container;
-  private panel: MenuPanel | null = null;
+  private panel: MenuPanel | BagPanel | null = null;
+  private bagKey!: Phaser.Input.Keyboard.Key;
+  private readonly bagRules = parseBagRules(bagJson);
   private bowl: Placed | null = null;
   private bowlLabel: Phaser.GameObjects.Text | null = null;
 
@@ -227,6 +234,7 @@ export class HomeScene extends Phaser.Scene {
     if (this.visit) new HudChip(this, this.cameras.main.width / 2, 4, { anchor: 'topCenter', fixed: true, depth: 60_000 }).setText(t('home.visiting', { name: this.visit.name }));
 
     this.keys = new Keys(this);
+    this.bagKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.B);
     // Coming back from an overlay: drop the key press that closed it.
     const onResume = () => {
       this.keys.read();
@@ -251,12 +259,14 @@ export class HomeScene extends Phaser.Scene {
     if (this.panel) {
       this.player.setVelocity(0, 0);
       showMotion(this.player, art[this.room.player.character].name, this.facing, false);
-      if (this.panel.handle(input) === 'cancel') this.closePanel();
+      const bagToggle = this.panel instanceof BagPanel && Phaser.Input.Keyboard.JustDown(this.bagKey);
+      if (this.panel.handle(input) === 'cancel' || bagToggle) this.closePanel();
       return;
     }
 
     this.movePlayer();
     if (input.cancel) return this.openPause();
+    if (!this.visit && Phaser.Input.Keyboard.JustDown(this.bagKey)) return this.openBag();
     // Only a player walking down into the doorway leaves (never a stray first-frame overlap).
     const exit = this.player.body.velocity.y > 0 ? exitAt(this.room, { x: this.player.x, y: this.player.body.bottom }) : null;
     if (exit) return this.leave(exit);
@@ -325,7 +335,37 @@ export class HomeScene extends Phaser.Scene {
     return this.t(`species.${this.petSpecies()}`);
   }
 
-  private openPanel(build: () => MenuPanel, pausePet: boolean): void {
+  /** The bag at home: creatures can be swapped between the bag and the apartment here. */
+  private openBag(): void {
+    this.player.setVelocity(0, 0);
+    this.openPanel(
+      () =>
+        new BagPanel(
+          this,
+          bagContent({
+            game: this.world,
+            rules: this.bagRules,
+            genericBaitId: catchingJson.genericBaitId,
+            t: (k, v) => this.t(k, v),
+            artName: (species) => (spritesJson as Record<string, { name: string }>)[species]?.name ?? null,
+            placeBait: null,
+            atHome: true,
+            changed: () => {
+              this.world.save();
+              (this.panel as BagPanel | null)?.refresh();
+            },
+            baitBlocked: this.t('bag.baitInTown'),
+            say: (msg) => (this.panel as BagPanel | null)?.say(msg),
+          }),
+          this.bagRules.cols,
+          this.bagRules.rows,
+          'creatures',
+        ),
+      false,
+    );
+  }
+
+  private openPanel(build: () => MenuPanel | BagPanel, pausePet: boolean): void {
     this.hint.setVisible(false);
     this.panel?.destroy();
     if (pausePet) this.pet.setPaused(true);
@@ -370,7 +410,7 @@ export class HomeScene extends Phaser.Scene {
     const max = this.world.speciesOf(c).maxEnergy;
     const lines = [
       this.t('pet.infoSpecies', { species: this.petName() }),
-      this.t('pet.infoEnergy', { energy: Math.round(c.energy), max }),
+      this.t('pet.infoEnergy', { energy: Math.floor(this.world.energyOf(c.id)), max }),
       this.t('pet.infoStatus', { status: this.t(`status.${c.status}`) }),
       this.t('pet.infoActivity', { activity: this.t(`activity.${this.pet.activity}`) }),
     ];
@@ -466,8 +506,8 @@ export class HomeScene extends Phaser.Scene {
     this.world.save();
     this.closePanel();
     this.pet.command('sleep', () => {
-      // Waking up frees the creature again; energy recovery over time is Story 004.
-      this.world.creature(id).status = 'idle';
+      // Waking up frees it again, keeping the energy it got back while asleep.
+      this.world.wake(id);
       this.world.save();
     });
   }

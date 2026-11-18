@@ -53,6 +53,8 @@ export interface Shop {
   productItemId: string;
   /** Output scale: items = baseProduction × affinity × shiftHours × rate (see work.ts). */
   rate: number;
+  /** Energy one shift costs an ordinary creature (light 15 / medium 25 / heavy 35; see energy.ts). */
+  energyCost: number;
 }
 
 /** Static definition of an item, loaded from items.json. */
@@ -125,4 +127,8 @@ export interface GameState {
   home?: HomeLayout;
   /** Timestamp (ms) at which in-game day 1 began. Optional so older saves load (filled in on load). */
   worldStartAt?: number;
+  /** Ids of the creatures travelling with the player (bag). Missing = the first few (see bag.ts partyOf). */
+  party?: string[];
+  /** Id of the creature following the player around town (chosen in the bag). Missing = nobody chosen. */
+  follower?: string;
 }

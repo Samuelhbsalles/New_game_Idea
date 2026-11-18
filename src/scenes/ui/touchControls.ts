@@ -3,7 +3,7 @@ import touchJson from '../../data/touch.json';
 import { stickDirs, type StickDir } from '../../logic/touchStick';
 
 /** Browser key codes the game already listens to (Phaser reads keyCode). */
-const KEYS: Record<StickDir | 'action' | 'menu' | 'map', { key: string; code: string; keyCode: number }> = {
+const KEYS: Record<StickDir | 'action' | 'menu' | 'map' | 'bag', { key: string; code: string; keyCode: number }> = {
   up: { key: 'ArrowUp', code: 'ArrowUp', keyCode: 38 },
   down: { key: 'ArrowDown', code: 'ArrowDown', keyCode: 40 },
   left: { key: 'ArrowLeft', code: 'ArrowLeft', keyCode: 37 },
@@ -11,6 +11,7 @@ const KEYS: Record<StickDir | 'action' | 'menu' | 'map', { key: string; code: st
   action: { key: 'e', code: 'KeyE', keyCode: 69 },
   menu: { key: 'Escape', code: 'Escape', keyCode: 27 },
   map: { key: 'm', code: 'KeyM', keyCode: 77 },
+  bag: { key: 'b', code: 'KeyB', keyCode: 66 },
 };
 
 /** Sends a key event the game treats like a real key (keyCode forced: some browsers drop it from the init dict). */
@@ -65,6 +66,7 @@ export function installTouchControls(visible: boolean): void {
     <div class="tc-buttons">
       <button class="tc-btn tc-menu" data-k="menu" aria-label="Menu">☰</button>
       <button class="tc-btn tc-map" data-k="map" aria-label="Map">M</button>
+      <button class="tc-btn tc-bag" data-k="bag" aria-label="Bag">🎒</button>
       <button class="tc-btn tc-action" data-k="action" aria-label="Action">E</button>
     </div>`;
   const style = document.createElement('style');
@@ -80,13 +82,14 @@ export function installTouchControls(visible: boolean): void {
     #touch-controls .tc-btn.on { background: ${ui.highlight}; transform: scale(0.94); }
     #touch-controls .tc-action { right: 0; bottom: ${t.buttonSize * 0.35}px; width: ${t.buttonSize * 1.25}px; height: ${t.buttonSize * 1.25}px; background: ${ui.heart}dd; color: ${ui.panel}; }
     #touch-controls .tc-menu { right: ${t.buttonSize * 0.15}px; top: 0; width: ${t.buttonSize * 0.8}px; height: ${t.buttonSize * 0.8}px; font-size: ${Math.round(t.buttonSize * 0.32)}px; }
-    #touch-controls .tc-map { left: 0; bottom: 0; width: ${t.buttonSize * 0.9}px; height: ${t.buttonSize * 0.9}px; }`;
+    #touch-controls .tc-map { left: 0; bottom: 0; width: ${t.buttonSize * 0.9}px; height: ${t.buttonSize * 0.9}px; }
+    #touch-controls .tc-bag { left: 0; top: 0; width: ${t.buttonSize * 0.9}px; height: ${t.buttonSize * 0.9}px; font-size: ${Math.round(t.buttonSize * 0.36)}px; }`;
   document.head.appendChild(style);
   document.body.appendChild(root);
 
   // Buttons: key down while the finger is on it, key up when it lifts or slides off.
   root.querySelectorAll<HTMLButtonElement>('.tc-btn').forEach((btn) => {
-    const k = btn.dataset.k as 'action' | 'menu' | 'map';
+    const k = btn.dataset.k as 'action' | 'menu' | 'map' | 'bag';
     let held = false;
     const up = () => {
       if (!held) return;

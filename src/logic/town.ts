@@ -127,6 +127,8 @@ export interface TownDef {
   npcEmotes: string[];
   /** Piers and boardwalks over water: water tiles fully inside one can be walked on. */
   walkways: Box[];
+  /** Away from town (a biome reached by ferry): where to stand to sail back. Null in town. */
+  ferryBack: Box | null;
 }
 
 /** Axis-aligned rectangle in town pixels. */
@@ -332,9 +334,14 @@ export function parseTown(raw: unknown): TownDef {
     inside(box.x, box.y, p);
     return box;
   });
+  let ferryBack: Box | null = null;
+  if (o.ferryBack !== undefined) {
+    const fo = obj(o.ferryBack, 'town.ferryBack');
+    ferryBack = { x: num(fo, 'x', 'town.ferryBack'), y: num(fo, 'y', 'town.ferryBack'), w: num(fo, 'w', 'town.ferryBack', 1), h: num(fo, 'h', 'town.ferryBack', 1) };
+  }
   const cameraLerp = o.cameraLerp === undefined ? 1 : num(o, 'cameraLerp', 'town', 0);
   if (cameraLerp <= 0 || cameraLerp > 1) throw new Error('town.cameraLerp must be in (0, 1]');
-  return { tileSize, cameraLerp, cols, rows, corners, ground: tileset(o.ground, 'town.ground'), water: tileset(o.water, 'town.water'), buildings, props, spots, spawn, smoke, birds, npcs, npcEmotes, walkways };
+  return { tileSize, cameraLerp, cols, rows, corners, ground: tileset(o.ground, 'town.ground'), water: tileset(o.water, 'town.water'), buildings, props, spots, spawn, smoke, birds, npcs, npcEmotes, walkways, ferryBack };
 }
 
 function wang(c: string[], upper: (t: string) => boolean): number {

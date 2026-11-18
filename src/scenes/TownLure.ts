@@ -14,6 +14,8 @@ import { textStyle } from './ui/MenuPanel';
 /** Texture drawn at runtime for bait lying on the ground (a little pouch). */
 const POUCH_TEX = 'bait_pouch';
 const POUCH = ['..###..', '.#####.', '##ooo##', '#ooooo#', '#ooooo#', '.#####.'];
+/** Item icons are 32px; on the ground they are drawn this much smaller. */
+const GROUND_ICON_SCALE = 0.55;
 /** Close enough (px) to the bait to count as "arrived" and start eating. */
 const ARRIVE_PX = 4;
 
@@ -31,6 +33,8 @@ export interface LureHost {
   say: (msg: string, at: { x: number; y: number }) => void;
   /** Save and refresh the HUD after inventory / roster changes. */
   changed: () => void;
+  /** A creature was just caught (before saving): the scene decides if it travels with you or goes home. */
+  joined: (creatureId: string, species: string) => void;
   /** Play the "caught!" effect on a sprite and remove it. */
   caughtEffect: (sprite: Phaser.GameObjects.Sprite, species: string, firstOfSpecies: boolean) => void;
 }
@@ -65,7 +69,8 @@ interface Bait {
  * while it looks (or stand too close) and it runs. While it eats, sneak up
  * and press E, then hold E to keep the marker in the green zone of the tension
  * bar until the meter fills. Losing costs the bait; a scared creature leaves
- * the bait where it was. Pigeons in the plaza go straight to the minigame.
+ * the bait where it was. (Pigeons in the plaza are lured the same way; the
+ * flocks that fly in and out are only scenery.)
  */
 export class TownLure {
   private state: LureState = { kind: 'idle' };
@@ -98,7 +103,14 @@ export class TownLure {
   placeBait(itemId: string, at: { x: number; y: number }): boolean {
     if (this.state.kind !== 'idle' || !takeBait(this.host.game, itemId)) return false;
     this.host.changed();
-    const sprite = this.host.scene.add.image(Math.round(at.x), Math.round(at.y), POUCH_TEX).setOrigin(0.5, 1).setDepth(at.y - 1);
+    // The bait's own icon on the ground (shrunk), or a plain pouch if it has none.
+    const icon = `item_${itemId}`;
+    const hasIcon = this.host.scene.textures.exists(icon);
+    const sprite = this.host.scene.add
+      .image(Math.round(at.x), Math.round(at.y), hasIcon ? icon : POUCH_TEX)
+      .setOrigin(0.5, 1)
+      .setScale(hasIcon ? GROUND_ICON_SCALE : 1)
+      .setDepth(at.y - 1);
     this.state = { kind: 'waiting', bait: { itemId, x: at.x, y: at.y, sprite }, leftMs: this.host.lure.waitMs };
     this.host.say(this.host.t('catch.placed'), { x: at.x, y: at.y - 14 });
     return true;
@@ -120,21 +132,6 @@ export class TownLure {
     if (s.kind !== 'eating') return null;
     const c = s.critter.sprite;
     return Math.hypot(c.x - p.x, c.y - p.feet) <= this.host.rules.catchRange ? { x: c.x, y: c.y - c.displayHeight - 6 } : null;
-  }
-
-  /** A pigeon pecking in the plaza: use the best bait it accepts and go straight to the minigame. */
-  startBird(bird: Bird): void {
-    const game = this.host.game;
-    const species = 'pigeon';
-    const own = game.config.species.find((s) => s.id === species)!.baitId;
-    const item = [own, this.host.rules.genericBaitId].find((id) => acceptsBait(game, this.host.rules, species, id) && (game.state.inventory[id] ?? 0) > 0);
-    if (!item) {
-      this.host.say(this.host.t('catch.needsBait', { bait: this.host.t(`items.${own}`) }), { x: bird.sprite.x, y: bird.sprite.y - 20 });
-      return;
-    }
-    takeBait(game, item);
-    this.host.changed();
-    this.startMinigame({ kind: 'bird', bird }, species, acceptsBait(game, this.host.rules, species, item) === 'specific', bird.sprite.x);
   }
 
   /** Per frame. `confirm` = E just pressed (handled here when it means something). Returns true if E was used. */
@@ -238,7 +235,7 @@ export class TownLure {
     else if (art) showMotion(c.sprite, art.name, 'down', false);
     // The pouch shrinks as it is eaten.
     const ms = nextDelay(this.host.lure.eatMs, Math.random);
-    this.host.scene.tweens.add({ targets: bait.sprite, scale: 0.4, duration: ms });
+    this.host.scene.tweens.add({ targets: bait.sprite, scale: bait.sprite.scale * 0.4, duration: ms });
     this.state = { kind: 'eating', bait, critter: c, leftMs: ms };
   }
 
@@ -283,7 +280,8 @@ export class TownLure {
     this.state = { kind: 'idle' };
     const at = { x: sprite.x, y: sprite.y - sprite.displayHeight };
     if (r.result === 'caught') {
-      const { firstOfSpecies } = catchCreature(this.host.game, s.species);
+      const { creature, firstOfSpecies } = catchCreature(this.host.game, s.species);
+      this.host.joined(creature.id, s.species);
       this.host.changed();
       if (s.target.kind === 'wild') this.host.wild.remove(s.target.critter);
       else this.host.birds?.take(s.target.bird);

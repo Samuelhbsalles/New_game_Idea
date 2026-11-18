@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { nextDelay } from '../logic/ambient';
-import type { AreaRule } from '../logic/catching';
+import type { AreaBox, AreaRule } from '../logic/catching';
 import { climbAlpha, climbStep, nearestTree, trunkFront, type ClimberRules, type WildRules } from '../logic/climb';
 import { findPath, type NavGrid, type Pt } from '../logic/npcMind';
 import { facingFor, showMotion, type Dir } from './sprites';
@@ -37,6 +37,8 @@ export interface Critter {
   climb: Climb | null;
   /** True while bait (TownLure) is in charge of it: it does not wander on its own. */
   lured?: boolean;
+  /** The rectangle of its area it appeared in: it wanders there (areas can span the whole town). */
+  box: AreaBox;
 }
 
 /** Trees critters may climb, and who climbs them. */
@@ -74,7 +76,7 @@ export class TownWild {
     for (const a of areas) {
       if (!a.inTown || a.max <= 0) continue;
       const area = a as Critter['area'];
-      this.spawn(area);
+      for (let i = 0; i < area.start; i++) this.spawn(area);
       const again = () =>
         scene.time.delayedCall(nextDelay(area.everyMs, rng), () => {
           if (this.critters.filter((c) => c.area === area).length < area.max) this.spawn(area);
@@ -95,7 +97,7 @@ export class TownWild {
     const p = this.randomIn(area);
     if (!p) return;
     const sprite = this.scene.add.sprite(p.x, p.y, `${name}_idle_down`).setOrigin(0.5, 0.9).setScale(this.scaleFor(species)).setAlpha(0);
-    const critter: Critter = { species, sprite, area, path: [], waitMs: nextDelay(PAUSE_MS, this.rng), facing: 'down', climb: null };
+    const critter: Critter = { species, sprite, area, path: [], waitMs: nextDelay(PAUSE_MS, this.rng), facing: 'down', climb: null, box: p.box };
     this.critters.push(critter);
     // A climber near a tree arrives by coming down it; everyone else fades in where they stand.
     const rules = this.climberRules(species);
@@ -110,18 +112,23 @@ export class TownWild {
   }
 
   /** A random free spot in the area (never inside a tree trunk, bench or building), or null. */
-  private randomIn(area: Critter['area']): Pt | null {
+  private randomIn(area: Critter['area'], only?: AreaBox): (Pt & { box: AreaBox }) | null {
     const g = this.nav;
-    const r = area.inTown;
+    // Bigger rectangles get more creatures: pick one weighted by its size (or stay in `only`).
+    const boxes = only ? [only] : area.inTown;
+    const total = boxes.reduce((t, b) => t + b.w * b.h, 0);
     for (let i = 0; i < 20; i++) {
+      let pick = this.rng() * total;
+      const r = boxes.find((b) => (pick -= b.w * b.h) < 0) ?? boxes[boxes.length - 1];
       const x = r.x + this.rng() * r.w;
       const y = r.y + this.rng() * r.h;
       const cx = Math.floor(x / g.cell);
       const cy = Math.floor(y / g.cell);
-      if (g.free[cy]?.[cx]) return { x, y };
+      if (g.free[cy]?.[cx]) return { x, y, box: r };
     }
     return null;
   }
+
 
   /** Per frame: pause, then hop over to a new spot in the area (or climb a tree). */
   update(dtMs: number): void {
@@ -174,7 +181,7 @@ export class TownWild {
         return;
       }
     }
-    const goal = this.randomIn(c.area);
+    const goal = this.randomIn(c.area, c.box);
     c.path = goal ? findPath(this.nav, c.sprite, goal) : [];
   }
 

@@ -9,8 +9,8 @@ export type FerryStatus = 'open' | 'soon';
 export interface FerryDestination {
   id: string;
   status: FerryStatus;
-  /** Scene that the trip opens (required when open). */
-  scene?: string;
+  /** Map the trip sails to (required when open), e.g. "shore". */
+  map?: string;
 }
 
 export interface FerryRules {
@@ -23,7 +23,7 @@ export interface FerryRules {
   destinations: FerryDestination[];
 }
 
-export type TicketResult = { ok: true; coins: number; scene: string } | { ok: false; reason: 'unknown' | 'soon' | 'no_coins' };
+export type TicketResult = { ok: true; coins: number; map: string } | { ok: false; reason: 'unknown' | 'soon' | 'no_coins' };
 
 const fail = (path: string, msg: string): never => {
   throw new Error(`ferry.json ${path}: ${msg}`);
@@ -49,8 +49,8 @@ export function parseFerry(json: unknown): FerryRules {
     seen.add(id);
     const status = dobj.status === 'open' || dobj.status === 'soon' ? dobj.status : fail(`${p}.status`, 'expected "open" or "soon"');
     const dest: FerryDestination = { id, status };
-    if (typeof dobj.scene === 'string' && dobj.scene !== '') dest.scene = dobj.scene;
-    if (status === 'open' && !dest.scene) fail(`${p}.scene`, 'an open destination needs a scene');
+    if (typeof dobj.map === 'string' && dobj.map !== '') dest.map = dobj.map;
+    if (status === 'open' && !dest.map) fail(`${p}.map`, 'an open destination needs a map');
     return dest;
   });
   return {
@@ -63,15 +63,15 @@ export function parseFerry(json: unknown): FerryRules {
 
 /**
  * Buys a trip out to `destId`: takes the fare from the wallet and returns the
- * scene to open. Nothing is charged when the trip can't happen.
+ * map to sail to. Nothing is charged when the trip can't happen.
  */
 export function buyTicket(wallet: { coins: number }, rules: FerryRules, destId: string): TicketResult {
   const dest = rules.destinations.find((d) => d.id === destId);
   if (!dest) return { ok: false, reason: 'unknown' };
-  if (dest.status !== 'open' || !dest.scene) return { ok: false, reason: 'soon' };
+  if (dest.status !== 'open' || !dest.map) return { ok: false, reason: 'soon' };
   if (wallet.coins < rules.fare) return { ok: false, reason: 'no_coins' };
   wallet.coins -= rules.fare;
-  return { ok: true, coins: wallet.coins, scene: dest.scene };
+  return { ok: true, coins: wallet.coins, map: dest.map };
 }
 
 /** True when a point (the player's feet) is in front of the ticket booth. */

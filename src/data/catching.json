@@ -9,15 +9,24 @@
     "legendary": { "weight": 1, "specific": 0, "generic": 0 }
   },
   "areas": {
-    "park": { "inTown": { "x": 60, "y": 470, "w": 220, "h": 70 }, "max": 3, "everyMs": [20000, 45000] },
+    "park": {
+      "inTown": [
+        { "x": 60, "y": 420, "w": 520, "h": 140 },
+        { "x": 20, "y": 30, "w": 1560, "h": 90 },
+        { "x": 40, "y": 820, "w": 1340, "h": 70 },
+        { "x": 20, "y": 560, "w": 90, "h": 120 },
+        { "x": 1660, "y": 40, "w": 600, "h": 330 }
+      ],
+      "max": 7, "start": 4, "everyMs": [12000, 30000]
+    },
     "streets": { "inTown": { "x": 230, "y": 340, "w": 1260, "h": 50 }, "max": 2, "everyMs": [30000, 60000] },
-    "plaza": { "inTown": null, "max": 0, "everyMs": [0, 0] },
+    "plaza": { "inTown": { "x": 640, "y": 430, "w": 320, "h": 160 }, "max": 3, "start": 2, "everyMs": [15000, 35000] },
     "harbor": { "inTown": { "x": 1300, "y": 560, "w": 240, "h": 70 }, "max": 2, "everyMs": [30000, 60000] },
     "rooftops": { "inTown": null, "max": 0, "everyMs": [0, 0] },
     "rural": { "inTown": null, "max": 0, "everyMs": [0, 0] },
     "lake": { "inTown": null, "max": 0, "everyMs": [0, 0] },
     "river": { "inTown": null, "max": 0, "everyMs": [0, 0] },
-    "shore": { "inTown": null, "max": 0, "everyMs": [0, 0] },
+    "shore": { "inTown": [{ "x": 40, "y": 170, "w": 1180, "h": 300 }], "map": "shore", "max": 5, "start": 3, "everyMs": [15000, 35000] },
     "metro": { "inTown": null, "max": 0, "everyMs": [0, 0] },
     "sewer": { "inTown": null, "max": 0, "everyMs": [0, 0] }
   }

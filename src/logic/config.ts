@@ -104,6 +104,7 @@ export function parseConfig(raw: { species: unknown; shops: unknown; items: unkn
       shiftMs: gameHoursToMs(shiftHours, time),
       productItemId: str(o, 'productItemId', p),
       rate: num(o, 'rate', p, { min: 0 }),
+      energyCost: num(o, 'energyCost', p, { min: 0 }),
     };
   });
   const items: Item[] = arr(raw.items, 'items').map((e, i) => {

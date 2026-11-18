@@ -7,6 +7,10 @@ export interface TimeConfig {
   /** Night runs from nightStartHour to dayStartHour (wrapping past midnight). */
   nightStartHour: number;
   dayStartHour: number;
+  /** Energy a creature regains per in-game hour when not working (src/logic/energy.ts). */
+  energyPerGameHour: number;
+  /** Recovery is this many times faster asleep in the pet bed. */
+  sleepEnergyMultiplier: number;
 }
 
 /** A moment in game time. */
@@ -37,7 +41,19 @@ export function parseTimeConfig(raw: unknown): TimeConfig {
     if (typeof v !== 'number' || !Number.isInteger(v) || v < 0 || v > 23) throw new Error(`Invalid config at time.${k}: expected integer 0-23`);
     return v;
   };
-  return { dayMs, startHour, nightStartHour: hour('nightStartHour'), dayStartHour: hour('dayStartHour') };
+  const positive = (k: 'energyPerGameHour' | 'sleepEnergyMultiplier') => {
+    const v = o[k];
+    if (typeof v !== 'number' || !Number.isFinite(v) || v < 0) throw new Error(`Invalid config at time.${k}: expected number >= 0`);
+    return v;
+  };
+  return {
+    dayMs,
+    startHour,
+    nightStartHour: hour('nightStartHour'),
+    dayStartHour: hour('dayStartHour'),
+    energyPerGameHour: positive('energyPerGameHour'),
+    sleepEnergyMultiplier: positive('sleepEnergyMultiplier'),
+  };
 }
 
 /** True at night: from nightStartHour until dayStartHour. */

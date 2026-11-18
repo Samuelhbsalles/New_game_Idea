@@ -241,7 +241,9 @@
     "close": "Close",
     "help": "↑↓ choose · E confirm · Esc close",
     "ready": "Ready!",
-    "inventory": "{item}: {count}"
+    "inventory": "{item}: {count}",
+    "tired": "{name} is too tired ({energy}/{needs}). Rest or feed it.",
+    "putRow": "{name} · {count} {item} · ⚡{cost}/{energy}"
   },
   "market": {
     "title": "Market",
@@ -315,7 +317,10 @@
       "shore": "Beach",
       "river": "River",
       "island": "Island"
-    }
+    },
+    "onlyBoat": "From here, only by boat: go to the dock",
+    "backToTown": "Back to town",
+    "backFree": "The trip back is free"
   },
   "furniture": {
     "bed": "Bed",
@@ -344,5 +349,43 @@
     "chest": "Chest",
     "desk": "Desk",
     "sofa3": "3-seat sofa"
+  },
+  "bag": {
+    "title": "Bag",
+    "tab": {
+      "baits": "Baits",
+      "items": "Items",
+      "creatures": "Animals"
+    },
+    "empty": "Nothing here yet",
+    "help": "Arrows move · E use · B/Esc close",
+    "loves": "Favourite of: {list}",
+    "generic": "Plain bait: attracts common animals",
+    "food": "Food: restores animals' energy",
+    "goods": "Material: sells at the market",
+    "placeBait": "Put down as bait",
+    "placeHere": "Use it where animals live",
+    "creatureInfo": "Energy {energy} · {status}",
+    "withYou": "With you",
+    "atHomeTag": "At home",
+    "takeAlong": "Take along",
+    "leaveHome": "Leave at home",
+    "partyFull": "{max} are with you already",
+    "lastOne": "Someone has to come with you",
+    "wentHome": "{name} went home (bag full)",
+    "followMe": "Follow me",
+    "stopFollow": "Stop following",
+    "baitAlreadyDown": "Bait is already down. Pick it up with E.",
+    "noAnimalsHere": "No animals here. Try the park or the trees.",
+    "baitInTown": "Bait is used in town, where animals live.",
+    "options": "options",
+    "sendHome": "Send home",
+    "working": "{name} is at work right now",
+    "mood": {
+      "working": "working",
+      "rested": "rested",
+      "recovering": "recovering",
+      "tired": "tired"
+    }
   }
 }

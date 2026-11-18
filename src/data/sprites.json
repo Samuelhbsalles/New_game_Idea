@@ -103,6 +103,7 @@
   ] },
   "pigeon": {
     "name": "pigeon",
+    "scale": 0.5,
     "folder": "creatures/pigeon",
     "walkFrames": 8,
     "extras": [

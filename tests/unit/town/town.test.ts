@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import mapJson from '../../../src/data/map.json';
 import spritesJson from '../../../src/data/sprites.json';
+import shoreJson from '../../../src/data/shore.json';
 import townJson from '../../../src/data/town.json';
 import { parseMap } from '../../../src/logic/map';
 import { buildNavGrid, findPath } from '../../../src/logic/npcMind';
@@ -182,4 +183,15 @@ describe('town', () => {
       for (let j = i + 1; j < solids.length; j++) expect(overlap(solids[i], solids[j]), `${JSON.stringify(solids[i])} vs ${JSON.stringify(solids[j])}`).toBe(false);
     }
   });
+
+  it('shipped shore map: valid, the dock arrival is free, and the ferry back is reachable from it', () => {
+    const shore = parseTown(shoreJson);
+    const solids = townSolids(shore);
+    const dock = arrivalPoint(shore, 'dock')!;
+    expect(dock).not.toBeNull();
+    expect(solids.some((b) => contains(b, dock))).toBe(false);
+    expect(shore.ferryBack).not.toBeNull();
+    expect(contains(shore.ferryBack!, dock)).toBe(true);
+  });
 });
+

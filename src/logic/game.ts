@@ -1,3 +1,4 @@
+import { energyNow, settleEnergy, shiftEnergyCost, type EnergyRules } from './energy';
 import type { Clock } from './clock';
 import { deserialize, isShiftDone, newGame, serialize } from './state';
 import type { Storage } from './storage';
@@ -50,12 +51,22 @@ export class Game {
    * a slot outside the shop's range, a taken slot, or a creature already working.
    * Throws on an unknown creature or shop (a bug, not a player action).
    */
-  startShift(creatureId: string, shopId: string, slot: number): { ok: true; shift: Shift } | { ok: false; reason: 'bad_slot' | 'slot_taken' | 'busy' } {
+  startShift(
+    creatureId: string,
+    shopId: string,
+    slot: number,
+  ): { ok: true; shift: Shift } | { ok: false; reason: 'bad_slot' | 'slot_taken' | 'busy' } | { ok: false; reason: 'tired'; energy: number; needs: number } {
     const creature = this.creature(creatureId);
     const shop = this.shop(shopId);
     if (!Number.isInteger(slot) || slot < 0 || slot >= shop.slots) return { ok: false, reason: 'bad_slot' };
     if (this.shiftAt(shopId, slot)) return { ok: false, reason: 'slot_taken' };
     if (creature.status === 'working' || this.state.shifts.some((s) => s.creatureId === creatureId)) return { ok: false, reason: 'busy' };
+    // Work costs energy up front; without enough for the whole shift it can't start.
+    const needs = this.shiftCost(creatureId, shopId);
+    const max = this.speciesOf(creature).maxEnergy;
+    settleEnergy(creature, max, this.clock.now(), this.energyRules());
+    if (creature.energy < needs) return { ok: false, reason: 'tired', energy: Math.floor(creature.energy), needs };
+    creature.energy -= needs;
     const startedAt = this.clock.now();
     const shift: Shift = { shopId, slot, creatureId, startedAt, endsAt: startedAt + shop.shiftMs };
     this.state.shifts.push(shift);
@@ -83,7 +94,7 @@ export class Game {
   /**
    * Collects a finished shift: its output goes to the inventory (or the coins,
    * for a workplace whose product is COINS_PRODUCT), the slot frees
-   * and the creature goes home tired ('resting'). Before the end it gives nothing
+   * and the creature is free again, with the energy the shift cost spent. Before the end it gives nothing
    * and leaves the shift running.
    */
   collectShift(shopId: string, slot: number): { ok: true; itemId: string; count: number; creatureId: string } | { ok: false; reason: 'empty' | 'not_done' } {
@@ -96,7 +107,9 @@ export class Game {
     if (shop.productItemId === COINS_PRODUCT) this.state.coins += count;
     else this.state.inventory[shop.productItemId] = (this.state.inventory[shop.productItemId] ?? 0) + count;
     this.state.shifts = this.state.shifts.filter((s) => s !== shift);
-    creature.status = 'resting';
+    // Back from work: free again, and its energy starts coming back from now.
+    creature.status = 'idle';
+    creature.energyAt = this.clock.now();
     return { ok: true, itemId: shop.productItemId, count, creatureId: creature.id };
   }
 
@@ -163,6 +176,7 @@ export class Game {
     if ((this.state.inventory[itemId] ?? 0) <= 0) return { ok: false, reason: 'no_item' };
     this.state.inventory[itemId] -= 1;
     const max = this.speciesOf(creature).maxEnergy;
+    settleEnergy(creature, max, this.clock.now(), this.energyRules());
     creature.energy = Math.min(max, creature.energy + item.energyRestore);
     creature.energyAt = this.clock.now();
     return { ok: true, energy: creature.energy };
@@ -192,17 +206,45 @@ export class Game {
     const item = this.config.items.find((i) => i.id === itemId);
     if (!item || item.energyRestore === undefined || (this.state.bowl ?? 0) <= 0) return null;
     this.state.bowl = (this.state.bowl ?? 0) - 1;
+    settleEnergy(creature, this.speciesOf(creature).maxEnergy, this.clock.now(), this.energyRules());
     creature.energy = Math.min(this.speciesOf(creature).maxEnergy, creature.energy + item.energyRestore);
     creature.energyAt = this.clock.now();
     return { energy: creature.energy };
   }
 
   /**
-   * Sends a creature to rest. Energy recovery over time is Story 004; this only
-   * records the status. Throws on an unknown creature.
+   * Puts a creature to sleep (pet bed): its energy then comes back faster.
+   * Throws on an unknown creature.
    */
   rest(creatureId: string): void {
-    this.creature(creatureId).status = 'resting';
+    const c = this.creature(creatureId);
+    settleEnergy(c, this.speciesOf(c).maxEnergy, this.clock.now(), this.energyRules());
+    c.status = 'resting';
+  }
+
+  /** Wakes a sleeping creature (keeps what it regained). */
+  wake(creatureId: string): void {
+    const c = this.creature(creatureId);
+    settleEnergy(c, this.speciesOf(c).maxEnergy, this.clock.now(), this.energyRules());
+    if (c.status === 'resting') c.status = 'idle';
+  }
+
+  /** A creature's energy right now (it comes back over time; see energy.ts). */
+  energyOf(creatureId: string): number {
+    const c = this.creature(creatureId);
+    return energyNow(c, this.speciesOf(c).maxEnergy, this.clock.now(), this.energyRules());
+  }
+
+  /** Energy one shift at `shopId` costs this creature (its affinity there changes it). */
+  shiftCost(creatureId: string, shopId: string): number {
+    const species = this.speciesOf(this.creature(creatureId));
+    return shiftEnergyCost(this.shop(shopId).energyCost, species.affinities[shopId] ?? 1);
+  }
+
+  /** Recovery rules from the time config. */
+  energyRules(): EnergyRules {
+    const t = this.config.time;
+    return { perGameHour: t.energyPerGameHour, sleepMultiplier: t.sleepEnergyMultiplier, gameHourMs: t.dayMs / 24 };
   }
 
   /** The creature with this id; throws if unknown. */

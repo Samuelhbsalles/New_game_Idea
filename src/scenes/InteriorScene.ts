@@ -507,7 +507,14 @@ export class InteriorScene extends Phaser.Scene {
     if (!shift) {
       const free = this.world.state.creatures.filter((c) => c.status !== 'working');
       const items: MenuItem[] = free.map((c) => ({
-        label: () => `${this.t('work.put', { name: this.creatureName(c.id) })} (${shiftOutput(this.world.speciesOf(c), shop)} ${item})`,
+        label: () =>
+          this.t('work.putRow', {
+            name: this.creatureName(c.id),
+            count: shiftOutput(this.world.speciesOf(c), shop),
+            item,
+            cost: this.world.shiftCost(c.id, shopId),
+            energy: Math.floor(this.world.energyOf(c.id)),
+          }),
         onSelect: () => this.assign(c.id, slot),
       }));
       const lines = free.length === 0 ? [this.t('work.noneFree')] : undefined;
@@ -533,7 +540,11 @@ export class InteriorScene extends Phaser.Scene {
   private assign(creatureId: string, slot: number): void {
     this.closePanel();
     const r = this.world.startShift(creatureId, this.def.shopId, slot);
-    if (!r.ok) return;
+    if (!r.ok) {
+      const st = this.def.stations[slot];
+      if (r.reason === 'tired') this.floatText(this.t('work.tired', { name: this.creatureName(creatureId), energy: r.energy, needs: r.needs }), st.x, st.y - 56);
+      return;
+    }
     this.world.save();
     // The following pet walks over to the station instead of tagging along.
     if (creatureId === homeJson.pet.creatureId && this.pet) {

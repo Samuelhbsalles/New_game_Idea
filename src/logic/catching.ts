@@ -11,13 +11,25 @@ export interface RarityRule {
   generic: number;
 }
 
-/** A neighbourhood creatures live in, and where (if anywhere) it is in the town. */
+/** One rectangle of town pixels. */
+export interface AreaBox {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+/** A neighbourhood creatures live in, and where (if anywhere) it is in the town (one or more rectangles). */
 export interface AreaRule {
   id: string;
   /** Spawn rectangle in town pixels, or null when the area is not in the town yet (lake, shore...). */
-  inTown: { x: number; y: number; w: number; h: number } | null;
+  inTown: AreaBox[] | null;
+  /** Which map the rectangles are on: "town" (default) or a biome map such as "shore". */
+  map: string;
   /** Most wild creatures out at once in this area. */
   max: number;
+  /** How many are already out when the player arrives (default 1, at most max). */
+  start: number;
   /** Wait between appearances (ms). */
   everyMs: [number, number];
 }
@@ -30,6 +42,11 @@ export interface CatchRules {
   catchRange: number;
   rarities: Record<Rarity, RarityRule>;
   areas: Record<string, AreaRule>;
+}
+
+/** The wild area containing a point on a map (town by default), or null. */
+export function areaAt(rules: CatchRules, p: { x: number; y: number }, map = 'town'): AreaRule | null {
+  return Object.values(rules.areas).find((a) => a.map === map && a.inTown?.some((r) => p.x >= r.x && p.x < r.x + r.w && p.y >= r.y && p.y < r.y + r.h)) ?? null;
 }
 
 /** Conditions right now that decide who is out. */
@@ -85,12 +102,22 @@ export function parseCatchRules(raw: unknown, species: Species[], itemIds: strin
     const x = obj(v, p);
     let inTown: AreaRule['inTown'] = null;
     if (x.inTown !== null) {
-      const a = obj(x.inTown, `${p}.inTown`);
-      inTown = { x: num(a, 'x', `${p}.inTown`), y: num(a, 'y', `${p}.inTown`), w: num(a, 'w', `${p}.inTown`, 1), h: num(a, 'h', `${p}.inTown`, 1) };
+      // One rectangle, or a list of them (creatures spread over several spots, e.g. every group of trees).
+      const list = Array.isArray(x.inTown) ? x.inTown : [x.inTown];
+      if (list.length === 0) fail(`${p}.inTown`, 'expected a rectangle or a non-empty list');
+      inTown = list.map((r, i) => {
+        const q = Array.isArray(x.inTown) ? `${p}.inTown[${i}]` : `${p}.inTown`;
+        const a = obj(r, q);
+        return { x: num(a, 'x', q), y: num(a, 'y', q), w: num(a, 'w', q, 1), h: num(a, 'h', q, 1) };
+      });
     }
     const e = x.everyMs;
     if (!Array.isArray(e) || e.length !== 2 || !e.every((n) => typeof n === 'number' && n >= 0) || e[0] > e[1]) fail(`${p}.everyMs`, 'expected [min, max]');
-    areas[id] = { id, inTown, max: num(x, 'max', p, 0), everyMs: [e[0], e[1]] };
+    const max = num(x, 'max', p, 0);
+    const start = x.start === undefined ? Math.min(1, max) : num(x, 'start', p, 0);
+    if (start > max) fail(`${p}.start`, 'cannot be above max');
+    const map = x.map === undefined ? 'town' : typeof x.map === 'string' && x.map !== '' ? x.map : fail(`${p}.map`, 'expected a map name');
+    areas[id] = { id, inTown, map, max, start, everyMs: [e[0], e[1]] };
   }
   for (const s of species) for (const a of s.areas) if (!(a in areas)) fail(`species.${s.id}.areas`, `unknown area "${a}"`);
   return { genericBaitId: o.genericBaitId, catchRange: num(o, 'catchRange', 'catching', 1), rarities, areas };

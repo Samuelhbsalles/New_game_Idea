@@ -11,6 +11,7 @@ import { MemoryStorage } from '../../../src/logic/memoryStorage';
 import {
   AUTO_ACTIVITIES,
   followTarget,
+  followWithSlack,
   nextActivity,
   pickDuration,
   pickWanderTarget,
@@ -180,3 +181,18 @@ describe('feeding, bowl and resting', () => {
     expect(c.status).toBe('resting');
   });
 });
+
+describe('following with slack (no stop-start flicker)', () => {
+  it('a walking pet keeps walking just inside the follow distance', () => {
+    // 24px away with distance 26 and slack 10: plain followTarget would stop it here.
+    expect(followTarget({ x: 0, y: 0 }, { x: 24, y: 0 }, 26)).toBeNull();
+    expect(followWithSlack({ x: 0, y: 0 }, { x: 24, y: 0 }, 26, 10, true)).not.toBeNull();
+  });
+
+  it('a walking pet stops once well inside; a standing one waits until the leader is beyond distance + slack', () => {
+    expect(followWithSlack({ x: 0, y: 0 }, { x: 20, y: 0 }, 26, 10, true)).toBeNull();
+    expect(followWithSlack({ x: 0, y: 0 }, { x: 34, y: 0 }, 26, 10, false)).toBeNull();
+    expect(followWithSlack({ x: 0, y: 0 }, { x: 40, y: 0 }, 26, 10, false)).toEqual({ x: 19, y: 0 });
+  });
+});
+

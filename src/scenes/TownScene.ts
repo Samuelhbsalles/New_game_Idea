@@ -4,6 +4,7 @@ import catchingJson from '../data/catching.json';
 import mapJson from '../data/map.json';
 import spritesJson from '../data/sprites.json';
 import townJson from '../data/town.json';
+import shoreJson from '../data/shore.json';
 import ui from '../data/ui.json';
 import waterJson from '../data/water.json';
 import ferryJson from '../data/ferry.json';
@@ -14,11 +15,15 @@ import wildJson from '../data/wild.json';
 import { parseWildRules } from '../logic/climb';
 import type { Game } from '../logic/game';
 import { parseMap, type TownMap } from '../logic/map';
-import { followTarget } from '../logic/petBrain';
-import { acceptsBait, baitCount, baitsHeld, eligibleSpecies, parseCatchRules, pickSpawn, type AreaRule, type CatchRules } from '../logic/catching';
+import { followWithSlack } from '../logic/petBrain';
+import { acceptsBait, areaAt, baitCount, baitsHeld, eligibleSpecies, parseCatchRules, pickSpawn, type AreaRule, type CatchRules } from '../logic/catching';
 import lureJson from '../data/lure.json';
-import { parseLureRules } from '../logic/lure';
+import { parseLureRules, throwPoint, type LureRules } from '../logic/lure';
 import { TownLure } from './TownLure';
+import bagJson from '../data/bag.json';
+import { parseBagRules, placeNewCreature, type BagTab } from '../logic/bag';
+import { bagContent } from './bagContent';
+import { BagPanel } from './ui/BagPanel';
 import { isNight } from '../logic/gameTime';
 import { buildNavGrid } from '../logic/npcMind';
 import { arrivalPoint, doorAt, parseTown, tileFlip, townLayers, townSolids, type Building, type TownDef } from '../logic/town';
@@ -44,6 +49,8 @@ const art: Record<string, CharacterArt> = { ...(spritesJson as Record<string, Ch
 /** Weather until a weather system exists: species needing rain, storms or tides do not appear yet. */
 const CURRENT_WEATHER = 'clear';
 
+/** Give (px) around the follow distance so a follower walks steadily (followWithSlack). */
+const FOLLOW_SLACK = 12;
 /** How often (ms) a water sparkle appears somewhere in view. */
 const SPARKLE_EVERY_MS = 180;
 /** Depth of flat props (piers): above water (-1900) and its effects (-1890..-1800), below standing things. */
@@ -69,7 +76,12 @@ export interface TownData {
   place?: string;
   /** True if the pet was following the player and comes along. */
   petFollowing?: boolean;
+  /** Which map: "town" (default) or a biome reached by ferry, e.g. "shore". */
+  map?: string;
 }
+
+/** Every walkable map this scene can show (same format: src/logic/town.ts). */
+const MAPS: Record<string, unknown> = { town: townJson, shore: shoreJson };
 
 /**
  * The walkable starter town: Wang-tiled cobble, grass and harbour water,
@@ -91,8 +103,11 @@ export class TownScene extends Phaser.Scene {
   private pet: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody | null = null;
   private petName = '';
   private petFacing: Dir = 'down';
+  /** The follower is mid-walk (see followWithSlack). */
+  private petWalking = false;
   private facing: Dir = 'down';
-  private panel: MenuPanel | null = null;
+  private panel: MenuPanel | BagPanel | null = null;
+  private bagKey!: Phaser.Input.Keyboard.Key;
   private leaving = false;
   /** Door the player is standing in, so its "soon" toast shows once per visit. */
   private atDoor: string | null = null;
@@ -102,8 +117,12 @@ export class TownScene extends Phaser.Scene {
     super('TownScene');
   }
 
+  /** The map shown now (town, or a biome). */
+  private mapId = 'town';
+
   init(data: TownData): void {
     this.data_ = data ?? {};
+    this.mapId = this.data_.map && MAPS[this.data_.map] ? this.data_.map : 'town';
     this.leaving = false;
     this.panel = null;
     this.atDoor = null;
@@ -111,7 +130,7 @@ export class TownScene extends Phaser.Scene {
   }
 
   preload(): void {
-    this.town = parseTown(townJson);
+    this.town = parseTown(MAPS[this.mapId]);
     this.map = parseMap(mapJson);
     const s = this.town.tileSize;
     for (const ts of [this.town.ground, this.town.water]) this.load.spritesheet(ts.key, `assets/town/${ts.key}.png`, { frameWidth: s, frameHeight: s });
@@ -190,21 +209,12 @@ export class TownScene extends Phaser.Scene {
     this.physics.add.collider(this.player, solids);
     // Other players here (online): drawn from the world room's synced state.
     const session = this.registry.get(SESSION_KEY) as WorldSession | undefined;
-    this.others = session ? new RemotePlayers(this, session.room, 'town', JSON.stringify(savedAppearance(this.world)), pDef.walkFps) : null;
+    this.others = session ? new RemotePlayers(this, session.room, this.mapId, JSON.stringify(savedAppearance(this.world)), pDef.walkFps) : null;
 
-    // The pet comes along only if it was following (and is not away at work).
-    const petAtWork = this.world.state.creatures.find((c) => c.id === homeJson.pet.creatureId)?.status === 'working';
-    if (this.data_.petFollowing && !petAtWork) {
-      const id = homeJson.pet.creatureId;
-      const species = this.world.state.creatures.find((c) => c.id === id)?.speciesId ?? this.world.state.creatures[0].speciesId;
-      const petArt = art[species];
-      createCharacterAnims(this, petArt, homeJson.pet.walkFps);
-      this.petName = petArt.name;
-      this.pet = this.physics.add.sprite(start.x - 20, start.y + 6, `${petArt.name}_idle_down`).setScale(scaleOf(petArt.name));
-      this.pet.body.setSize(18, 12).setOffset(15, 30);
-      this.pet.setCollideWorldBounds(true);
-      this.physics.add.collider(this.pet, solids);
-    }
+    // Who follows: the creature chosen in the bag, else the home pet if it was following (never one away at work).
+    this.solids = solids;
+    const followerId = this.world.state.follower ?? (this.data_.petFollowing ? homeJson.pet.creatureId : null);
+    if (followerId) this.spawnFollower(followerId, start);
 
     this.startAmbient(solids);
 
@@ -235,6 +245,7 @@ export class TownScene extends Phaser.Scene {
     const kb = this.input.keyboard;
     if (!kb) throw new Error('Keyboard input unavailable');
     this.mapKey = kb.addKey(Phaser.Input.Keyboard.KeyCodes.M);
+    this.bagKey = kb.addKey(Phaser.Input.Keyboard.KeyCodes.B);
     const onResume = () => this.keys.read();
     this.events.on(Phaser.Scenes.Events.RESUME, onResume);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.events.off(Phaser.Scenes.Events.RESUME, onResume));
@@ -248,7 +259,8 @@ export class TownScene extends Phaser.Scene {
     if (this.panel) {
       this.player.setVelocity(0, 0);
       showMotion(this.player, art[homeJson.player.character].name, this.facing, false);
-      if (this.panel.handle(input) === 'cancel') this.closePanel();
+      const bagToggle = this.panel instanceof BagPanel && Phaser.Input.Keyboard.JustDown(this.bagKey);
+      if (this.panel.handle(input) === 'cancel' || bagToggle) this.closePanel();
       return;
     }
     const feet = { x: this.player.x, feet: this.player.body.bottom, moving: this.player.body.velocity.lengthSq() > 0 };
@@ -263,20 +275,21 @@ export class TownScene extends Phaser.Scene {
     this.movePlayer();
     this.movePet();
     if (input.cancel) return this.openPause();
-    if (Phaser.Input.Keyboard.JustDown(this.mapKey)) return this.openMap();
+    if (Phaser.Input.Keyboard.JustDown(this.mapKey)) {
+      // Away from town the way back is the ferry, not the town map.
+      if (this.mapId !== 'town') return this.toastAt(this.player.x, this.player.y - 30, services(this).i18n.t('ferry.onlyBoat'));
+      return this.openMap();
+    }
+    if (Phaser.Input.Keyboard.JustDown(this.bagKey)) return this.openBag();
     if (this.lure.update(dt, feet, input.confirm, this.keys.holding())) return;
-    const bird = this.catchTarget();
     const lureHint = this.lure.hintAt(feet);
-    const atBooth = !bird && !lureHint && inBooth(this.ferry, { x: this.player.x, y: this.player.body.bottom });
-    this.catchHint.setVisible(bird !== null || lureHint !== null || atBooth);
+    const atBooth = !lureHint && this.atFerry({ x: this.player.x, y: this.player.body.bottom });
+    this.catchHint.setVisible(lureHint !== null || atBooth);
     if (lureHint) this.catchHint.setPosition(lureHint.x, lureHint.y);
-    else if (bird) this.catchHint.setPosition(bird.sprite.x, bird.sprite.y - bird.sprite.displayHeight - 6);
     else if (atBooth) this.catchHint.setPosition(this.player.x, this.player.y - this.player.displayHeight / 2 - 8);
     if (input.confirm) {
-      if (bird) return this.lure.startBird(bird.bird);
-      if (atBooth) return this.openFerry();
+      if (atBooth) return this.mapId === 'town' ? this.openFerry() : this.openFerryBack();
       if (this.lure.pickUpNear(feet)) return;
-      if (!this.lure.baitDown) return this.openBaitMenu();
     }
     this.checkDoor();
   }
@@ -305,20 +318,65 @@ export class TownScene extends Phaser.Scene {
     this.player.setDepth(this.player.body.bottom);
   }
 
+  private solids!: Phaser.Physics.Arcade.StaticGroup;
+
+  /** Puts `creatureId` at the player's side, following (replaces any follower). False if it can't come (away at work). */
+  private spawnFollower(creatureId: string, at: { x: number; y: number } = { x: this.player.x, y: this.player.y }): boolean {
+    const c = this.world.state.creatures.find((x) => x.id === creatureId);
+    if (!c || c.status === 'working') return false;
+    const petArt = art[c.speciesId];
+    if (!petArt) return false;
+    this.pet?.destroy();
+    createCharacterAnims(this, petArt, homeJson.pet.walkFps);
+    this.petName = petArt.name;
+    this.pet = this.physics.add.sprite(at.x - 20, at.y + 6, `${petArt.name}_idle_down`).setScale(scaleOf(petArt.name));
+    this.pet.body.setSize(18, 12).setOffset(15, 30);
+    this.pet.setCollideWorldBounds(true);
+    this.physics.add.collider(this.pet, this.solids);
+    for (const n of this.npcs) this.physics.add.collider(this.pet, n.sprite);
+    return true;
+  }
+
+  /** Bag "Follow me" / "Stop following". Says why when it can't come (away at work). */
+  private toggleFollower(creatureId: string): void {
+    const t = services(this).i18n;
+    if (this.world.state.follower === creatureId && this.pet) {
+      this.dropFollower();
+    } else if (this.spawnFollower(creatureId)) {
+      this.world.state.follower = creatureId;
+    } else {
+      const c = this.world.state.creatures.find((x) => x.id === creatureId);
+      if (c?.status === 'working') (this.panel as BagPanel | null)?.say(t.t('bag.working', { name: t.t(`species.${c.speciesId}`) }));
+    }
+    this.world.save();
+  }
+
+  /** Nobody follows any more (the follower went home, or stopped following). */
+  private dropFollower(): void {
+    this.world.state.follower = undefined;
+    this.pet?.destroy();
+    this.pet = null;
+  }
+
   private movePet(): void {
     const pet = this.pet;
     if (!pet) return;
-    const goal = followTarget(pet, this.player, homeJson.pet.followDistance);
+    const p = homeJson.pet;
+    const goal = followWithSlack(pet, this.player, p.followDistance, FOLLOW_SLACK, this.petWalking);
+    this.petWalking = goal !== null;
     if (!goal) {
       pet.setVelocity(0, 0);
       showMotion(pet, this.petName, this.petFacing, false);
     } else {
-      this.physics.moveTo(pet, goal.x, goal.y, homeJson.pet.speed * 2);
+      // Far behind: hurry; close: walk at the player's pace so it doesn't bump into them and stop.
+      const far = Math.hypot(this.player.x - pet.x, this.player.y - pet.y) > p.followDistance * 2;
+      this.physics.moveTo(pet, goal.x, goal.y, far ? p.speed * 2 : homeJson.player.speed);
       this.petFacing = facingFor(goal.x - pet.x, goal.y - pet.y, this.petFacing);
       showMotion(pet, this.petName, this.petFacing, true);
     }
     pet.setDepth(pet.body.bottom);
   }
+
 
   // ---- ambient life ----------------------------------------------------------------
 
@@ -360,7 +418,7 @@ export class TownScene extends Phaser.Scene {
     const trees = this.town.props.filter((p) => wildRules.treeSprites.includes(p.sprite)).map((p) => ({ x: p.x, y: p.y }));
     this.wild = new TownWild(
       this,
-      Object.values(this.rules.areas),
+      Object.values(this.rules.areas).filter((a) => a.map === this.mapId),
       pick,
       (species) => art[species]?.name ?? null,
       nav,
@@ -368,11 +426,12 @@ export class TownScene extends Phaser.Scene {
       (species) => (spritesJson as Record<string, { scale?: number }>)[species]?.scale ?? 1,
       { rules: wildRules, trees },
     );
+    this.lureRules = parseLureRules(lureJson, Object.keys(this.rules.rarities));
     this.lure = new TownLure({
       scene: this,
       game: this.world,
       rules: this.rules,
-      lure: parseLureRules(lureJson, Object.keys(this.rules.rarities)),
+      lure: this.lureRules,
       wild: this.wild,
       birds: this.birds,
       art: (species) => art[species] ?? null,
@@ -383,6 +442,12 @@ export class TownScene extends Phaser.Scene {
         this.refreshBait();
       },
       caughtEffect: (sprite, species, first) => this.caughtEffect(sprite, species, first),
+      joined: (creatureId, species) => {
+        if (placeNewCreature(this.world, creatureId, this.bagRules.partyMax) === 'home') {
+          const t = services(this).i18n;
+          this.time.delayedCall(1400, () => this.floatText(t.t('bag.wentHome', { name: t.t(`species.${species}`) }), { x: this.player.x, y: this.player.y - 30 }));
+        }
+      },
     });
 
     for (const c of this.town.smoke) {
@@ -395,6 +460,7 @@ export class TownScene extends Phaser.Scene {
   private birds: TownBirds | null = null;
   private wild: TownWild | null = null;
   private lure!: TownLure;
+  private lureRules!: LureRules;
   private rules!: CatchRules;
   private baitText!: HudChip;
   private catchHint!: Phaser.GameObjects.Container;
@@ -435,43 +501,62 @@ export class TownScene extends Phaser.Scene {
   // ---- catching ----------------------------------------------------------------------
 
   /** The nearest grounded bird or wild creature within catch range of the player's feet. */
-  private catchTarget(): Extract<CatchTarget, { kind: 'bird' }> | null {
-    const feet = { x: this.player.x, y: this.player.body.bottom };
-    const bird = this.birds?.grounded(feet, this.rules.catchRange)[0];
-    return bird ? { kind: 'bird', bird, species: 'pigeon', sprite: bird.sprite } : null;
-  }
-
   /** The wild area (with a place in town) the player stands in, or null. */
   private areaHere(): AreaRule | null {
     const x = this.player.x;
     const y = this.player.body.bottom;
-    return Object.values(this.rules.areas).find((a) => a.inTown && x >= a.inTown.x && x < a.inTown.x + a.inTown.w && y >= a.inTown.y && y < a.inTown.y + a.inTown.h) ?? null;
+    return areaAt(this.rules, { x, y }, this.mapId);
   }
 
-  /** E out in a wild area: choose a bait to put down. Baits a creature in view loves are starred. */
-  private openBaitMenu(): void {
+  /** The bag (B, or E in a wild area for the baits tab). Baits can be put down where animals live. */
+  private openBag(tab: BagTab = 'baits'): void {
     const t = (k: string, v?: Record<string, string | number>) => services(this).i18n.t(k, v);
-    const head = { x: this.player.x, y: this.player.y - this.player.displayHeight / 2 - 4 };
-    if (!this.areaHere()) return this.floatText(t('catch.noArea'), head);
-    const held = baitsHeld(this.world, this.rules);
-    if (held.length === 0) return this.floatText(t('catch.noBaitHeld'), head);
     this.player.setVelocity(0, 0);
-    const view = this.cameras.main.worldView;
-    const inView = (this.wild?.free() ?? []).filter((c) => view.contains(c.sprite.x, c.sprite.y));
-    const items: MenuItem[] = held.map(({ itemId, count }) => {
-      const fan = inView.find((c) => acceptsBait(this.world, this.rules, c.species, itemId) === 'specific');
-      const item = t(`items.${itemId}`);
-      return {
-        label: () => (fan ? t('catch.favourite', { item, count, species: t(`species.${fan.species}`) }) : t('catch.placeRow', { item, count })),
-        onSelect: () => {
-          this.closePanel();
-          this.lure.placeBait(itemId, { x: this.player.x, y: this.player.body.bottom });
+    const inArea = this.areaHere() !== null;
+    const canBait = inArea && !this.lure.baitDown;
+    const baitBlocked = this.lure.baitDown ? t('bag.baitAlreadyDown') : t('bag.noAnimalsHere');
+    const content = bagContent({
+      game: this.world,
+      rules: this.bagRules,
+      genericBaitId: this.rules.genericBaitId,
+      t,
+      artName: (species) => art[species]?.name ?? null,
+      placeBait: canBait
+        ? (itemId) => {
+            this.closePanel();
+            this.lure.placeBait(itemId, this.baitSpot());
+          }
+        : null,
+      baitBlocked,
+      atHome: false,
+      sendHome: (id) => {
+        if (this.world.state.follower === id) this.dropFollower();
+      },
+      follow: {
+        current: () => (this.pet ? (this.world.state.follower ?? null) : null),
+        toggle: (id) => {
+          this.toggleFollower(id);
+          (this.panel as BagPanel | null)?.refresh();
         },
-      };
+      },
+      changed: () => {
+        this.world.save();
+        (this.panel as BagPanel | null)?.refresh();
+      },
+      say: (msg) => (this.panel as BagPanel | null)?.say(msg),
     });
-    items.push({ label: () => t('catch.close'), onSelect: () => this.closePanel() });
     this.panel?.destroy();
-    this.panel = new MenuPanel(this, { title: t('catch.placeTitle'), items, help: t('work.help'), anchor: { kind: 'center' } });
+    this.panel = new BagPanel(this, content, this.bagRules.cols, this.bagRules.rows, tab);
+  }
+
+  private readonly bagRules = parseBagRules(bagJson);
+
+  /** Where bait lands: a few steps ahead of the player, or at their feet if that spot is blocked. */
+  private baitSpot(): { x: number; y: number } {
+    const feet = { x: this.player.x, y: this.player.body.bottom };
+    const p = throwPoint(feet, this.facing, this.lureRules.throwDistance);
+    const blocked = townSolids(this.town).some((b) => p.x >= b.x && p.x < b.x + b.w && p.y >= b.y && p.y < b.y + b.h);
+    return blocked ? feet : p;
   }
 
   /** Caught: stars, the sprite pops away, and the album line the first time. */
@@ -676,6 +761,36 @@ export class TownScene extends Phaser.Scene {
     }
     this.world.save();
     this.closePanel();
-    this.enter(r.scene, 'harbor');
+    this.sailTo(r.map, 'dock');
+  }
+
+  /** In town: the ticket booth. Away (a biome): the dock where the ferry takes you back. */
+  private atFerry(feet: { x: number; y: number }): boolean {
+    if (this.mapId === 'town') return inBooth(this.ferry, feet);
+    const b = this.town.ferryBack;
+    return b !== null && feet.x >= b.x && feet.x < b.x + b.w && feet.y >= b.y && feet.y < b.y + b.h;
+  }
+
+  /** Away from town: sail back (free when the ferry says so). */
+  private openFerryBack(): void {
+    const t = (k: string, v?: Record<string, string | number>) => services(this).i18n.t(k, v);
+    this.player.setVelocity(0, 0);
+    const items: MenuItem[] = [
+      { label: () => t('ferry.backToTown'), onSelect: () => (this.closePanel(), this.sailTo('town', 'ferryDock')) },
+      { label: () => t('ferry.close'), onSelect: () => this.closePanel() },
+    ];
+    const lines = [t(this.ferry.returnFree ? 'ferry.backFree' : 'ferry.fareOnly', { fare: this.ferry.fare })];
+    this.panel?.destroy();
+    this.panel = new MenuPanel(this, { title: t('ferry.title'), lines, items, help: t('work.help'), anchor: { kind: 'center' } });
+  }
+
+  /** Fades out and reopens this scene on another map, arriving at `place`. The follower comes along. */
+  private sailTo(map: string, place: string): void {
+    this.leaving = true;
+    this.player.setVelocity(0, 0);
+    this.cameras.main.fadeOut(400, 0, 0, 0);
+    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () =>
+      this.scene.restart({ from: 'travel', map, place, petFollowing: this.pet !== null } satisfies TownData),
+    );
   }
 }

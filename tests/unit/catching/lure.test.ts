@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import lureJson from '../../../src/data/lure.json';
 import catchingJson from '../../../src/data/catching.json';
-import { noticeRadius, parseLureRules, spooked, temperOf, tensionFor, type Temper } from '../../../src/logic/lure';
+import { noticeRadius, parseLureRules, spooked, temperOf, tensionFor, throwPoint, type Temper } from '../../../src/logic/lure';
 import { inZone, startTension, stepTension, type TensionTuning } from '../../../src/logic/tension';
 
 const RARITIES = Object.keys(catchingJson.rarities);
@@ -44,12 +44,22 @@ describe('bait rules (lure.json)', () => {
 });
 
 describe('spooking (red light, green light)', () => {
-  const temper: Temper = { lookEveryMs: [1000, 1000], lookMs: [500, 500], speed: 10, fleeDistance: 30 };
+  const temper: Temper = { lookEveryMs: [1000, 1000], lookMs: [500, 500], speed: 10, fleeDistance: 30, watchRadius: 80 };
 
   it('moving while it looks scares it; moving while it does not is fine', () => {
-    expect(spooked(temper, { looking: true, playerMoving: true, playerDistance: 100 })).toBe('moved');
-    expect(spooked(temper, { looking: false, playerMoving: true, playerDistance: 100 })).toBeNull();
-    expect(spooked(temper, { looking: true, playerMoving: false, playerDistance: 100 })).toBeNull();
+    expect(spooked(temper, { looking: true, playerMoving: true, playerDistance: 50 })).toBe('moved');
+    expect(spooked(temper, { looking: false, playerMoving: true, playerDistance: 50 })).toBeNull();
+    expect(spooked(temper, { looking: true, playerMoving: false, playerDistance: 50 })).toBeNull();
+  });
+
+  it('far outside its watch radius you can move freely, even while it looks', () => {
+    expect(spooked(temper, { looking: true, playerMoving: true, playerDistance: 79 })).toBe('moved');
+    expect(spooked(temper, { looking: true, playerMoving: true, playerDistance: 80 })).toBeNull();
+  });
+
+  it('bait lands in front of the player, the way they face', () => {
+    expect(throwPoint({ x: 10, y: 20 }, 'right', 30)).toEqual({ x: 40, y: 20 });
+    expect(throwPoint({ x: 10, y: 20 }, 'up', 30)).toEqual({ x: 10, y: -10 });
   });
 
   it('standing too close always scares it', () => {

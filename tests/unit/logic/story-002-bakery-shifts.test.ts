@@ -63,7 +63,7 @@ describe('story-002 shifts (all workplaces)', () => {
     expect(shiftOutput(sp('bee'), bakery)).toBeGreaterThan(shiftOutput(sp('rabbit'), bakery) * 3);
   });
 
-  it('AC5: collecting a finished shift adds the product, frees the slot and sends the creature home tired', () => {
+  it('AC5: collecting a finished shift adds the product, frees the slot and the creature comes back with the shift energy spent', () => {
     // Arrange
     const { game, clock } = gameWith(['monkey']);
     game.startShift('c1', 'bakery', 2);
@@ -74,8 +74,33 @@ describe('story-002 shifts (all workplaces)', () => {
     expect(r).toEqual({ ok: true, itemId: 'bread', count: shiftOutput(sp('monkey'), bakery), creatureId: 'c1' });
     expect(game.state.inventory.bread).toBe(shiftOutput(sp('monkey'), bakery));
     expect(game.shiftAt('bakery', 2)).toBeUndefined();
-    expect(game.creature('c1').status).toBe('resting');
+    expect(game.creature('c1').status).toBe('idle');
+    expect(game.energyOf('c1')).toBe(sp('monkey').maxEnergy - game.shiftCost('c1', 'bakery'));
     expect(game.startShift('c1', 'factory', 0).ok).toBe(true);
+  });
+
+  it('work costs energy (less where the creature is good) and a tired creature cannot start a shift', () => {
+    const { game } = gameWith(['monkey']);
+    const bakeryCost = game.shiftCost('c1', 'bakery');
+    expect(bakeryCost).toBeLessThan(bakery.energyCost); // the monkey is good at the bakery
+    game.creature('c1').energy = bakeryCost - 1;
+    const r = game.startShift('c1', 'bakery', 0);
+    expect(r).toEqual({ ok: false, reason: 'tired', energy: bakeryCost - 1, needs: bakeryCost });
+    expect(game.shiftAt('bakery', 0)).toBeUndefined();
+  });
+
+  it('energy comes back over time, twice as fast asleep, and food tops it up', () => {
+    const { game, clock } = gameWith(['monkey']);
+    const c = game.creature('c1');
+    c.energy = 10;
+    const hour = game.energyRules().gameHourMs;
+    clock.advance(hour);
+    expect(game.energyOf('c1')).toBe(10 + game.energyRules().perGameHour);
+    game.rest('c1');
+    clock.advance(hour);
+    expect(game.energyOf('c1')).toBe(10 + game.energyRules().perGameHour * (1 + game.energyRules().sleepMultiplier));
+    game.wake('c1');
+    expect(c.status).toBe('idle');
   });
 
   it('AC6: collecting early gives nothing and leaves the shift running; an empty slot gives nothing', () => {
@@ -126,7 +151,7 @@ describe('story-002 shifts (all workplaces)', () => {
 });
 
 describe('game clock', () => {
-  const cfg = parseTimeConfig({ dayMs: 2400, startHour: 6, nightStartHour: 18, dayStartHour: 6 });
+  const cfg = parseTimeConfig({ dayMs: 2400, startHour: 6, nightStartHour: 18, dayStartHour: 6, energyPerGameHour: 10, sleepEnergyMultiplier: 2 });
 
   it('starts day 1 at startHour', () => {
     expect(gameTimeAt(0, 0, cfg)).toEqual({ day: 1, hour: 6, minute: 0 });
@@ -151,7 +176,7 @@ describe('game clock', () => {
   });
 
   it('rejects a bad time config', () => {
-    expect(() => parseTimeConfig({ dayMs: 0, startHour: 6, nightStartHour: 18, dayStartHour: 6 })).toThrow(/dayMs/);
-    expect(() => parseTimeConfig({ dayMs: 2400, startHour: 24, nightStartHour: 18, dayStartHour: 6 })).toThrow(/startHour/);
+    expect(() => parseTimeConfig({ dayMs: 0, startHour: 6, nightStartHour: 18, dayStartHour: 6, energyPerGameHour: 10, sleepEnergyMultiplier: 2 })).toThrow(/dayMs/);
+    expect(() => parseTimeConfig({ dayMs: 2400, startHour: 24, nightStartHour: 18, dayStartHour: 6, energyPerGameHour: 10, sleepEnergyMultiplier: 2 })).toThrow(/startHour/);
   });
 });

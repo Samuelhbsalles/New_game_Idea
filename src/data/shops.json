@@ -1,11 +1,11 @@
 [
-  {"id": "bakery", "name": "Bakery", "slots": 3, "shiftHours": 4, "productItemId": "bread", "rate": 0.1},
-  {"id": "factory", "name": "Factory", "slots": 3, "shiftHours": 4, "productItemId": "planks", "rate": 0.1},
-  {"id": "construction", "name": "Construction", "slots": 3, "shiftHours": 4, "productItemId": "stone", "rate": 0.1},
-  {"id": "cafe", "name": "Cafe", "slots": 3, "shiftHours": 4, "productItemId": "coffee", "rate": 0.1},
-  {"id": "clothes", "name": "Clothes", "slots": 3, "shiftHours": 4, "productItemId": "fabric", "rate": 0.1},
-  {"id": "petPharmacy", "name": "Pet pharmacy", "slots": 3, "shiftHours": 4, "productItemId": "herbs", "rate": 0.1},
-  {"id": "hotel", "name": "Hotel", "slots": 3, "shiftHours": 4, "productItemId": "coins", "rate": 0.5},
-  {"id": "careHome", "name": "Care home", "slots": 3, "shiftHours": 4, "productItemId": "coins", "rate": 0.5},
-  {"id": "market", "name": "Market", "slots": 3, "shiftHours": 4, "productItemId": "coins", "rate": 0.4}
+  {"id": "bakery", "name": "Bakery", "slots": 3, "shiftHours": 4, "productItemId": "bread", "rate": 0.1, "energyCost": 25},
+  {"id": "factory", "name": "Factory", "slots": 3, "shiftHours": 4, "productItemId": "planks", "rate": 0.1, "energyCost": 35},
+  {"id": "construction", "name": "Construction", "slots": 3, "shiftHours": 4, "productItemId": "stone", "rate": 0.1, "energyCost": 35},
+  {"id": "cafe", "name": "Cafe", "slots": 3, "shiftHours": 4, "productItemId": "coffee", "rate": 0.1, "energyCost": 15},
+  {"id": "clothes", "name": "Clothes", "slots": 3, "shiftHours": 4, "productItemId": "fabric", "rate": 0.1, "energyCost": 15},
+  {"id": "petPharmacy", "name": "Pet pharmacy", "slots": 3, "shiftHours": 4, "productItemId": "herbs", "rate": 0.1, "energyCost": 15},
+  {"id": "hotel", "name": "Hotel", "slots": 3, "shiftHours": 4, "productItemId": "coins", "rate": 0.5, "energyCost": 15},
+  {"id": "careHome", "name": "Care home", "slots": 3, "shiftHours": 4, "productItemId": "coins", "rate": 0.5, "energyCost": 15},
+  {"id": "market", "name": "Market", "slots": 3, "shiftHours": 4, "productItemId": "coins", "rate": 0.4, "energyCost": 25}
 ]

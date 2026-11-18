@@ -1,3 +1,4 @@
+import itemsJson from '../data/items.json';
 import Phaser from 'phaser';
 import ui from '../data/ui.json';
 import { joinWorld, SESSION_KEY } from '../net/world';
@@ -22,6 +23,8 @@ export class BootScene extends Phaser.Scene {
     this.load.image(UI_TEX.panel, 'assets/ui/menu_panel.png');
     this.load.image(UI_TEX.titleBg, 'assets/ui/title_bg.png');
     preloadCreatorLayers(this);
+    // Item icons for the bag, shops and bait on the ground: assets/items/item_<id>.png.
+    for (const it of itemsJson) this.load.image(`item_${it.id}`, `assets/items/item_${it.id}.png`);
   }
 
   create(): void {

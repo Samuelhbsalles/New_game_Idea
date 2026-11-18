@@ -90,6 +90,28 @@ export function followTarget(
 }
 
 /**
+ * Following with some give, so a pet keeps a steady walk instead of stopping
+ * and starting every frame (which froze its walk on the first frame): once
+ * walking it keeps going until it is `slack / 2` px inside `distance`; once
+ * standing it waits until the leader is `slack` px beyond `distance`.
+ * Returns where to walk, or null to stand still.
+ */
+export function followWithSlack(
+  pet: { x: number; y: number },
+  leader: { x: number; y: number },
+  distance: number,
+  slack: number,
+  walking: boolean,
+): { x: number; y: number } | null {
+  const d = Math.hypot(leader.x - pet.x, leader.y - pet.y);
+  const stopAt = distance - slack / 2;
+  const startAt = distance + slack;
+  if (walking ? d <= stopAt : d <= startAt) return null;
+  const k = (d - stopAt) / d;
+  return { x: pet.x + (leader.x - pet.x) * k, y: pet.y + (leader.y - pet.y) * k };
+}
+
+/**
  * Picks a random walkable floor point (tile centre) for wandering, avoiding
  * `blocked` rectangles (solid furniture). Returns null if no tile is free.
  * `floor[y][x]` is true for a walkable tile.

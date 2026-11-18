@@ -241,7 +241,9 @@
     "close": "Fechar",
     "help": "↑↓ escolher · E confirmar · Esc fechar",
     "ready": "Pronto!",
-    "inventory": "{item}: {count}"
+    "inventory": "{item}: {count}",
+    "tired": "{name} está cansado ({energy}/{needs}). Descanse ou dê comida.",
+    "putRow": "{name} · {count} {item} · ⚡{cost}/{energy}"
   },
   "market": {
     "title": "Mercado",
@@ -315,7 +317,10 @@
       "shore": "Praia",
       "river": "Rio",
       "island": "Ilha"
-    }
+    },
+    "onlyBoat": "Daqui, só de barco: vá ao cais",
+    "backToTown": "Voltar para a cidade",
+    "backFree": "A volta é grátis"
   },
   "furniture": {
     "bed": "Cama",
@@ -344,5 +349,43 @@
     "chest": "Baú",
     "desk": "Escrivaninha",
     "sofa3": "Sofá de 3 lugares"
+  },
+  "bag": {
+    "title": "Mochila",
+    "tab": {
+      "baits": "Iscas",
+      "items": "Itens",
+      "creatures": "Bichos"
+    },
+    "empty": "Nada aqui ainda",
+    "help": "Setas mover · E usar · B/Esc fechar",
+    "loves": "Favorita de: {list}",
+    "generic": "Isca comum: atrai bichos comuns",
+    "food": "Comida: recupera energia dos bichos",
+    "goods": "Material: vende no mercado",
+    "placeBait": "Colocar como isca",
+    "placeHere": "Use num lugar com bichos",
+    "creatureInfo": "Energia {energy} · {status}",
+    "withYou": "Com você",
+    "atHomeTag": "Em casa",
+    "takeAlong": "Levar junto",
+    "leaveHome": "Deixar em casa",
+    "partyFull": "Já tem {max} com você",
+    "lastOne": "Alguém precisa ir com você",
+    "wentHome": "{name} foi para casa (mochila cheia)",
+    "followMe": "Me seguir",
+    "stopFollow": "Parar de seguir",
+    "baitAlreadyDown": "Já tem isca no chão. Recolha com E perto dela.",
+    "noAnimalsHere": "Aqui não tem bichos. Tente o parque ou as árvores.",
+    "baitInTown": "Iscas são usadas na cidade, onde vivem os bichos.",
+    "options": "opções",
+    "sendHome": "Enviar para casa",
+    "working": "{name} está trabalhando agora",
+    "mood": {
+      "working": "trabalhando",
+      "rested": "descansado",
+      "recovering": "recuperando",
+      "tired": "cansado"
+    }
   }
 }

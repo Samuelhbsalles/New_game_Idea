@@ -1,14 +1,15 @@
 {
-  "noticeRadius": 90,
+  "noticeRadius": 100,
+  "throwDistance": 36,
   "specificNoticeBonus": 1.5,
   "specificZoneBonus": 1.25,
   "waitMs": 25000,
   "eatMs": [5000, 7000],
   "defaultTemper": "curious",
   "tempers": {
-    "calm": { "lookEveryMs": [3500, 6000], "lookMs": [500, 800], "speed": 12, "fleeDistance": 26 },
-    "curious": { "lookEveryMs": [2200, 3800], "lookMs": [600, 1000], "speed": 20, "fleeDistance": 34 },
-    "shy": { "lookEveryMs": [1400, 2600], "lookMs": [800, 1300], "speed": 16, "fleeDistance": 48 }
+    "calm": { "lookEveryMs": [4500, 7000], "lookMs": [400, 650], "speed": 12, "fleeDistance": 14, "watchRadius": 60 },
+    "curious": { "lookEveryMs": [3000, 5000], "lookMs": [450, 750], "speed": 20, "fleeDistance": 20, "watchRadius": 75 },
+    "shy": { "lookEveryMs": [2200, 3800], "lookMs": [600, 1000], "speed": 16, "fleeDistance": 28, "watchRadius": 95 }
   },
   "species": {
     "capybara": "calm", "sloth": "calm", "sheep": "calm", "penguin": "calm", "pelican": "calm",

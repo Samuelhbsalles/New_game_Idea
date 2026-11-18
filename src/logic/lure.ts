@@ -18,6 +18,8 @@ export interface Temper {
   speed: number;
   /** Closer than this (px) to the creature while it comes over and it runs. */
   fleeDistance: number;
+  /** It only notices you moving within this distance (px) while it looks around. */
+  watchRadius: number;
 }
 
 export interface LureRules {
@@ -27,6 +29,8 @@ export interface LureRules {
   specificNoticeBonus: number;
   /** Its own bait widens the minigame's catch zone this many times. */
   specificZoneBonus: number;
+  /** Bait is put down this far (px) in front of the player. */
+  throwDistance: number;
   /** Bait nobody came for is given back after this long (ms). */
   waitMs: number;
   /** How long a creature eats (ms): the window to sneak up and press E. */
@@ -64,7 +68,7 @@ export function parseLureRules(json: unknown, rarityIds: string[]): LureRules {
   for (const [name, v] of Object.entries(to)) {
     const p = `tempers.${name}`;
     const t = obj(v, p);
-    tempers[name] = { lookEveryMs: range(t, 'lookEveryMs', p), lookMs: range(t, 'lookMs', p), speed: num(t, 'speed', p, 1), fleeDistance: num(t, 'fleeDistance', p) };
+    tempers[name] = { lookEveryMs: range(t, 'lookEveryMs', p), lookMs: range(t, 'lookMs', p), speed: num(t, 'speed', p, 1), fleeDistance: num(t, 'fleeDistance', p), watchRadius: num(t, 'watchRadius', p) };
   }
   const defaultTemper = typeof o.defaultTemper === 'string' && tempers[o.defaultTemper] ? o.defaultTemper : fail('defaultTemper', 'expected a temper name');
   const so = obj(o.species, 'species');
@@ -99,6 +103,7 @@ export function parseLureRules(json: unknown, rarityIds: string[]): LureRules {
     noticeRadius: num(o, 'noticeRadius', '(root)', 1),
     specificNoticeBonus: num(o, 'specificNoticeBonus', '(root)', 1),
     specificZoneBonus: num(o, 'specificZoneBonus', '(root)', 1),
+    throwDistance: num(o, 'throwDistance', '(root)'),
     waitMs: num(o, 'waitMs', '(root)', 1),
     eatMs: range(o, 'eatMs', '(root)'),
     defaultTemper,
@@ -120,12 +125,19 @@ export function noticeRadius(rules: LureRules, specific: boolean): number {
 
 /**
  * While a creature comes to the bait: does it get scared? Standing too close
- * always does; moving only while it is looking around ("red light, green light").
+ * always does; moving only while it is looking around and you are within its
+ * watch radius ("red light, green light" — far away you can walk freely).
  */
 export function spooked(temper: Temper, s: { looking: boolean; playerMoving: boolean; playerDistance: number }): Spook | null {
   if (s.playerDistance < temper.fleeDistance) return 'too_close';
-  if (s.looking && s.playerMoving) return 'moved';
+  if (s.looking && s.playerMoving && s.playerDistance < temper.watchRadius) return 'moved';
   return null;
+}
+
+/** Where thrown bait lands: `distance` px from the feet in the facing direction. */
+export function throwPoint(feet: { x: number; y: number }, facing: 'up' | 'down' | 'left' | 'right', distance: number): { x: number; y: number } {
+  const d = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[facing];
+  return { x: feet.x + d[0] * distance, y: feet.y + d[1] * distance };
 }
 
 /** Minigame tuning for a species' rarity, with the zone widened for its own bait. */

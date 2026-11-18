@@ -1,0 +1,6 @@
+{
+  "partyMax": 6,
+  "cols": 6,
+  "rows": 3,
+  "tabs": ["baits", "items", "creatures"]
+}

@@ -9,7 +9,7 @@ function rules() {
     returnFree: true,
     booth: { x: 100, y: 200, w: 40, h: 20 },
     destinations: [
-      { id: 'shore', status: 'open', scene: 'ShoreScene' },
+      { id: 'shore', status: 'open', map: 'shore' },
       { id: 'island', status: 'soon' },
     ],
   });
@@ -20,18 +20,18 @@ describe('ferry', () => {
     expect(() => parseFerry(ferryJson)).not.toThrow();
   });
 
-  it('refuses an open destination without a scene, and a negative fare', () => {
-    expect(() => parseFerry({ ...ferryJson, destinations: [{ id: 'x', status: 'open' }] })).toThrow(/destinations\[0\]\.scene/);
+  it('refuses an open destination without a map, and a negative fare', () => {
+    expect(() => parseFerry({ ...ferryJson, destinations: [{ id: 'x', status: 'open' }] })).toThrow(/destinations\[0\]\.map/);
     expect(() => parseFerry({ ...ferryJson, fare: -1 })).toThrow(/fare/);
   });
 
-  it('a ticket to an open destination costs the fare and names its scene', () => {
+  it('a ticket to an open destination costs the fare and names its map', () => {
     // Arrange
     const wallet = { coins: 20 };
     // Act
     const r = buyTicket(wallet, rules(), 'shore');
     // Assert
-    expect(r).toEqual({ ok: true, coins: 5, scene: 'ShoreScene' });
+    expect(r).toEqual({ ok: true, coins: 5, map: 'shore' });
     expect(wallet.coins).toBe(5);
   });
 
